@@ -1,4 +1,4 @@
-import { ActionConfig, LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
+import { LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
 
 declare global {
   interface HTMLElementTagNameMap {
