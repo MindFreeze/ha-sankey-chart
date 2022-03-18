@@ -32,7 +32,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/boilerplate-card.ts',
+    input: 'src/sankey-chart.ts',
     output: {
       dir: 'dist',
       format: 'es',

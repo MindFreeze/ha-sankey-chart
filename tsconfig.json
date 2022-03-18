@@ -9,7 +9,7 @@
       "dom.iterable"
     ],
     "noEmit": true,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "strict": true,

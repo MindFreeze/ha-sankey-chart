@@ -22,7 +22,7 @@ Hey dude! Help me out for a couple of :beers: or a :coffee:!
 
 | Name              | Type    | Requirement  | Description                                 | Default             |
 | ----------------- | ------- | ------------ | ------------------------------------------- | ------------------- |
-| type              | string  | **Required** | `custom:boilerplate-card`                   |
+| type              | string  | **Required** | `custom:sankey-chart`                   |
 | name              | string  | **Optional** | Card name                                   | `Boilerplate`       |
 | show_error        | boolean | **Optional** | Show what an error looks like for the card  | `false`             |
 | show_warning      | boolean | **Optional** | Show what a warning looks like for the card | `false`             |
@@ -43,7 +43,7 @@ Hey dude! Help me out for a couple of :beers: or a :coffee:!
 | haptic          | string | **Optional** | Haptic feedback _success, warning, failure, light, medium, heavy, selection_ | `none`      |
 | repeat          | number | **Optional** | How often to repeat the `hold_action` in milliseconds.                                                                                 | `none`       |
 
-## Starting a new card from boilerplate-card
+## Starting a new card from sankey-chart
 
 ### Step 1
 
@@ -67,19 +67,19 @@ Search the repository for all instances of "TODO" and handle the changes/suggest
 
 Customize to suit your needs and contribute it back to the community
 
-## Starting a new card from boilerplate-card with [devcontainer][devcontainer]
+## Starting a new card from sankey-chart with [devcontainer][devcontainer]
 
 Note: this is available only in vscode ensure you have the [Remote Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed.
 
 1. Fork and clone the repository.
 2. Open a [devcontainer][devcontainer] terminal and run `npm start` when it's ready.
 3. The compiled `.js` file will be accessible on
-   `http://127.0.0.1:5000/boilerplate-card.js`.
+   `http://127.0.0.1:5000/sankey-chart.js`.
 4. On a running Home Assistant installation add this to your Lovelace
    `resources:`
 
 ```yaml
-- url: 'http://127.0.0.1:5000/boilerplate-card.js'
+- url: 'http://127.0.0.1:5000/sankey-chart.js'
   type: module
 ```
 
@@ -106,14 +106,14 @@ error Found incompatible module
 info Visit https://yarnpkg.com/en/docs/cli/install for documentation about this command.
 ```
 
-[commits-shield]: https://img.shields.io/github/commit-activity/y/custom-cards/boilerplate-card.svg?style=for-the-badge
-[commits]: https://github.com/custom-cards/boilerplate-card/commits/master
+[commits-shield]: https://img.shields.io/github/commit-activity/y/custom-cards/sankey-chart.svg?style=for-the-badge
+[commits]: https://github.com/custom-cards/sankey-chart/commits/master
 [devcontainer]: https://code.visualstudio.com/docs/remote/containers
 [discord]: https://discord.gg/5e9yvq
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/c/projects/frontend
-[license-shield]: https://img.shields.io/github/license/custom-cards/boilerplate-card.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/custom-cards/sankey-chart.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2021.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/custom-cards/boilerplate-card.svg?style=for-the-badge
-[releases]: https://github.com/custom-cards/boilerplate-card/releases
+[releases-shield]: https://img.shields.io/github/release/custom-cards/sankey-chart.svg?style=for-the-badge
+[releases]: https://github.com/custom-cards/sankey-chart/releases

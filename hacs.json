@@ -1,5 +1,5 @@
 {
-    "name": "Boilerplate Card",
+    "name": "Sankey chart Card",
     "render_readme": true,
-    "filename": "boilerplate-card.js"
+    "filename": "sankey-chart.js"
 }

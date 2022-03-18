@@ -1,7 +1,7 @@
 {
-  "name": "boilerplate-card",
+  "name": "sankey-chart",
   "version": "1.4.1",
-  "description": "Lovelace boilerplate-card",
+  "description": "Lovelace sankey-chart",
   "keywords": [
     "home-assistant",
     "homeassistant",
@@ -10,8 +10,8 @@
     "lovelace",
     "custom-cards"
   ],
-  "module": "boilerplate-card.js",
-  "repository": "git@github.com:custom_cards/boilerplate-card.git",
+  "module": "sankey-chart.js",
+  "repository": "git@github.com:custom_cards/sankey-chart.git",
   "author": "Ian Richardson <iantrich@gmail.com>",
   "license": "MIT",
   "dependencies": {
