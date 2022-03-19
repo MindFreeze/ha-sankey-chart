@@ -45,10 +45,10 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 _Change "127.0.0.1" to the IP of your development machine._
 
-[commits-shield]: https://img.shields.io/github/commit-activity/y/custom-cards/sankey-chart.svg?style=for-the-badge
+[commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com/custom-cards/sankey-chart/commits/master
 [devcontainer]: https://code.visualstudio.com/docs/remote/containers
-[license-shield]: https://img.shields.io/github/license/custom-cards/sankey-chart.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2022.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/custom-cards/sankey-chart.svg?style=for-the-badge
-[releases]: https://github.com/custom-cards/sankey-chart/releases
+[releases-shield]: https://img.shields.io/github/release/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
+[releases]: https://github.com/MindFreeze/ha-sankey-chart/releases
