@@ -2,8 +2,9 @@
 import {
   LitElement,
   html,
+  svg,
   TemplateResult,
-  css,
+  SVGTemplateResult,
   PropertyValues,
   CSSResultGroup,
 } from 'lit';
@@ -23,6 +24,7 @@ import type { SankeyChartConfig, SectionState, EntityConfig } from './types';
 import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION, MIN_BOX_HEIGHT } from './const';
 import { localize } from './localize/localize';
+import styles from './styles';
 
 /* eslint no-console: 0 */
 console.info(
@@ -56,6 +58,8 @@ export class SankeyChart extends LitElement {
   
   @state() private config!: SankeyChartConfig;
   @state() public height = 200;
+  @state() private sections: SectionState[] = [];
+  @state() private maxSectionTotal = 0;
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
@@ -109,7 +113,6 @@ export class SankeyChart extends LitElement {
 
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
-    // TODO Check for stateObj or other necessary things and render a warning if missing
     // if (this.config.show_warning) {
     //   return this._showWarning(localize('common.show_warning'));
     // }
@@ -118,24 +121,7 @@ export class SankeyChart extends LitElement {
       return this._showError(localize('common.entity_not_found'));
     }
 
-    let maxSectionTotal = 0;
-    const sections: SectionState[] = this.config.sections.map(section => {
-      const boxes = section.entities
-        .filter(entity => !isNaN(Number(this._getEntityState(entity).state)))
-        .map(entity => ({
-          entity_id: this._getEntityId(entity),
-          state: Number(this._getEntityState(entity).state),
-          parents: typeof entity !== 'string' && entity.parents ? entity.parents : [],
-        }));
-      const total = boxes.reduce((sum, box) => sum + box.state, 0);
-      if (total > maxSectionTotal) {
-        maxSectionTotal = total;
-      }
-      return {
-        boxes,
-        total,
-      };
-    });
+    this._calcElements();
 
     return html`
       <ha-card
@@ -148,36 +134,124 @@ export class SankeyChart extends LitElement {
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
       <div class="container" style="height:${this.height}px">
-        ${sections.map(s => this.renderSection(s, maxSectionTotal))}
+        ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
     `;
   }
 
-  protected renderSection(section: SectionState, maxSectionTotal: number): TemplateResult | void {
+  protected renderSection(index: number): TemplateResult {
+    const section = this.sections[index];
     const {boxes} = section;
-    const sizes = boxes.map(b => Math.max(MIN_BOX_HEIGHT, b.state/maxSectionTotal*this.height));
-    const totalSize = sizes.reduce((sum, s) => sum + s, 0);
-    const extraSpace = this.height - totalSize;
-    const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
-
-    const hasParents = boxes.some(b => b.parents.length > 0);
-
+    const hasParents = index > 0 && boxes.some(b => b.parents.length > 0);
+    // const parents = {};
+    
     return html`
         ${hasParents ?
-          html`<div class="connectors"></div>` :
+          html`<svg class="connectors" height="${this.height}" viewBox="0 0 100 ${this.height}" preserveAspectRatio="none">
+            ${this.renderParentConnectors(index)}
+          </svg>` :
           null
         }
         <div class="section">
           ${boxes.map((box, i) => html`
-            ${i > 0 ? html`<div class="spacerv" style="height:${spacerH}px"></div>` : null}
-            <div class="box" style="height: ${sizes[i]}px">${box.state}</div>
+            ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
+            <div class="box" style="height: ${box.size}px">${box.state}</div>
           `)}
         </div>
     `;
   }
 
+  protected renderParentConnectors(index: number): SVGTemplateResult[] {
+    const section = this.sections[index];
+    const {boxes} = section;
+    return boxes.filter(b => b.parents.length > 0).map(b => {
+      const parents = this.sections[index - 1].boxes.filter(parent => b.parents.includes(parent.entity_id));
+      let endYOffset = 0;
+      const connections = parents.map(p => {
+        const startY = p.top + p.connections.children.reduce((sum, c) => sum + c.startSize, 0);
+        const startSize = Math.min(p.size, b.size || 1);
+        const endY = b.top + endYOffset;
+        const endSize = startSize;
+        endYOffset += endSize;
+
+        const connection = {startY, startSize, endY, endSize};
+        p.connections.children.push(connection);
+        return connection;
+      });
+      return svg`
+        ${connections.map(c => svg`
+          <!-- <rect y="${c.startY}" width="50" height="${c.startSize}" />
+          <rect x="50" y="${c.endY}" width="50" height="${c.endSize}" /> -->
+          <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY}
+            L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z" />
+        `)}
+      `;
+    })
+  }
+
+  private _calcElements() {
+    this.maxSectionTotal = 0;
+    this.sections = this.config.sections.map(section => {
+      let total = 0;
+      const boxes = section.entities
+        .filter(entity => {
+          const state = Number(this._getEntityState(entity).state);
+          return !isNaN(state) && state !== 0;
+        })
+        .map(entity => {
+          const state = Number(this._getEntityState(entity).state);
+          total += state;
+          return {
+            entity_id: this._getEntityId(entity),
+            state,
+            parents: typeof entity !== 'string' && entity.parents ? entity.parents : [],
+            connections: {children: []},
+            top: 0,
+            size: 0,
+          };
+        });
+      // const total = boxes.reduce((sum, box) => sum + box.state, 0);
+      if (total > this.maxSectionTotal) {
+        this.maxSectionTotal = total;
+      }
+      return {
+        boxes,
+        total,
+      };
+    });
+    this.sections = this.sections.map(section => {
+      let totalSize = 0;
+      let boxes = section.boxes.map(box => {
+        const size = Math.max(MIN_BOX_HEIGHT, box.state/this.maxSectionTotal*this.height);
+        totalSize += size;
+        return {
+          ...box,
+          size,
+        };
+      })
+      // const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
+      const extraSpace = this.height - totalSize;
+      const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
+      let offset = 0;
+      boxes = boxes.map(box => {
+        const top = offset;
+        offset += box.size + spacerH;
+        return {
+          ...box,
+          top,
+        };
+      })
+      return {
+        ...section,
+        boxes,
+        spacerH,
+      };
+    });
+  }
+
   private _handleAction(ev: ActionHandlerEvent): void {
+    console.log('@TODO');
     if (this.hass && this.config && ev.detail.action) {
       // handleAction(this, this.hass, this.config, ev.detail.action);
     }
@@ -210,41 +284,7 @@ export class SankeyChart extends LitElement {
     return this.hass.states[this._getEntityId(entity)];
   }
 
-  // https://lit.dev/docs/components/styles/
   static get styles(): CSSResultGroup {
-    return css`
-      ha-card {
-        padding: 5px 0;
-        background-color: var(--primary-background-color);
-      }
-      .container {
-        display: flex;
-        width: 100%;
-        /* height: 210px; */
-      }
-      .section {
-        flex: 1;
-        flex-direction: column;
-      }
-      .box {
-        position: relative;
-        min-height: 1px;
-        /* margin: 5px 0; */
-        /* background-color: var(--accent-color); */
-      }
-      .box::before {
-          content: "";
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          left: 0;
-          background-color: var(--accent-color);
-          opacity: 0.5;
-      }
-      .connectors {
-        flex: 0.25;
-        flex-direction: column;
-      }
-    `;
+    return styles;
   }
 }

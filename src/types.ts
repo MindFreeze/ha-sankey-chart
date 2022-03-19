@@ -31,13 +31,26 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   // double_tap_action?: ActionConfig;
 }
 
+export interface Connection {
+  startY: number;
+  startSize: number;
+  endY: number;
+  endSize: number;
+}
+
 export interface Box {
   entity_id: string;
   state: number;
   parents: string[];
+  size: number;
+  top: number;
+  connections: {
+    children: Connection[];
+  }
 }
 
 export interface SectionState {
   boxes: Box[],
   total: number,
+  spacerH?: number,
 }
