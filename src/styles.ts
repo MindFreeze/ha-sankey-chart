@@ -26,6 +26,7 @@ export default css`
         /* position: relative; */
         /* min-height: 1px; */
         color: var(--primary-text-color);
+        transition: height 0.25s;
     }
     /* .box::before {
         content: "";
@@ -59,7 +60,7 @@ export default css`
         height: 100%;
     }
     .connectors path {
-        fill: var(--primary-color);
+        /* fill: var(--primary-color); */
         opacity: 0.4;
     }
 `;

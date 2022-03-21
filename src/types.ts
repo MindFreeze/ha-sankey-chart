@@ -11,7 +11,7 @@ declare global {
 export type EntityConfig = string | {
   entity_id: string;
   children?: string[];
-  // color?: string;
+  color?: string;
 }
 
 export interface SectionConfig {
@@ -38,6 +38,7 @@ export interface Box {
   state: number;
   unit_of_measurement?: string;
   children: string[];
+  color: string;
   size: number;
   top: number;
   connections: {

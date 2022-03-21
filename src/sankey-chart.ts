@@ -8,6 +8,7 @@ import {
   PropertyValues,
   CSSResultGroup,
 } from 'lit';
+import { styleMap } from 'lit-html/directives/style-map';
 import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
@@ -22,7 +23,7 @@ import './editor';
 
 import type { SankeyChartConfig, SectionState, EntityConfig } from './types';
 import { actionHandler } from './action-handler-directive';
-import { CARD_VERSION, MIN_BOX_HEIGHT } from './const';
+import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT } from './const';
 import { localize } from './localize/localize';
 import styles from './styles';
 
@@ -133,7 +134,7 @@ export class SankeyChart extends LitElement {
         tabindex="0"
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
-      <div class="container" style="height:${this.height}px">
+      <div class="container" style="min-height:${this.height}px">
         ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
@@ -155,9 +156,9 @@ export class SankeyChart extends LitElement {
           }
           ${boxes.map((box, i) => html`
             ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
-            <div class="box" style="height: ${box.size}px">
-              <div></div>
-              <span>${box.state}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></span>
+            <div class="box" style=${styleMap({height: box.size+'px'})}>
+              <div style=${styleMap({backgroundColor: box.color})}></div>
+              <span>${Math.round(box.state)}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></span>
             </div>
           `)}
         </div>
@@ -171,22 +172,37 @@ export class SankeyChart extends LitElement {
       const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
       let startYOffset = 0;
       const connections = children.map(c => {
-        const endY = c.top + c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
-        const endSize = Math.min(c.size, b.size);
+        const endYOffset = c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
         const startY = b.top + startYOffset;
-        const startSize = endSize;
+        const startSize = Math.min(c.size - endYOffset, b.size - startYOffset);
         startYOffset += startSize;
+        const endY = c.top + endYOffset;
+        const endSize = startSize;
 
-        const connection = {startY, startSize, endY, endSize};
+        const connection = {
+          startY, 
+          startSize, 
+          startColor: b.color,
+          endY, 
+          endSize,
+          endColor: c.color,
+        };
         c.connections.parents.push(connection);
         return connection;
-      });
+      }).filter(c => c.endSize);
       return svg`
-        ${connections.map(c => svg`
-          <!-- <rect y="${c.startY}" width="50" height="${c.startSize}" />
-          <rect x="50" y="${c.endY}" width="50" height="${c.endSize}" /> -->
+        <defs>
+          ${connections.map((c, i) => svg`
+            <linearGradient id="gradient${b.entity_id + i}">
+              <stop offset="0%" stop-color="${c.startColor}"/>
+              <stop offset="100%" stop-color="${c.endColor}"/>
+            </linearGradient>
+          `)}
+      </defs>
+        ${connections.map((c, i) => svg`
           <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY}
-            L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z" />
+            L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z"
+            fill="url(#gradient${b.entity_id + i})" />
         `)}
       `;
     })
@@ -215,6 +231,7 @@ export class SankeyChart extends LitElement {
             entity_id: this._getEntityId(entityConf),
             state,
             unit_of_measurement,
+            color: typeof entityConf !== 'string' && entityConf.color || 'var(--primary-color)',
             children: typeof entityConf !== 'string' && entityConf.children ? entityConf.children : [],
             connections: {parents: []},
             top: 0,
@@ -233,14 +250,16 @@ export class SankeyChart extends LitElement {
     this.sections = this.sections.map(section => {
       let totalSize = 0;
       let boxes = section.boxes.map(box => {
-        const size = Math.max(MIN_BOX_HEIGHT, box.state/this.maxSectionTotal*this.height);
+        const totalHeight = section.boxes.length > 1 && section.total === this.maxSectionTotal
+          ? this.height - ((section.boxes.length - 1) * MIN_SPACER_HEIGHT) // leave room for margin
+          : this.height;
+        const size = Math.max(MIN_BOX_HEIGHT, box.state/this.maxSectionTotal*totalHeight);
         totalSize += size;
         return {
           ...box,
           size,
         };
       })
-      // const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
       const extraSpace = this.height - totalSize;
       const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
       let offset = 0;
