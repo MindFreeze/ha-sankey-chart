@@ -156,7 +156,7 @@ export class SankeyChart extends LitElement {
         <div class="section">
           ${boxes.map((box, i) => html`
             ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
-            <div class="box" style="height: ${box.size}px">${box.state}</div>
+            <div class="box" style="height: ${box.size}px">${box.state} ${box.unit_of_measurement}</div>
           `)}
         </div>
     `;
@@ -199,13 +199,21 @@ export class SankeyChart extends LitElement {
           const state = Number(this._getEntityState(entity).state);
           return !isNaN(state) && state !== 0;
         })
-        .map(entity => {
-          const state = Number(this._getEntityState(entity).state);
+        .map(entityConf => {
+          const entity = this._getEntityState(entityConf);
+          let state = Number(entity.state);
+          let {unit_of_measurement} = entity.attributes;
+          if (unit_of_measurement && unit_of_measurement.indexOf('k') === 0) {
+            state *= 1000;
+            unit_of_measurement = unit_of_measurement.substring(1);
+          }
           total += state;
           return {
-            entity_id: this._getEntityId(entity),
+            entity,
+            entity_id: this._getEntityId(entityConf),
             state,
-            parents: typeof entity !== 'string' && entity.parents ? entity.parents : [],
+            unit_of_measurement,
+            parents: typeof entityConf !== 'string' && entityConf.parents ? entityConf.parents : [],
             connections: {children: []},
             top: 0,
             size: 0,

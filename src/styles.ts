@@ -36,12 +36,12 @@ export default css`
         border-radius: 3px;
     } */
     .connectors {
-        flex: 0.25;
+        flex: 1;
         flex-direction: column;
         position: relative;
     }
     .connectors path {
         fill: var(--primary-color);
-        /* opacity: 0.75; */
+        opacity: 0.75;
     }
 `;

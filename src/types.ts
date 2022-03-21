@@ -1,4 +1,5 @@
 import { LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
+import { HassEntity } from 'home-assistant-js-websocket';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -39,8 +40,10 @@ export interface Connection {
 }
 
 export interface Box {
+  entity: HassEntity;
   entity_id: string;
   state: number;
+  unit_of_measurement?: string;
   parents: string[];
   size: number;
   top: number;
