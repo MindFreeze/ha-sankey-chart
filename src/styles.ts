@@ -20,6 +20,9 @@ export default css`
     .section:last-child {
         flex: initial;
     }
+    .spacerv {
+        transition: height 0.25s;
+    }
     .box {
         display: flex;
         align-items: center;
