@@ -143,40 +143,42 @@ export class SankeyChart extends LitElement {
   protected renderSection(index: number): TemplateResult {
     const section = this.sections[index];
     const {boxes} = section;
-    const hasParents = index > 0 && boxes.some(b => b.parents.length > 0);
-    // const parents = {};
+    const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
     
     return html`
-        ${hasParents ?
-          html`<svg class="connectors" height="${this.height}" viewBox="0 0 100 ${this.height}" preserveAspectRatio="none">
-            ${this.renderParentConnectors(index)}
-          </svg>` :
-          null
-        }
         <div class="section">
+          ${hasChildren ?
+            html`<svg class="connectors" viewBox="0 0 100 ${this.height}" preserveAspectRatio="none">
+              ${this.renderBranchConnectors(index)}
+            </svg>` :
+            null
+          }
           ${boxes.map((box, i) => html`
             ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
-            <div class="box" style="height: ${box.size}px">${box.state} ${box.unit_of_measurement}</div>
+            <div class="box" style="height: ${box.size}px">
+              <div></div>
+              <span>${box.state}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></span>
+            </div>
           `)}
         </div>
     `;
   }
 
-  protected renderParentConnectors(index: number): SVGTemplateResult[] {
+  protected renderBranchConnectors(index: number): SVGTemplateResult[] {
     const section = this.sections[index];
     const {boxes} = section;
-    return boxes.filter(b => b.parents.length > 0).map(b => {
-      const parents = this.sections[index - 1].boxes.filter(parent => b.parents.includes(parent.entity_id));
-      let endYOffset = 0;
-      const connections = parents.map(p => {
-        const startY = p.top + p.connections.children.reduce((sum, c) => sum + c.startSize, 0);
-        const startSize = Math.min(p.size, b.size || 1);
-        const endY = b.top + endYOffset;
-        const endSize = startSize;
-        endYOffset += endSize;
+    return boxes.filter(b => b.children.length > 0).map(b => {
+      const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
+      let startYOffset = 0;
+      const connections = children.map(c => {
+        const endY = c.top + c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
+        const endSize = Math.min(c.size, b.size);
+        const startY = b.top + startYOffset;
+        const startSize = endSize;
+        startYOffset += startSize;
 
         const connection = {startY, startSize, endY, endSize};
-        p.connections.children.push(connection);
+        c.connections.parents.push(connection);
         return connection;
       });
       return svg`
@@ -213,8 +215,8 @@ export class SankeyChart extends LitElement {
             entity_id: this._getEntityId(entityConf),
             state,
             unit_of_measurement,
-            parents: typeof entityConf !== 'string' && entityConf.parents ? entityConf.parents : [],
-            connections: {children: []},
+            children: typeof entityConf !== 'string' && entityConf.children ? entityConf.children : [],
+            connections: {parents: []},
             top: 0,
             size: 0,
           };

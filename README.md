@@ -24,14 +24,14 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options.
+| entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
 
 #### Entities object
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
-| parents           | list    | **Required** |                     | List of entity ids describing parent entities
+| children          | list    | **Required** |                     | List of entity ids describing child entities (branches). Only entities from the next section will be connected.
 
 ## Development
 

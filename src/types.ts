@@ -10,7 +10,8 @@ declare global {
 
 export type EntityConfig = string | {
   entity_id: string;
-  parents?: string[];
+  children?: string[];
+  // color?: string;
 }
 
 export interface SectionConfig {
@@ -22,14 +23,6 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   // name?: string;
   sections: SectionConfig[];
   height?: number;
-
-  // show_warning?: boolean;
-  // show_error?: boolean;
-  // test_gui?: boolean;
-  // entity?: string;
-  // tap_action?: ActionConfig;
-  // hold_action?: ActionConfig;
-  // double_tap_action?: ActionConfig;
 }
 
 export interface Connection {
@@ -44,11 +37,11 @@ export interface Box {
   entity_id: string;
   state: number;
   unit_of_measurement?: string;
-  parents: string[];
+  children: string[];
   size: number;
   top: number;
   connections: {
-    children: Connection[];
+    parents: Connection[];
   }
 }
 
