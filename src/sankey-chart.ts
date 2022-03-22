@@ -200,8 +200,7 @@ export class SankeyChart extends LitElement {
           `)}
       </defs>
         ${connections.map((c, i) => svg`
-          <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY}
-            L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z"
+          <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z"
             fill="url(#gradient${b.entity_id + i})" />
         `)}
       `;

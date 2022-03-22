@@ -5,6 +5,7 @@ import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 import json from '@rollup/plugin-json';
+import minifyHTML from 'rollup-plugin-minify-html-literals';
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -27,7 +28,8 @@ const plugins = [
     exclude: 'node_modules/**',
   }),
   dev && serve(serveopts),
-  !dev && terser(),
+  !dev && minifyHTML(),
+  !dev && terser({ output: { comments: false } }),
 ];
 
 export default [
