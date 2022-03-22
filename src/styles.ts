@@ -3,8 +3,7 @@ import { css } from 'lit-element';
 // https://lit.dev/docs/components/styles/
 export default css`
     ha-card {
-        padding: 5px 0;
-        background-color: var(--primary-background-color);
+        padding: 12px;
     }
     .container {
         display: flex;
@@ -28,7 +27,6 @@ export default css`
         align-items: center;
         /* position: relative; */
         /* min-height: 1px; */
-        color: var(--primary-text-color);
         transition: height 0.25s;
     }
     /* .box::before {

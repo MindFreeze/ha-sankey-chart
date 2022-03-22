@@ -12,17 +12,17 @@ import { styleMap } from 'lit-html/directives/style-map';
 import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
-  hasAction,
+  // hasAction,
   ActionHandlerEvent,
-  LovelaceCardEditor,
+  // LovelaceCardEditor,
   getLovelace,
 } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 
-import './editor';
+// import './editor';
 
 import type { SankeyChartConfig, SectionState, EntityConfig } from './types';
-import { actionHandler } from './action-handler-directive';
+// import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT } from './const';
 import { localize } from './localize/localize';
 import styles from './styles';
@@ -44,15 +44,14 @@ console.info(
 
 @customElement('sankey-chart')
 export class SankeyChart extends LitElement {
-  public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    return document.createElement('sankey-chart-editor');
-  }
+  // public static async getConfigElement(): Promise<LovelaceCardEditor> {
+  //   return document.createElement('sankey-chart-editor');
+  // }
 
   public static getStubConfig(): Record<string, unknown> {
     return {};
   }
 
-  // TODO Add any properities that should cause your element to re-render here
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) private entities: string[] = [];
@@ -64,7 +63,6 @@ export class SankeyChart extends LitElement {
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
-    // TODO Check for required fields and that they are of the proper format
     if (!config || !Array.isArray(config.sections)) {
       throw new Error(localize('common.invalid_configuration'));
     }
@@ -124,13 +122,13 @@ export class SankeyChart extends LitElement {
 
     this._calcElements();
 
+        // @action=${this._handleAction}
+        // .actionHandler=${actionHandler({
+        //   hasHold: hasAction(this.config.hold_action),
+        //   hasDoubleClick: hasAction(this.config.double_tap_action),
+        // })}
     return html`
       <ha-card
-        @action=${this._handleAction}
-        .actionHandler=${actionHandler({
-          hasHold: hasAction(this.config.hold_action),
-          hasDoubleClick: hasAction(this.config.double_tap_action),
-        })}
         tabindex="0"
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
