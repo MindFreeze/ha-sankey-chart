@@ -19,6 +19,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | type              | string  | **Required** |                     | `custom:sankey-chart`
 | sections          | list    | **Required** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
 | height            | number  | **Optional** | 200                 | The height of the card in pixels
+| wide              | boolean | **Optional** | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space.
 
 #### Sections object
 

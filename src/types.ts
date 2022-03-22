@@ -23,6 +23,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   // name?: string;
   sections: SectionConfig[];
   height?: number;
+  wide?: boolean;
 }
 
 export interface Connection {

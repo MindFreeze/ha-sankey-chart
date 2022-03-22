@@ -15,8 +15,9 @@ export default css`
         flex: 1;
         flex-direction: column;
         position: relative;
+        min-width: 0;
     }
-    .section:last-child {
+    .wide .section:last-child {
         flex: initial;
     }
     .spacerv {
@@ -45,18 +46,24 @@ export default css`
         width: 15px;
         height: 100%;
     }
-    .box span {
-        margin: 0 10px;
+    .box .label {
+        flex: 1;
+        padding: 0 10px;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    .box span span {
+    .box .label span {
         font-style: italic;
-        margin: 0;
     }
     .connectors {
         position: absolute;
         top: 0;
-        left: 15px;
+        left: 14px;
+        right: -1px;
+        height: 100%;
+    }
+    .connectors svg {
         width: 100%;
         height: 100%;
     }

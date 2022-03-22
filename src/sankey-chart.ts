@@ -132,7 +132,7 @@ export class SankeyChart extends LitElement {
         tabindex="0"
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
-      <div class="container" style="min-height:${this.height}px">
+      <div class="container ${this.config.wide ? 'wide' : ''}" style="min-height:${this.height}px">
         ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
@@ -147,16 +147,18 @@ export class SankeyChart extends LitElement {
     return html`
         <div class="section">
           ${hasChildren ?
-            html`<svg class="connectors" viewBox="0 0 100 ${this.height}" preserveAspectRatio="none">
-              ${this.renderBranchConnectors(index)}
-            </svg>` :
+            html`<div class="connectors">
+              <svg viewBox="0 0 100 ${this.height}" preserveAspectRatio="none">
+                ${this.renderBranchConnectors(index)}
+              </svg>
+            </div>` :
             null
           }
           ${boxes.map((box, i) => html`
             ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
             <div class="box" style=${styleMap({height: box.size+'px'})}>
               <div style=${styleMap({backgroundColor: box.color})}></div>
-              <span>${Math.round(box.state)}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></span>
+              <div class="label">${Math.round(box.state)}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></div>
             </div>
           `)}
         </div>
