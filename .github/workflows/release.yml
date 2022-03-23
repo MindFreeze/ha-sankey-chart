@@ -28,3 +28,11 @@ jobs:
           asset_name: sankey-chart.js
           tag: ${{ github.ref }}
           overwrite: true
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: HACS Validate
+        uses: hacs/action@main
+        with:
+          category: lovelace
