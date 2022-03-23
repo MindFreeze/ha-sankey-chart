@@ -1,7 +1,7 @@
 {
-  "name": "sankey-chart",
+  "name": "ha-sankey-chart",
   "version": "1.4.1",
-  "description": "Lovelace sankey-chart",
+  "description": "Lovelace sankey diagram card",
   "keywords": [
     "home-assistant",
     "homeassistant",
@@ -10,8 +10,8 @@
     "lovelace",
     "custom-cards"
   ],
-  "module": "sankey-chart.js",
-  "repository": "git@github.com:custom_cards/sankey-chart.git",
+  "module": "ha-sankey-chart.js",
+  "repository": "git@github.com:MindFreeze/ha-sankey-chart.git",
   "author": "Ian Richardson <iantrich@gmail.com>",
   "license": "MIT",
   "dependencies": {

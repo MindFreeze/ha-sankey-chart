@@ -40,18 +40,18 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 1. `npm i`
 2. `npm start`
 3. The compiled `.js` file will be accessible on
-   `http://127.0.0.1:5000/sankey-chart.js`.
+   `http://127.0.0.1:5000/ha-sankey-chart.js`.
 4. On a running Home Assistant installation add this to your Lovelace `resources:`
 
 ```yaml
-- url: 'http://127.0.0.1:5000/sankey-chart.js'
+- url: 'http://127.0.0.1:5000/ha-sankey-chart.js'
   type: module
 ```
 
 _Change "127.0.0.1" to the IP of your development machine._
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
-[commits]: https://github.com/custom-cards/sankey-chart/commits/master
+[commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master
 [devcontainer]: https://code.visualstudio.com/docs/remote/containers
 [license-shield]: https://img.shields.io/github/license/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2022.svg?style=for-the-badge

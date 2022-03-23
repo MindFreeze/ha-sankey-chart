@@ -34,7 +34,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/sankey-chart.ts',
+    input: 'src/ha-sankey-chart.ts',
     output: {
       dir: 'dist',
       format: 'es',
