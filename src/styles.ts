@@ -42,6 +42,10 @@ export default css`
         border-radius: 3px;
     } */
     .box div:first-child {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
         background-color: var(--primary-color);
         width: 15px;
         height: 100%;

@@ -16,6 +16,7 @@ import {
   ActionHandlerEvent,
   // LovelaceCardEditor,
   getLovelace,
+  stateIcon,
 } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 
@@ -140,6 +141,7 @@ export class SankeyChart extends LitElement {
   }
 
   protected renderSection(index: number): TemplateResult {
+    const {show_names, show_icons} = this.config;
     const section = this.sections[index];
     const {boxes} = section;
     const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
@@ -154,13 +156,20 @@ export class SankeyChart extends LitElement {
             </div>` :
             null
           }
-          ${boxes.map((box, i) => html`
-            ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
-            <div class="box" style=${styleMap({height: box.size+'px'})}>
-              <div style=${styleMap({backgroundColor: box.color})}></div>
-              <div class="label">${Math.round(box.state)}${box.unit_of_measurement} <span>${box.entity.attributes.friendly_name}</span></div>
-            </div>
-          `)}
+          ${boxes.map((box, i) => {
+            // const {icon} = box.entity.attributes;
+            return html`
+              ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
+              <div class="box" style=${styleMap({height: box.size+'px'})}>
+                <div style=${styleMap({backgroundColor: box.color})}>
+                  ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
+                </div>
+                <div class="label">${Math.round(box.state)}${box.unit_of_measurement}
+                  ${show_names && html`<span>${box.entity.attributes.friendly_name}</span>`}
+                </div>
+              </div>
+            `;
+          })}
         </div>
     `;
   }
