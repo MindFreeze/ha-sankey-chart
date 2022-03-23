@@ -35,4 +35,4 @@ jobs:
       - name: HACS Validate
         uses: hacs/action@main
         with:
-          category: lovelace
+          category: plugin
