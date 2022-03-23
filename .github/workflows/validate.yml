@@ -5,8 +5,7 @@ on:
     types: [published]
 
 jobs:
-  release:
-    name: Prepare release
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
