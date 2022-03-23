@@ -132,7 +132,7 @@ export class SankeyChart extends LitElement {
         tabindex="0"
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
-      <div class="container ${this.config.wide ? 'wide' : ''}" style="min-height:${this.height}px">
+      <div class="container ${this.config.wide ? 'wide' : ''}" style="height:${this.height}px">
         ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
@@ -237,7 +237,6 @@ export class SankeyChart extends LitElement {
             size: 0,
           };
         });
-      // const total = boxes.reduce((sum, box) => sum + box.state, 0);
       if (total > this.maxSectionTotal) {
         this.maxSectionTotal = total;
       }
@@ -247,18 +246,10 @@ export class SankeyChart extends LitElement {
       };
     });
     this.sections = this.sections.map(section => {
-      let totalSize = 0;
-      let boxes = section.boxes.map(box => {
-        const totalHeight = section.boxes.length > 1 && section.total === this.maxSectionTotal
-          ? this.height - ((section.boxes.length - 1) * MIN_SPACER_HEIGHT) // leave room for margin
-          : this.height;
-        const size = Math.max(MIN_BOX_HEIGHT, box.state/this.maxSectionTotal*totalHeight);
-        totalSize += size;
-        return {
-          ...box,
-          size,
-        };
-      })
+      // leave room for margin
+      const availableHeight = this.height - ((section.boxes.length - 1) * MIN_SPACER_HEIGHT);
+      let boxes = this._calcBoxHeights(section.boxes, availableHeight);
+      const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
       const extraSpace = this.height - totalSize;
       const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
       let offset = 0;
@@ -276,6 +267,28 @@ export class SankeyChart extends LitElement {
         spacerH,
       };
     });
+  }
+
+  private _calcBoxHeights(boxes, availableHeight: number) {
+    let deficitHeight = 0;
+    const result = boxes.map(box => {
+      if (box.size === MIN_BOX_HEIGHT) {
+        return box;
+      }
+      let size = Math.floor(box.state/this.maxSectionTotal*availableHeight);
+      if (size < MIN_BOX_HEIGHT) {
+        deficitHeight += MIN_BOX_HEIGHT - size;
+        size = MIN_BOX_HEIGHT;
+      }
+      return {
+        ...box,
+        size,
+      };
+    });
+    if (deficitHeight > 0) {
+      return this._calcBoxHeights(result, availableHeight - deficitHeight);
+    }
+    return result;
   }
 
   private _handleAction(ev: ActionHandlerEvent): void {
