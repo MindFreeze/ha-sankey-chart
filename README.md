@@ -12,6 +12,8 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 ![Project Maintenance][maintenance-shield]
 [![GitHub Activity][commits-shield]][commits]
 
+![Example card](example.png)
+
 ## Options
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
