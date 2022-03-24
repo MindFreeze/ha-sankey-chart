@@ -8,7 +8,7 @@ import {
   PropertyValues,
   CSSResultGroup,
 } from 'lit';
-import { styleMap } from 'lit-html/directives/style-map';
+import { styleMap } from 'lit/directives/style-map';
 import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
