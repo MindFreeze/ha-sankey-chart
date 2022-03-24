@@ -203,8 +203,8 @@ export class SankeyChart extends LitElement {
         <defs>
           ${connections.map((c, i) => svg`
             <linearGradient id="gradient${b.entity_id + i}">
-              <stop offset="0%" stop-color="${c.startColor}"/>
-              <stop offset="100%" stop-color="${c.endColor}"/>
+              <stop offset="0%" stop-color="${c.startColor}"></stop>
+              <stop offset="100%" stop-color="${c.endColor}"></stop>
             </linearGradient>
           `)}
       </defs>
