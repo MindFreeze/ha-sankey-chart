@@ -133,7 +133,7 @@ export class SankeyChart extends LitElement {
         tabindex="0"
         .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
       >
-      <div class="container ${this.config.wide ? 'wide' : ''}" style="height:${this.height}px">
+      <div class="container ${this.config.wide ? 'wide' : ''}" style=${styleMap({height: this.height+'px'})}>
         ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
@@ -159,7 +159,7 @@ export class SankeyChart extends LitElement {
           ${boxes.map((box, i) => {
             // const {icon} = box.entity.attributes;
             return html`
-              ${i > 0 ? html`<div class="spacerv" style="height:${section.spacerH}px"></div>` : null}
+              ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
                 <div style=${styleMap({backgroundColor: box.color})}>
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
