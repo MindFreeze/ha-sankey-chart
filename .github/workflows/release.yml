@@ -2,6 +2,10 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: Target release tag
   release:
     types: [created]
 
@@ -27,7 +31,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: /home/runner/work/ha-sankey-chart/ha-sankey-chart/dist/ha-sankey-chart.js
           asset_name: ha-sankey-chart.js
-          tag: ${{ github.ref }}
+          tag: ${{ github.event.inputs.tag || github.ref }}
           overwrite: true
   validate:
     runs-on: ubuntu-latest
