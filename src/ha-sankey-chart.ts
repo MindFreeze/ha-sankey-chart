@@ -22,7 +22,7 @@ import {
 
 // import './editor';
 
-import type { SankeyChartConfig, SectionState, EntityConfig } from './types';
+import type { SankeyChartConfig, SectionState, EntityConfigOrStr } from './types';
 // import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT } from './const';
 import { localize } from './localize/localize';
@@ -165,7 +165,7 @@ export class SankeyChart extends LitElement {
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
                 <div class="label">${Math.round(box.state)}${box.unit_of_measurement}
-                  ${show_names && html`<span>${box.entity.attributes.friendly_name}</span>`}
+                  ${show_names && html`<span>${box.config.name || box.entity.attributes.friendly_name}</span>`}
                 </div>
               </div>
             `;
@@ -225,7 +225,8 @@ export class SankeyChart extends LitElement {
           const state = Number(this._getEntityState(entity).state);
           return !isNaN(state) && state !== 0;
         })
-        .map(entityConf => {
+        .map(conf => {
+          const entityConf = typeof conf === 'string' ? {entity_id: conf} : conf;
           const entity = this._getEntityState(entityConf);
           let state = Number(entity.state);
           let {unit_of_measurement} = entity.attributes;
@@ -235,12 +236,13 @@ export class SankeyChart extends LitElement {
           }
           total += state;
           return {
+            config: entityConf,
             entity,
             entity_id: this._getEntityId(entityConf),
             state,
             unit_of_measurement,
-            color: typeof entityConf !== 'string' && entityConf.color || 'var(--primary-color)',
-            children: typeof entityConf !== 'string' && entityConf.children ? entityConf.children : [],
+            color: entityConf.color || 'var(--primary-color)',
+            children: entityConf.children ? entityConf.children : [],
             connections: {parents: []},
             top: 0,
             size: 0,
@@ -326,11 +328,11 @@ export class SankeyChart extends LitElement {
     `;
   }
 
-  private _getEntityId(entity: EntityConfig): string {
+  private _getEntityId(entity: EntityConfigOrStr): string {
     return typeof entity === 'string' ? entity : entity.entity_id;
   }
 
-  private _getEntityState(entity: EntityConfig) {
+  private _getEntityState(entity: EntityConfigOrStr) {
     return this.hass.states[this._getEntityId(entity)];
   }
 

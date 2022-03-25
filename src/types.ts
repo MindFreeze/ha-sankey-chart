@@ -8,14 +8,17 @@ declare global {
   }
 }
 
-export type EntityConfig = string | {
+export type EntityConfig = {
   entity_id: string;
   children?: string[];
   color?: string;
+  name?: string;
 }
 
+export type EntityConfigOrStr = string | EntityConfig;
+
 export interface SectionConfig {
-  entities: EntityConfig[];
+  entities: EntityConfigOrStr[];
 }
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
@@ -36,6 +39,7 @@ export interface Connection {
 }
 
 export interface Box {
+  config: EntityConfig;
   entity: HassEntity;
   entity_id: string;
   state: number;
