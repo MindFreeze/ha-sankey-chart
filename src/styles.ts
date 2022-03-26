@@ -21,7 +21,7 @@ export default css`
         flex: initial;
     }
     .spacerv {
-        transition: height 0.25s;
+        transition: height 0.2s;
     }
     .box {
         display: flex;
