@@ -183,10 +183,13 @@ export class SankeyChart extends LitElement {
       const connections = children.map(c => {
         const endYOffset = c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
         const startY = b.top + startYOffset;
-        const startSize = Math.min(c.size - endYOffset, b.size - startYOffset);
-        startYOffset += startSize;
+        const startSize = Math.max(Math.min(c.state / b.state * b.size, b.size - startYOffset), 1);
         const endY = c.top + endYOffset;
-        const endSize = startSize;
+        const endSize = Math.min(c.size - endYOffset, b.size - startYOffset);
+        if (endSize) {
+          // only increment if this connection will be rendered
+          startYOffset += startSize;
+        }
 
         const connection = {
           startY, 
@@ -207,7 +210,7 @@ export class SankeyChart extends LitElement {
               <stop offset="100%" stop-color="${c.endColor}"></stop>
             </linearGradient>
           `)}
-      </defs>
+        </defs>
         ${connections.map((c, i) => svg`
           <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY+c.endSize} C50,${c.endY+c.endSize} 50,${c.startY+c.startSize} 0,${c.startY+c.startSize} Z"
             fill="url(#gradient${b.entity_id + i})" />
