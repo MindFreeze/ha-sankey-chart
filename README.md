@@ -56,7 +56,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 ## TODO
 
 - specify connection entities (for size of connector)
-- work with kilo/mega/giga units of measuremnt
+- unit_prefix. work with kilo/mega/giga units of measuremnt
 
 _Change "127.0.0.1" to the IP of your development machine._
 
