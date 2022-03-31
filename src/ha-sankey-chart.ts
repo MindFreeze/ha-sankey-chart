@@ -22,9 +22,9 @@ import {
 
 // import './editor';
 
-import type { SankeyChartConfig, SectionState, EntityConfigOrStr } from './types';
+import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr } from './types';
 // import { actionHandler } from './action-handler-directive';
-import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT } from './const';
+import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT, UNIT_PREFIXES } from './const';
 import { localize } from './localize/localize';
 import styles from './styles';
 
@@ -57,7 +57,7 @@ export class SankeyChart extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) private entities: string[] = [];
   
-  @state() private config!: SankeyChartConfig;
+  @state() private config!: Config;
   @state() public height = 200;
   @state() private sections: SectionState[] = [];
   @state() private maxSectionTotal = 0;
@@ -72,14 +72,14 @@ export class SankeyChart extends LitElement {
       getLovelace().setEditMode(true);
     }
 
-    if (config.height) {
-      this.height = config.height;
-    }
-
     this.config = {
-      // name: 'Sankey Chart',
+      height: 200,
+      unit_prefix: '',
+      round: 0,
       ...config,
     };
+
+    this.height = this.config.height;
 
     const entities: string[] = [];
     config.sections.forEach(section => {
@@ -131,7 +131,7 @@ export class SankeyChart extends LitElement {
     return html`
       <ha-card
         tabindex="0"
-        .label=${`Boilerplate: ${this.config.entity || 'No Entity Defined'}`}
+        label="Sankey Chart"
       >
       <div class="container ${this.config.wide ? 'wide' : ''}" style=${styleMap({height: this.height+'px'})}>
         ${this.sections.map((s, i) => this.renderSection(i))}
@@ -164,7 +164,7 @@ export class SankeyChart extends LitElement {
                 <div style=${styleMap({backgroundColor: box.color})}>
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
-                <div class="label">${Math.round(box.state)}${box.unit_of_measurement}
+                <div class="label">${box.state.toFixed(this.config.round)}${box.unit_of_measurement}
                   ${show_names && html`<span>${box.config.name || box.entity.attributes.friendly_name}</span>`}
                 </div>
               </div>
@@ -232,12 +232,10 @@ export class SankeyChart extends LitElement {
         .map(conf => {
           const entityConf = typeof conf === 'string' ? {entity_id: conf} : conf;
           const entity = this._getEntityState(entityConf);
-          let state = Number(entity.state);
-          let {unit_of_measurement} = entity.attributes;
-          if (unit_of_measurement && unit_of_measurement.indexOf('k') === 0) {
-            state *= 1000;
-            unit_of_measurement = unit_of_measurement.substring(1);
-          }
+          const {state, unit_of_measurement} = this._normalizeStateValue(
+            Number(entity.state), 
+            entity.attributes.unit_of_measurement
+          );
           total += state;
           return {
             config: entityConf,
@@ -304,6 +302,24 @@ export class SankeyChart extends LitElement {
       return this._calcBoxHeights(result, availableHeight - deficitHeight);
     }
     return result;
+  }
+
+  private _normalizeStateValue(state: number, unit_of_measurement?: string) {
+    if (!unit_of_measurement) {
+      return {state, unit_of_measurement};
+    }
+    const {unit_prefix} = this.config;
+    const prefix = Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0) || '';
+    const currentFactor = UNIT_PREFIXES[prefix] || 1;
+    const targetFactor = UNIT_PREFIXES[unit_prefix] || 1;
+    if (currentFactor === targetFactor) {
+      return {state, unit_of_measurement};
+    }
+    return {
+      state: state * currentFactor / targetFactor,
+      unit_of_measurement: prefix 
+        ? unit_of_measurement.replace(prefix, unit_prefix) : unit_prefix + unit_of_measurement,
+    };
   }
 
   private _handleAction(ev: ActionHandlerEvent): void {

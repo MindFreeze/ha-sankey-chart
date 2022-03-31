@@ -1,5 +1,6 @@
 import { LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
+import {UNIT_PREFIXES} from './const';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -23,12 +24,19 @@ export interface SectionConfig {
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
-  // name?: string;
   sections: SectionConfig[];
+  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
+  round?: number;
   height?: number;
   wide?: boolean;
   show_icons?: boolean;
   show_names?: boolean;
+}
+
+export interface Config extends SankeyChartConfig {
+  unit_prefix: '' | keyof typeof UNIT_PREFIXES;
+  round: number;
+  height: number;
 }
 
 export interface Connection {
