@@ -39,7 +39,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
 | children          | list    | **Required** |                     | List of entity ids describing child entities (branches). Only entities from the next section will be connected.
-| color             | string  | **Optional** | --primary-color     | Color of the box
+| color             | string  | **Optional** | var(--primary-color)| Color of the box
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 
 ## Development
