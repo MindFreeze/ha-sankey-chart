@@ -22,7 +22,7 @@ import {
 
 // import './editor';
 
-import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr } from './types';
+import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box } from './types';
 // import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT, UNIT_PREFIXES } from './const';
 import { localize } from './localize/localize';
@@ -60,7 +60,7 @@ export class SankeyChart extends LitElement {
   @state() private config!: Config;
   @state() public height = 200;
   @state() private sections: SectionState[] = [];
-  @state() private maxSectionTotal = 0;
+  @state() private statePerPixelY = 0;
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
@@ -183,11 +183,12 @@ export class SankeyChart extends LitElement {
       const connections = children.map(c => {
         const endYOffset = c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
         const startY = b.top + startYOffset;
-        // @FIXME c.state could be less
-        const startSize = Math.max(Math.min(c.state / b.state * b.size, b.size - startYOffset), 1);
+        // c.state could be less because of previous connections
+        const remainingEndState = Math.ceil(c.state - (endYOffset / c.size * c.state));
+        const startSize = Math.max(Math.min(remainingEndState / b.state * b.size, b.size - startYOffset), 1);
         const endY = c.top + endYOffset;
         const endSize = Math.min(c.size - endYOffset, b.size - startYOffset);
-        if (endSize) {
+        if (endSize > 0) {
           // only increment if this connection will be rendered
           startYOffset += startSize;
         }
@@ -202,7 +203,7 @@ export class SankeyChart extends LitElement {
         };
         c.connections.parents.push(connection);
         return connection;
-      }).filter(c => c.endSize);
+      }).filter(c => c.endSize > 0);
       return svg`
         <defs>
           ${connections.map((c, i) => svg`
@@ -221,10 +222,10 @@ export class SankeyChart extends LitElement {
   }
 
   private _calcElements() {
-    this.maxSectionTotal = 0;
+    this.statePerPixelY = 0;
     this.sections = this.config.sections.map(section => {
       let total = 0;
-      const boxes = section.entities
+      let boxes: Box[] = section.entities
         .filter(entity => {
           const state = Number(this._getEntityState(entity).state);
           return !isNaN(state) && state !== 0;
@@ -250,22 +251,60 @@ export class SankeyChart extends LitElement {
             size: 0,
           };
         });
-      if (total > this.maxSectionTotal) {
-        this.maxSectionTotal = total;
+      if (!boxes.length) {
+        return {
+          boxes,
+          total,
+          spacerH: 0,
+          statePerPixelY: 0,
+        };
       }
-      return {
-        boxes,
-        total,
-      };
-    });
-    this.sections = this.sections.map(section => {
       // leave room for margin
-      const availableHeight = this.height - ((section.boxes.length - 1) * MIN_SPACER_HEIGHT);
-      let boxes = this._calcBoxHeights(section.boxes, availableHeight);
+      const availableHeight = this.height - ((boxes.length - 1) * MIN_SPACER_HEIGHT);
+      // calc sizes to determine statePerPixelY ratio and find the best one 
+      const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
+      boxes = calcResults.boxes;
       const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
       const extraSpace = this.height - totalSize;
       const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
       let offset = 0;
+      boxes = boxes.map(box => {
+        const top = offset;
+        offset += box.size + spacerH;
+        return {
+          ...box,
+          top,
+        };
+      })
+      return {
+        boxes,
+        total,
+        spacerH,
+        statePerPixelY: calcResults.statePerPixelY,
+      };
+    })
+    .filter(s => s.boxes.length > 0)
+    .map(section => {
+      // calc sizes again with the best statePerPixelY
+      let totalSize = 0;
+      let {boxes} = section;
+      if (section.statePerPixelY !== this.statePerPixelY) {
+        boxes = boxes.map(box => {
+          const size = Math.max(MIN_BOX_HEIGHT, Math.floor(box.state/this.statePerPixelY));
+          totalSize += size;
+          return {
+            ...box,
+            size,
+          };
+        });
+      } else {
+        totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
+      }
+      // calc vertical margin size
+      const extraSpace = this.height - totalSize;
+      const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
+      let offset = 0;
+      // calc y positions. needed for connectors
       boxes = boxes.map(box => {
         const top = offset;
         offset += box.size + spacerH;
@@ -282,13 +321,18 @@ export class SankeyChart extends LitElement {
     });
   }
 
-  private _calcBoxHeights(boxes, availableHeight: number) {
+  private _calcBoxHeights(boxes: Box[], availableHeight: number, totalState: number)
+    : {boxes: Box[], statePerPixelY: number} {
+    const statePerPixelY = totalState / availableHeight;
+    if (statePerPixelY > this.statePerPixelY) {
+      this.statePerPixelY = statePerPixelY;
+    }
     let deficitHeight = 0;
     const result = boxes.map(box => {
       if (box.size === MIN_BOX_HEIGHT) {
         return box;
       }
-      let size = Math.floor(box.state/this.maxSectionTotal*availableHeight);
+      let size = Math.floor(box.state/this.statePerPixelY);
       if (size < MIN_BOX_HEIGHT) {
         deficitHeight += MIN_BOX_HEIGHT - size;
         size = MIN_BOX_HEIGHT;
@@ -299,9 +343,9 @@ export class SankeyChart extends LitElement {
       };
     });
     if (deficitHeight > 0) {
-      return this._calcBoxHeights(result, availableHeight - deficitHeight);
+      return this._calcBoxHeights(result, availableHeight - deficitHeight, totalState);
     }
-    return result;
+    return {boxes: result, statePerPixelY: this.statePerPixelY};
   }
 
   private _normalizeStateValue(state: number, unit_of_measurement?: string) {

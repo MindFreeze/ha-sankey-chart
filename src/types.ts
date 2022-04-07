@@ -64,5 +64,6 @@ export interface Box {
 export interface SectionState {
   boxes: Box[],
   total: number,
-  spacerH?: number,
+  spacerH: number,
+  statePerPixelY: number,
 }

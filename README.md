@@ -58,7 +58,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 ## TODO
 
 - specify connection entities (for size of connector)
-- refactor box size calculations
+- add example configs to README
 
 _Change "127.0.0.1" to the IP of your development machine._
 
