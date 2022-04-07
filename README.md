@@ -4,7 +4,6 @@
 
 A Home Assistant lovelace card to display a sankey chart. For example for power consumption
 
-
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE.md)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -12,7 +11,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 ![Project Maintenance][maintenance-shield]
 [![GitHub Activity][commits-shield]][commits]
 
-![Example card](example.png)
+![Example card](img/example.png)
 
 ## Options
 
@@ -42,6 +41,26 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | color             | string  | **Optional** | var(--primary-color)| Color of the box
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 
+## Examples
+
+### Simple
+
+![Simple example card](img/example-simple.png)
+
+```yaml
+- type: custom:sankey-chart
+  show_names: true
+  sections:
+    - entities:
+      - entity_id: sensor.power
+        children:
+          - sensor.washing_machine_power
+          - sensor.other_power
+    - entities:
+      - sensor.washing_machine_power
+      - sensor.other_power
+```
+
 ## Development
 
 1. `npm i`
@@ -57,7 +76,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 ## TODO
 
-- add example configs to README
+- add more example configs to README
 - specify connection entities (for size of connector)
 - option to throttle updates
 - connections accross sections
