@@ -24,13 +24,14 @@ import {
 
 import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box } from './types';
 // import { actionHandler } from './action-handler-directive';
-import { CARD_VERSION, MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT, UNIT_PREFIXES } from './const';
+import { MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT, UNIT_PREFIXES } from './const';
+import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
 
 /* eslint no-console: 0 */
 console.info(
-  `%c sankey-chart %c ${localize('common.version')} ${CARD_VERSION} `,
+  `%c sankey-chart %c ${localize('common.version')} ${version} `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray',
 );

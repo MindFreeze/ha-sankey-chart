@@ -23,7 +23,9 @@ const plugins = [
   nodeResolve({}),
   commonjs(),
   typescript(),
-  json(),
+  json({
+    compact: true,
+  }),
   babel({
     exclude: 'node_modules/**',
   }),
