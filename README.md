@@ -25,6 +25,8 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | wide              | boolean | **Optional** | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size.
 | show_icons        | boolean | **Optional** | false               | Display entity icons
 | show_names        | boolean | **Optional** | false               | Display entity names
+| min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
+| min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 
 #### Sections object
 

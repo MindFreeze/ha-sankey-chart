@@ -31,12 +31,16 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   wide?: boolean;
   show_icons?: boolean;
   show_names?: boolean;
+  min_box_height?: number,
+  min_box_distance?: number,
 }
 
 export interface Config extends SankeyChartConfig {
   unit_prefix: '' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;
+  min_box_height: number;
+  min_box_distance: number;
 }
 
 export interface Connection {

@@ -24,7 +24,7 @@ import {
 
 import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box } from './types';
 // import { actionHandler } from './action-handler-directive';
-import { MIN_BOX_HEIGHT, MIN_SPACER_HEIGHT, UNIT_PREFIXES } from './const';
+import { UNIT_PREFIXES } from './const';
 import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
@@ -77,6 +77,8 @@ export class SankeyChart extends LitElement {
       height: 200,
       unit_prefix: '',
       round: 0,
+      min_box_height: 3,
+      min_box_distance: 5,
       ...config,
     };
 
@@ -261,7 +263,7 @@ export class SankeyChart extends LitElement {
         };
       }
       // leave room for margin
-      const availableHeight = this.height - ((boxes.length - 1) * MIN_SPACER_HEIGHT);
+      const availableHeight = this.height - ((boxes.length - 1) * this.config.min_box_distance);
       // calc sizes to determine statePerPixelY ratio and find the best one 
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       boxes = calcResults.boxes;
@@ -291,7 +293,7 @@ export class SankeyChart extends LitElement {
       let {boxes} = section;
       if (section.statePerPixelY !== this.statePerPixelY) {
         boxes = boxes.map(box => {
-          const size = Math.max(MIN_BOX_HEIGHT, Math.floor(box.state/this.statePerPixelY));
+          const size = Math.max(this.config.min_box_height, Math.floor(box.state/this.statePerPixelY));
           totalSize += size;
           return {
             ...box,
@@ -330,13 +332,13 @@ export class SankeyChart extends LitElement {
     }
     let deficitHeight = 0;
     const result = boxes.map(box => {
-      if (box.size === MIN_BOX_HEIGHT) {
+      if (box.size === this.config.min_box_height) {
         return box;
       }
       let size = Math.floor(box.state/this.statePerPixelY);
-      if (size < MIN_BOX_HEIGHT) {
-        deficitHeight += MIN_BOX_HEIGHT - size;
-        size = MIN_BOX_HEIGHT;
+      if (size < this.config.min_box_height) {
+        deficitHeight += this.config.min_box_height - size;
+        size = this.config.min_box_height;
       }
       return {
         ...box,
