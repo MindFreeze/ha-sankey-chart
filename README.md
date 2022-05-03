@@ -63,6 +63,51 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
       - sensor.other_power
 ```
 
+### Daily energy use
+
+![Energy example card](img/example-energy.png)
+
+```yaml
+- type: custom:sankey-chart
+  show_names: true
+  unit_prefix: k
+  round: 1
+  wide: true
+  sections:
+    - entities:
+        - entity_id: sensor.solar
+          color: var(--warning-color)
+          children:
+            - sensor.daily_energy
+        - entity_id: sensor.grid
+          children:
+            - sensor.daily_energy
+        - entity_id: sensor.battery
+          color: var(--success-color)
+          children:
+            - sensor.daily_energy
+    - entities:
+        - entity_id: sensor.daily_energy
+          children:
+            - sensor.floor1
+            - sensor.floor2
+            - sensor.garage
+    - entities:
+        - entity_id: sensor.floor1
+          children:
+            - sensor.living_room
+            - sensor.washer
+        - entity_id: sensor.floor2
+        - entity_id: sensor.garage
+          color: purple
+          children:
+            - sensor.ev_charger
+    - entities:
+        - sensor.living_room
+        - sensor.washer
+        - sensor.ev_charger
+```
+
 ## Development
 
 1. `npm i`
