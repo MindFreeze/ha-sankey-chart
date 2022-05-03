@@ -160,13 +160,14 @@ export class SankeyChart extends LitElement {
             null
           }
           ${boxes.map((box, i) => {
+            const formattedState = parseFloat(box.state.toFixed(this.config.round));
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
                 <div style=${styleMap({backgroundColor: box.color})}>
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
-                <div class="label">${box.state.toFixed(this.config.round)}${box.unit_of_measurement}
+                <div class="label">${formattedState}${box.unit_of_measurement}
                   ${show_names && html`<span>${box.config.name || box.entity.attributes.friendly_name}</span>`}
                 </div>
               </div>
@@ -186,7 +187,7 @@ export class SankeyChart extends LitElement {
         const endYOffset = c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
         const startY = b.top + startYOffset;
         // c.state could be less because of previous connections
-        const remainingEndState = Math.ceil(c.state - (endYOffset / c.size * c.state));
+        const remainingEndState = c.state - (endYOffset / c.size * c.state);
         const startSize = Math.max(Math.min(remainingEndState / b.state * b.size, b.size - startYOffset), 1);
         const endY = c.top + endYOffset;
         const endSize = Math.min(c.size - endYOffset, b.size - startYOffset);
