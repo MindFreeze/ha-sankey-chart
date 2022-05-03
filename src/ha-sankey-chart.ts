@@ -160,7 +160,6 @@ export class SankeyChart extends LitElement {
             null
           }
           ${boxes.map((box, i) => {
-            // const {icon} = box.entity.attributes;
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
@@ -231,7 +230,7 @@ export class SankeyChart extends LitElement {
       let boxes: Box[] = section.entities
         .filter(entity => {
           const state = Number(this._getEntityState(entity).state);
-          return !isNaN(state) && state !== 0;
+          return !isNaN(state) && state > 0;
         })
         .map(conf => {
           const entityConf = typeof conf === 'string' ? {entity_id: conf} : conf;

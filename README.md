@@ -83,8 +83,6 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 - option to throttle updates
 - connections accross sections
 
-_Change "127.0.0.1" to the IP of your development machine._
-
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master
 [devcontainer]: https://code.visualstudio.com/docs/remote/containers
