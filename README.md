@@ -127,7 +127,6 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 - specify connection entities (for size of connector)
 - option to throttle updates
 - connections accross sections
-- handle onClick to show more-info dialog
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master

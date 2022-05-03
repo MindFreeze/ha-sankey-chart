@@ -17,6 +17,7 @@ import {
   // LovelaceCardEditor,
   getLovelace,
   stateIcon,
+  fireEvent,
 } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 
@@ -164,7 +165,7 @@ export class SankeyChart extends LitElement {
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
-                <div style=${styleMap({backgroundColor: box.color})}>
+                <div style=${styleMap({backgroundColor: box.color})} @click=${() => this._handleBoxClick(box)}>
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
                 <div class="label">${formattedState}${box.unit_of_measurement}
@@ -369,12 +370,16 @@ export class SankeyChart extends LitElement {
     };
   }
 
-  private _handleAction(ev: ActionHandlerEvent): void {
-    console.log('@TODO');
-    if (this.hass && this.config && ev.detail.action) {
-      // handleAction(this, this.hass, this.config, ev.detail.action);
-    }
+  private _handleBoxClick(box: Box): void {
+    fireEvent(this, "hass-more-info", { entityId: box.entity_id });
   }
+
+  // private _handleAction(ev: ActionHandlerEvent): void {
+  //   console.log('@TODO');
+  //   if (this.hass && this.config && ev.detail.action) {
+  //     // handleAction(this, this.hass, this.config, ev.detail.action);
+  //   }
+  // }
 
   // private _showWarning(warning: string): TemplateResult {
   //   return html`

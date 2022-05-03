@@ -49,6 +49,7 @@ export default css`
         background-color: var(--primary-color);
         width: 15px;
         height: 100%;
+        cursor: pointer;
     }
     .box .label {
         flex: 1;
