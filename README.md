@@ -1,5 +1,3 @@
-# **This project is new and under development !!!**
-
 # Sankey Chart Card
 
 A Home Assistant lovelace card to display a sankey chart. For example for power consumption
@@ -28,13 +26,13 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 
-#### Sections object
+### Sections object
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
 
-#### Entities object
+### Entities object
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
@@ -123,10 +121,9 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 ## TODO
 
-- add more example configs to README
 - specify connection entities (for size of connector)
 - option to throttle updates
-- connections accross sections
+- connections accross sections?
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master
