@@ -162,14 +162,18 @@ export class SankeyChart extends LitElement {
           }
           ${boxes.map((box, i) => {
             const formattedState = parseFloat(box.state.toFixed(this.config.round));
+            const name = box.config.name || box.entity.attributes.friendly_name || '';
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
-                <div style=${styleMap({backgroundColor: box.color})} @click=${() => this._handleBoxClick(box)}>
+                <div style=${styleMap({backgroundColor: box.color})} 
+                  @click=${() => this._handleBoxClick(box)} 
+                  title=${name}
+                >
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
                 <div class="label">${formattedState}${box.unit_of_measurement}
-                  ${show_names && html`<span>${box.config.name || box.entity.attributes.friendly_name}</span>`}
+                  ${show_names && html`<span>${name}</span>`}
                 </div>
               </div>
             `;
