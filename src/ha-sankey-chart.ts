@@ -25,7 +25,7 @@ import {
 
 import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box } from './types';
 // import { actionHandler } from './action-handler-directive';
-import { UNIT_PREFIXES } from './const';
+import { UNIT_PREFIXES, MIN_LABEL_HEIGHT } from './const';
 import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
@@ -147,7 +147,7 @@ export class SankeyChart extends LitElement {
   protected renderSection(index: number): TemplateResult {
     const {show_names, show_icons} = this.config;
     const section = this.sections[index];
-    const {boxes} = section;
+    const {boxes, spacerH} = section;
     const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
     
     return html`
@@ -163,8 +163,12 @@ export class SankeyChart extends LitElement {
           ${boxes.map((box, i) => {
             const formattedState = parseFloat(box.state.toFixed(this.config.round));
             const name = box.config.name || box.entity.attributes.friendly_name || '';
+            const maxLabelH = box.size + spacerH;
+            const labelStyle = maxLabelH < MIN_LABEL_HEIGHT
+              ? {maxHeight: maxLabelH+'px', fontSize: `${maxLabelH/MIN_LABEL_HEIGHT}em`}
+              : {};
             return html`
-              ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: section.spacerH+'px'})}></div>` : null}
+              ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
                 <div style=${styleMap({backgroundColor: box.color})} 
                   @click=${() => this._handleBoxClick(box)} 
@@ -172,8 +176,9 @@ export class SankeyChart extends LitElement {
                 >
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
-                <div class="label">${formattedState}${box.unit_of_measurement}
-                  ${show_names && html`<span>${name}</span>`}
+                <div class="label" style=${styleMap(labelStyle)}>
+                  ${formattedState}${box.unit_of_measurement}
+                  ${show_names && html`<span>&nbsp;${name}</span>`}
                 </div>
               </div>
             `;

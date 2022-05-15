@@ -5,3 +5,5 @@ export const UNIT_PREFIXES = {
     'G': 1000000000,
     'T': 1000000000000,
 };
+
+export const MIN_LABEL_HEIGHT = 15;

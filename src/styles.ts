@@ -16,6 +16,7 @@ export default css`
         flex-direction: column;
         position: relative;
         min-width: 0;
+        max-width: 50%;
     }
     .wide .section:last-child {
         flex: initial;
@@ -53,6 +54,8 @@ export default css`
     }
     .box .label {
         flex: 1;
+        display: flex;
+        align-items: center;
         padding: 0 10px;
         white-space: nowrap;
         overflow: hidden;
