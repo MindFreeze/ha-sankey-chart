@@ -24,6 +24,7 @@ export interface SectionConfig {
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
+  title?: string;
   sections: SectionConfig[];
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
   round?: number;

@@ -136,6 +136,7 @@ export class SankeyChart extends LitElement {
       <ha-card
         tabindex="0"
         label="Sankey Chart"
+        .header=${this.config.title}
       >
       <div class="container ${this.config.wide ? 'wide' : ''}" style=${styleMap({height: this.height+'px'})}>
         ${this.sections.map((s, i) => this.renderSection(i))}

@@ -17,6 +17,7 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | type              | string  | **Required** |                     | `custom:sankey-chart`
 | sections          | list    | **Required** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
+| title             | string  | **Optional** |                     | Optional header title for the card
 | unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
 | round             | number  | **Optional** | 0                   | Round the value to at most N decimal places.
 | height            | number  | **Optional** | 200                 | The height of the card in pixels
