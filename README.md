@@ -39,8 +39,16 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
 | children          | list    | **Required** |                     | List of entity ids describing child entities (branches). Only entities from the next section will be connected.
-| color             | string  | **Optional** | var(--primary-color)| Color of the box
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
+| color             | string  | **Optional** | var(--primary-color)| Color of the box
+| remaining         | [object](#remaining-object) | **Optional** | | This configures wheter to display a box for the remaining state if the sum of entity states from children is less than this entity's state.
+
+### Remaining object
+
+| Name              | Type    | Requirement  | Default              | Description                                 |
+| ----------------- | ------- | ------------ | -------------------- | ------------------------------------------- |
+| name              | string  | **Required** |                      | Label for this entity. For example 'Other'
+| color             | string  | **Optional** | var(--primary-color) | Color of the box
 
 ## Examples
 
@@ -119,12 +127,6 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 - url: 'http://127.0.0.1:5000/ha-sankey-chart.js'
   type: module
 ```
-
-## TODO
-
-- specify connection entities (for size of connector)
-- option to throttle updates
-- connections accross sections?
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master

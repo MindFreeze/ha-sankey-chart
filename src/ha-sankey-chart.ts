@@ -13,7 +13,7 @@ import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
   // hasAction,
-  ActionHandlerEvent,
+  // ActionHandlerEvent,
   // LovelaceCardEditor,
   getLovelace,
   stateIcon,
@@ -23,7 +23,7 @@ import {
 
 // import './editor';
 
-import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box } from './types';
+import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box, EntityConfig, EntityConfigInternal } from './types';
 // import { actionHandler } from './action-handler-directive';
 import { UNIT_PREFIXES, MIN_LABEL_HEIGHT } from './const';
 import {version} from '../package.json';
@@ -120,10 +120,10 @@ export class SankeyChart extends LitElement {
     // if (this.config.show_warning) {
     //   return this._showWarning(localize('common.show_warning'));
     // }
-    const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
-    if (errEntityId) {
-      return this._showError(localize('common.entity_not_found'));
-    }
+    // const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
+    // if (errEntityId) {
+    //   return this._showError(localize('common.entity_not_found'));
+    // }
 
     this._calcElements();
 
@@ -237,21 +237,43 @@ export class SankeyChart extends LitElement {
 
   private _calcElements() {
     this.statePerPixelY = 0;
-    this.sections = this.config.sections.map(section => {
+    const extraEntities: EntityConfigInternal[][] = this.config.sections.map(() => []);
+    this.sections = this.config.sections.map((section, sectionIndex) => {
       let total = 0;
-      let boxes: Box[] = section.entities
+      let boxes: Box[] = [...section.entities, ...extraEntities[sectionIndex]]
         .filter(entity => {
           const state = Number(this._getEntityState(entity).state);
           return !isNaN(state) && state > 0;
         })
         .map(conf => {
-          const entityConf = typeof conf === 'string' ? {entity_id: conf} : conf;
+          const entityConf: EntityConfigInternal = typeof conf === 'string' ? {entity_id: conf} : conf;
           const entity = this._getEntityState(entityConf);
           const {state, unit_of_measurement} = this._normalizeStateValue(
-            Number(entity.state), 
+            entityConf.accountedState ? Number(entity.state) - entityConf.accountedState : Number(entity.state), 
             entity.attributes.unit_of_measurement
           );
           total += state;
+          if (extraEntities[sectionIndex]) {
+            extraEntities[sectionIndex].some(e => {
+              if (e.children!.some(c => c === entityConf.entity_id)) {
+                e.accountedState! += state;
+              }
+            });
+          }
+
+          let children = entityConf.children || [];
+          if (entityConf.remaining && extraEntities[sectionIndex + 1]) {
+            children = [...children, entityConf.entity_id]
+            // @TODO proper positioning
+            extraEntities[sectionIndex + 1].push({
+              ...entityConf,
+              color: undefined,
+              ...entityConf.remaining,
+              isRemaining: true,
+              accountedState: 0,
+            });
+          }
+
           return {
             config: entityConf,
             entity,
@@ -259,7 +281,7 @@ export class SankeyChart extends LitElement {
             state,
             unit_of_measurement,
             color: entityConf.color || 'var(--primary-color)',
-            children: entityConf.children ? entityConf.children : [],
+            children,
             connections: {parents: []},
             top: 0,
             size: 0,
@@ -289,7 +311,7 @@ export class SankeyChart extends LitElement {
           ...box,
           top,
         };
-      })
+      });
       return {
         boxes,
         total,

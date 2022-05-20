@@ -14,6 +14,15 @@ export type EntityConfig = {
   children?: string[];
   color?: string;
   name?: string;
+  remaining?: {
+    name: string;
+    color?: string;
+  },
+}
+
+export type EntityConfigInternal = EntityConfig & {
+  isRemaining?: boolean;
+  accountedState?: number;
 }
 
 export type EntityConfigOrStr = string | EntityConfig;
