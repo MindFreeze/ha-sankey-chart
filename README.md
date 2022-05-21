@@ -100,19 +100,21 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
             - sensor.floor2
             - sensor.garage
     - entities:
+        - entity_id: sensor.garage
+          color: purple
+          remaining:
+            name: Other
+          children:
+            - sensor.ev_charger
         - entity_id: sensor.floor1
           children:
             - sensor.living_room
             - sensor.washer
         - entity_id: sensor.floor2
-        - entity_id: sensor.garage
-          color: purple
-          children:
-            - sensor.ev_charger
     - entities:
+        - sensor.ev_charger
         - sensor.living_room
         - sensor.washer
-        - sensor.ev_charger
 ```
 
 ## Development
