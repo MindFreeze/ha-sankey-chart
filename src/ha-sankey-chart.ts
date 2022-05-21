@@ -164,7 +164,7 @@ export class SankeyChart extends LitElement {
           ${boxes.map((box, i) => {
             const formattedState = parseFloat(box.state.toFixed(this.config.round));
             const name = box.config.name || box.entity.attributes.friendly_name || '';
-            const maxLabelH = box.size + spacerH;
+            const maxLabelH = box.size + spacerH - 1;
             const labelStyle = maxLabelH < MIN_LABEL_HEIGHT
               ? {maxHeight: maxLabelH+'px', fontSize: `${maxLabelH/MIN_LABEL_HEIGHT}em`}
               : {};
