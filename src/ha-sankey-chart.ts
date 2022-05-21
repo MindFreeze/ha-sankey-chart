@@ -240,13 +240,19 @@ export class SankeyChart extends LitElement {
     const extraEntities: EntityConfigInternal[][] = this.config.sections.map(() => []);
     this.sections = this.config.sections.map((section, sectionIndex) => {
       let total = 0;
-      let boxes: Box[] = [...section.entities, ...extraEntities[sectionIndex]]
+      const allSectionEntities = section.entities.reduce((acc, conf) => {
+        const entityConf: EntityConfigInternal = typeof conf === 'string' ? {entity_id: conf} : conf;
+        const other = extraEntities[sectionIndex]
+          .find(e => e.children![e.children!.length - 1] === entityConf.entity_id);
+          // position 'remaining' boxes right after all other children of the same parent
+        return other ? [...acc, entityConf, other] : [...acc, entityConf];
+      }, [] as EntityConfigInternal[]);
+      let boxes: Box[] = allSectionEntities
         .filter(entity => {
           const state = Number(this._getEntityState(entity).state);
           return !isNaN(state) && state > 0;
         })
-        .map(conf => {
-          const entityConf: EntityConfigInternal = typeof conf === 'string' ? {entity_id: conf} : conf;
+        .map(entityConf => {
           const entity = this._getEntityState(entityConf);
           const {state, unit_of_measurement} = this._normalizeStateValue(
             entityConf.accountedState ? Number(entity.state) - entityConf.accountedState : Number(entity.state), 
@@ -264,7 +270,6 @@ export class SankeyChart extends LitElement {
           let children = entityConf.children || [];
           if (entityConf.remaining && extraEntities[sectionIndex + 1]) {
             children = [...children, entityConf.entity_id]
-            // @TODO proper positioning
             extraEntities[sectionIndex + 1].push({
               ...entityConf,
               color: undefined,

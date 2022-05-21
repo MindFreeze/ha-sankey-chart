@@ -21,6 +21,7 @@ export type EntityConfig = {
 }
 
 export type EntityConfigInternal = EntityConfig & {
+  // children: string[];
   isRemaining?: boolean;
   accountedState?: number;
 }
