@@ -14,7 +14,7 @@ export type EntityConfig = {
   children?: string[];
   color?: string;
   name?: string;
-  remaining?: {
+  remaining?: string | {
     name: string;
     color?: string;
   },

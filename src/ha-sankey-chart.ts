@@ -269,11 +269,13 @@ export class SankeyChart extends LitElement {
 
           let children = entityConf.children || [];
           if (entityConf.remaining && extraEntities[sectionIndex + 1]) {
-            children = [...children, entityConf.entity_id]
+            children = [...children, entityConf.entity_id];
+            const remainingConf = typeof entityConf.remaining === 'string' 
+              ? {name: entityConf.remaining} : entityConf.remaining;
             extraEntities[sectionIndex + 1].push({
               ...entityConf,
               color: undefined,
-              ...entityConf.remaining,
+              ...remainingConf,
               isRemaining: true,
               accountedState: 0,
             });
