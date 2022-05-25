@@ -254,10 +254,14 @@ export class SankeyChart extends LitElement {
         })
         .map(entityConf => {
           const entity = this._getEntityState(entityConf);
-          const {state, unit_of_measurement} = this._normalizeStateValue(
-            entityConf.accountedState ? Number(entity.state) - entityConf.accountedState : Number(entity.state), 
+          // eslint-disable-next-line prefer-const
+          let {state, unit_of_measurement} = this._normalizeStateValue(
+            Number(entity.state), 
             entity.attributes.unit_of_measurement
           );
+          if (entityConf.accountedState) {
+            state -= entityConf.accountedState
+          }
           total += state;
           if (extraEntities[sectionIndex]) {
             extraEntities[sectionIndex].some(e => {
