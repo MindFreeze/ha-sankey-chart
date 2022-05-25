@@ -9,6 +9,7 @@ import {
   CSSResultGroup,
 } from 'lit';
 import { styleMap } from 'lit/directives/style-map';
+import { classMap } from 'lit/directives/class-map';
 import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
@@ -127,6 +128,11 @@ export class SankeyChart extends LitElement {
 
     this._calcElements();
 
+    const containerClasses = classMap({
+      container: true,
+      wide: !!this.config.wide,
+      'with-header': !!this.config.title,
+    });
         // @action=${this._handleAction}
         // .actionHandler=${actionHandler({
         //   hasHold: hasAction(this.config.hold_action),
@@ -138,7 +144,7 @@ export class SankeyChart extends LitElement {
         label="Sankey Chart"
         .header=${this.config.title}
       >
-      <div class="container ${this.config.wide ? 'wide' : ''}" style=${styleMap({height: this.height+'px'})}>
+      <div class=${containerClasses} style=${styleMap({height: this.height+'px'})}>
         ${this.sections.map((s, i) => this.renderSection(i))}
       </div>
       </ha-card>
@@ -175,11 +181,11 @@ export class SankeyChart extends LitElement {
                   @click=${() => this._handleBoxClick(box)} 
                   title=${name}
                 >
-                  ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
+                  ${show_icons ? html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>` : null}
                 </div>
                 <div class="label" style=${styleMap(labelStyle)}>
                   <span class="state">${formattedState}</span><span class="unit">${box.unit_of_measurement}</span>
-                  ${show_names && html`<span class="name">&nbsp;${name}</span>`}
+                  ${show_names ? html`<span class="name">&nbsp;${name}</span>` : null}
                 </div>
               </div>
             `;

@@ -2,14 +2,15 @@ import { css } from 'lit-element';
 
 // https://lit.dev/docs/components/styles/
 export default css`
-    ha-card {
-        padding: 12px;
-    }
     .container {
         display: flex;
         position: relative;
         width: 100%;
         /* height: 210px; */
+        padding: 16px;
+    }
+    .container.with-header {
+        padding-top: 0;
     }
     .section {
         flex: 1;
