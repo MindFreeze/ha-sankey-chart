@@ -59,7 +59,7 @@ export class SankeyChart extends LitElement {
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) private entities: string[] = [];
-  
+
   @state() private config!: Config;
   @state() public height = 200;
   @state() private sections: SectionState[] = [];
@@ -81,6 +81,7 @@ export class SankeyChart extends LitElement {
       round: 0,
       min_box_height: 3,
       min_box_distance: 5,
+      show_states: true,
       ...config,
     };
 
@@ -152,11 +153,11 @@ export class SankeyChart extends LitElement {
   }
 
   protected renderSection(index: number): TemplateResult {
-    const {show_names, show_icons} = this.config;
+    const {show_names, show_icons, show_states} = this.config;
     const section = this.sections[index];
     const {boxes, spacerH} = section;
     const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
-    
+
     return html`
         <div class="section">
           ${hasChildren ?
@@ -177,14 +178,14 @@ export class SankeyChart extends LitElement {
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: spacerH+'px'})}></div>` : null}
               <div class="box" style=${styleMap({height: box.size+'px'})}>
-                <div style=${styleMap({backgroundColor: box.color})} 
-                  @click=${() => this._handleBoxClick(box)} 
+                <div style=${styleMap({backgroundColor: box.color})}
+                  @click=${() => this._handleBoxClick(box)}
                   title=${name}
                 >
                   ${show_icons ? html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>` : null}
                 </div>
                 <div class="label" style=${styleMap(labelStyle)}>
-                  <span class="state">${formattedState}</span><span class="unit">${box.unit_of_measurement}</span>
+                  ${show_states ? html`<span class="state">${formattedState}</span><span class="unit">${box.unit_of_measurement}</span>` : null}
                   ${show_names ? html`<span class="name">&nbsp;${name}</span>` : null}
                 </div>
               </div>
@@ -214,10 +215,10 @@ export class SankeyChart extends LitElement {
         }
 
         const connection = {
-          startY, 
-          startSize, 
+          startY,
+          startSize,
           startColor: b.color,
-          endY, 
+          endY,
           endSize,
           endColor: c.color,
         };
@@ -262,7 +263,7 @@ export class SankeyChart extends LitElement {
           const entity = this._getEntityState(entityConf);
           // eslint-disable-next-line prefer-const
           let {state, unit_of_measurement} = this._normalizeStateValue(
-            Number(entity.state), 
+            Number(entity.state),
             entity.attributes.unit_of_measurement
           );
           if (entityConf.accountedState) {
@@ -280,7 +281,7 @@ export class SankeyChart extends LitElement {
           let children = entityConf.children || [];
           if (entityConf.remaining && extraEntities[sectionIndex + 1]) {
             children = [...children, entityConf.entity_id];
-            const remainingConf = typeof entityConf.remaining === 'string' 
+            const remainingConf = typeof entityConf.remaining === 'string'
               ? {name: entityConf.remaining} : entityConf.remaining;
             extraEntities[sectionIndex + 1].push({
               ...entityConf,
@@ -290,13 +291,21 @@ export class SankeyChart extends LitElement {
             });
           }
 
+          let finalColor = entityConf.color || 'var(--primary-color)';
+          if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
+            let colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
+            let colorBelow = typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
+            let colorAbove = typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
+            finalColor = state > colorLimit ? colorAbove : colorBelow;
+          }
+
           return {
             config: entityConf,
             entity,
             entity_id: this._getEntityId(entityConf),
             state,
             unit_of_measurement,
-            color: entityConf.color || 'var(--primary-color)',
+            color: finalColor,
             children,
             connections: {parents: []},
             top: 0,
@@ -313,7 +322,7 @@ export class SankeyChart extends LitElement {
       }
       // leave room for margin
       const availableHeight = this.height - ((boxes.length - 1) * this.config.min_box_distance);
-      // calc sizes to determine statePerPixelY ratio and find the best one 
+      // calc sizes to determine statePerPixelY ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       boxes = calcResults.boxes;
       const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
@@ -413,7 +422,7 @@ export class SankeyChart extends LitElement {
     }
     return {
       state: state * currentFactor / targetFactor,
-      unit_of_measurement: prefix 
+      unit_of_measurement: prefix
         ? unit_of_measurement.replace(prefix, unit_prefix) : unit_prefix + unit_of_measurement,
     };
   }

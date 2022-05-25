@@ -14,6 +14,10 @@ export type EntityConfig = {
   children?: string[];
   color?: string;
   name?: string;
+  color_on_state?: boolean;
+  color_above?: string;
+  color_below?: string;
+  color_limit?: number;
   remaining?: string | {
     name: string;
     color?: string;
@@ -22,6 +26,7 @@ export type EntityConfig = {
 
 export type EntityConfigInternal = EntityConfig & {
   // children: string[];
+  isRemaining?: boolean;
   accountedState?: number;
 }
 
@@ -43,6 +48,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   show_names?: boolean;
   min_box_height?: number,
   min_box_distance?: number,
+  show_states?: boolean;
 }
 
 export interface Config extends SankeyChartConfig {

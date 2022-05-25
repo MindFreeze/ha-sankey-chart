@@ -26,6 +26,7 @@ This card is intended to display connections between entities with numeric state
 | wide              | boolean | **Optional** | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size.
 | show_icons        | boolean | **Optional** | false               | Display entity icons
 | show_names        | boolean | **Optional** | false               | Display entity names
+| show_states       | boolean | **Optional** | true                | Display entity states
 | min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 
@@ -43,6 +44,10 @@ This card is intended to display connections between entities with numeric state
 | children          | list    | **Required** |                     | List of entity ids describing child entities (branches). Only entities from the next section will be connected.
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | color             | string  | **Optional** | var(--primary-color)| Color of the box
+| color_on_state    | boolean | **Optional** | false               | Color the box based on state value
+| color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
+| color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
+| color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
 | remaining         | [object](#remaining-object) | **Optional** | | This configures wheter to display a box for the remaining state if the sum of entity states from children is less than this entity's state.
 
 ### Remaining object
