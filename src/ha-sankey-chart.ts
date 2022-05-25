@@ -178,8 +178,8 @@ export class SankeyChart extends LitElement {
                   ${show_icons && html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>`}
                 </div>
                 <div class="label" style=${styleMap(labelStyle)}>
-                  ${formattedState}${box.unit_of_measurement}
-                  ${show_names && html`<span>&nbsp;${name}</span>`}
+                  <span class="state">${formattedState}</span><span class="unit">${box.unit_of_measurement}</span>
+                  ${show_names && html`<span class="name">&nbsp;${name}</span>`}
                 </div>
               </div>
             `;
@@ -276,7 +276,6 @@ export class SankeyChart extends LitElement {
               ...entityConf,
               color: undefined,
               ...remainingConf,
-              isRemaining: true,
               accountedState: 0,
             });
           }
