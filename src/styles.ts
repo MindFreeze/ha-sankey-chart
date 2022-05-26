@@ -5,7 +5,6 @@ export default css`
     .container {
         display: flex;
         position: relative;
-        width: 100%;
         /* height: 210px; */
         padding: 16px;
     }
