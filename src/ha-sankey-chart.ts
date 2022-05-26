@@ -293,9 +293,9 @@ export class SankeyChart extends LitElement {
 
           let finalColor = entityConf.color || 'var(--primary-color)';
           if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
-            let colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
-            let colorBelow = typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
-            let colorAbove = typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
+            const colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
+            const colorBelow = typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
+            const colorAbove = typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
             finalColor = state > colorLimit ? colorAbove : colorBelow;
           }
 
