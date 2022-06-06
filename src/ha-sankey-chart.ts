@@ -19,6 +19,7 @@ import {
   getLovelace,
   stateIcon,
   fireEvent,
+  LovelaceCard,
 } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 
@@ -122,10 +123,11 @@ export class SankeyChart extends LitElement {
     // if (this.config.show_warning) {
     //   return this._showWarning(localize('common.show_warning'));
     // }
-    // const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
-    // if (errEntityId) {
-    //   return this._showError(localize('common.entity_not_found'));
-    // }
+    const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
+    if (errEntityId) {
+      console.warn(errEntityId);
+      return this._showError(localize('common.entity_not_found'));
+    }
 
     this._calcElements();
 
@@ -445,16 +447,14 @@ export class SankeyChart extends LitElement {
   // }
 
   private _showError(error: string): TemplateResult {
-    const errorCard = document.createElement('hui-error-card');
+    const errorCard = document.createElement('hui-error-card') as LovelaceCard;
     errorCard.setConfig({
       type: 'error',
       error,
       origConfig: this.config,
     });
 
-    return html`
-      ${errorCard}
-    `;
+    return html` ${errorCard} `;
   }
 
   private _getEntityId(entity: EntityConfigOrStr): string {
