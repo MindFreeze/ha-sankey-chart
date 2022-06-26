@@ -208,7 +208,7 @@ export class SankeyChart extends LitElement {
         const startY = b.top + startYOffset;
         // c.state could be less because of previous connections
         const remainingEndState = c.state - (endYOffset / c.size * c.state);
-        const startSize = Math.max(Math.min(remainingEndState / b.state * b.size, b.size - startYOffset), 1);
+        const startSize = Math.max(Math.min(remainingEndState / b.state * b.size, b.size - startYOffset), 0.1);
         const endY = c.top + endYOffset;
         const endSize = Math.min(c.size - endYOffset, b.size);
         if (Math.min(c.size - endYOffset, b.size - startYOffset) > 0) {
