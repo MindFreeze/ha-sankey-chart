@@ -171,7 +171,7 @@ export class SankeyChart extends LitElement {
             null
           }
           ${boxes.map((box, i) => {
-            const formattedState = parseFloat(box.state.toFixed(this.config.round));
+            const formattedState = parseFloat(box.state.toFixed(this.config.round)).toLocaleString();
             const name = box.config.name || box.entity.attributes.friendly_name || '';
             const maxLabelH = box.size + spacerH - 1;
             const labelStyle = maxLabelH < MIN_LABEL_HEIGHT
