@@ -25,12 +25,13 @@ import {
 
 // import './editor';
 
-import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box, EntityConfig, EntityConfigInternal } from './types';
+import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box, EntityConfigInternal, Connection } from './types';
 // import { actionHandler } from './action-handler-directive';
-import { UNIT_PREFIXES, MIN_LABEL_HEIGHT } from './const';
+import { MIN_LABEL_HEIGHT } from './const';
 import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
+import { formatState, normalizeStateValue } from './utils';
 
 /* eslint no-console: 0 */
 console.info(
@@ -171,7 +172,7 @@ export class SankeyChart extends LitElement {
             null
           }
           ${boxes.map((box, i) => {
-            const formattedState = parseFloat(box.state.toFixed(this.config.round)).toLocaleString();
+            const formattedState = formatState(box.state, this.config.round);
             const name = box.config.name || box.entity.attributes.friendly_name || '';
             const maxLabelH = box.size + spacerH - 1;
             const labelStyle = maxLabelH < MIN_LABEL_HEIGHT
@@ -202,19 +203,22 @@ export class SankeyChart extends LitElement {
     const {boxes} = section;
     return boxes.filter(b => b.children.length > 0).map(b => {
       const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
-      let startYOffset = 0;
+      let accountedStartState = 0;
       const connections = children.map(c => {
-        const endYOffset = c.connections.parents.reduce((sum, c) => sum + c.endSize, 0);
-        const startY = b.top + startYOffset;
-        // c.state could be less because of previous connections
-        const remainingEndState = c.state - (endYOffset / c.size * c.state);
-        const startSize = Math.max(Math.min(remainingEndState / b.state * b.size, b.size - startYOffset), 1);
-        const endY = c.top + endYOffset;
-        const endSize = Math.min(c.size - endYOffset, b.size - startYOffset);
-        if (endSize > 0) {
-          // only increment if this connection will be rendered
-          startYOffset += startSize;
+        const remainingStartState = b.state - accountedStartState;
+        // remaining c.state could be less because of previous connections
+        const accountedEndState = c.connections.parents.reduce((sum, c) => sum + c.state, 0);
+        const remainingEndState = c.state - accountedEndState;
+        const connectionState = Math.min(remainingStartState, remainingEndState);
+        if (connectionState <= 0) {
+          // only continue if this connection will be rendered
+          return {state: connectionState} as Connection;
         }
+        const startY = accountedStartState / b.state * b.size + b.top;
+        const startSize = Math.max(connectionState / b.state * b.size, 0);
+        const endY = accountedEndState / c.state * c.size + c.top;
+        const endSize = Math.max(connectionState / c.state * c.size, 0);
+        accountedStartState += connectionState;
 
         const connection = {
           startY,
@@ -223,10 +227,11 @@ export class SankeyChart extends LitElement {
           endY,
           endSize,
           endColor: c.color,
+          state: connectionState,
         };
         c.connections.parents.push(connection);
         return connection;
-      }).filter(c => c.endSize > 0);
+      }).filter(c => c.state > 0);
       return svg`
         <defs>
           ${connections.map((c, i) => svg`
@@ -264,7 +269,8 @@ export class SankeyChart extends LitElement {
         .map(entityConf => {
           const entity = this._getEntityState(entityConf);
           // eslint-disable-next-line prefer-const
-          let {state, unit_of_measurement} = this._normalizeStateValue(
+          let {state, unit_of_measurement} = normalizeStateValue(
+            this.config.unit_prefix,
             Number(entity.state),
             entity.attributes.unit_of_measurement
           );
@@ -409,24 +415,6 @@ export class SankeyChart extends LitElement {
       return this._calcBoxHeights(result, availableHeight - deficitHeight, totalState);
     }
     return {boxes: result, statePerPixelY: this.statePerPixelY};
-  }
-
-  private _normalizeStateValue(state: number, unit_of_measurement?: string) {
-    if (!unit_of_measurement) {
-      return {state, unit_of_measurement};
-    }
-    const {unit_prefix} = this.config;
-    const prefix = Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0) || '';
-    const currentFactor = UNIT_PREFIXES[prefix] || 1;
-    const targetFactor = UNIT_PREFIXES[unit_prefix] || 1;
-    if (currentFactor === targetFactor) {
-      return {state, unit_of_measurement};
-    }
-    return {
-      state: state * currentFactor / targetFactor,
-      unit_of_measurement: prefix
-        ? unit_of_measurement.replace(prefix, unit_prefix) : unit_prefix + unit_of_measurement,
-    };
   }
 
   private _handleBoxClick(box: Box): void {

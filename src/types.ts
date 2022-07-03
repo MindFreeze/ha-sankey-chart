@@ -63,6 +63,9 @@ export interface Connection {
   startSize: number;
   endY: number;
   endSize: number;
+  state: number;
+  startColor?: string;
+  endColor?: string;
 }
 
 export interface Box {
