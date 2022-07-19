@@ -27,6 +27,7 @@ This card is intended to display connections between entities with numeric state
 | show_icons        | boolean | **Optional** | false               | Display entity icons
 | show_names        | boolean | **Optional** | false               | Display entity names
 | show_states       | boolean | **Optional** | true                | Display entity states
+| show_units        | boolean | **Optional** | true                | Display unit of measurement
 | min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 

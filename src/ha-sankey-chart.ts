@@ -86,6 +86,7 @@ export class SankeyChart extends LitElement {
       min_box_height: 3,
       min_box_distance: 5,
       show_states: true,
+      show_units: true,
       ...config,
     };
 
@@ -157,7 +158,7 @@ export class SankeyChart extends LitElement {
   }
 
   protected renderSection(index: number): TemplateResult {
-    const {show_names, show_icons, show_states} = this.config;
+    const {show_names, show_icons, show_states, show_units} = this.config;
     const section = this.sections[index];
     const {boxes, spacerH} = section;
     const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
@@ -189,7 +190,7 @@ export class SankeyChart extends LitElement {
                   ${show_icons ? html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>` : null}
                 </div>
                 <div class="label" style=${styleMap(labelStyle)}>
-                  ${show_states ? html`<span class="state">${formattedState}</span><span class="unit">${box.unit_of_measurement}</span>` : null}
+                  ${show_states ? html`<span class="state">${formattedState}</span>${show_units ? html`<span class="unit">${box.unit_of_measurement}</span>` : null}` : null}
                   ${show_names ? html`<span class="name">&nbsp;${name}</span>` : null}
                 </div>
               </div>
