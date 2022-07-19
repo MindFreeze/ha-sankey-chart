@@ -10,6 +10,7 @@ import {
 } from 'lit';
 import { styleMap } from 'lit/directives/style-map';
 import { classMap } from 'lit/directives/class-map';
+import { until } from 'lit/directives/until.js';
 import { customElement, property, state } from "lit/decorators";
 import {
   HomeAssistant,
@@ -20,6 +21,7 @@ import {
   stateIcon,
   fireEvent,
   LovelaceCard,
+  createThing,
 } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 
@@ -126,8 +128,7 @@ export class SankeyChart extends LitElement {
     // }
     const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
     if (errEntityId) {
-      console.warn(errEntityId);
-      return this._showError(localize('common.entity_not_found'));
+      return html`${until(this._showError(localize('common.entity_not_found') + ' ' + errEntityId))}`;
     }
 
     this._calcElements();
@@ -434,15 +435,24 @@ export class SankeyChart extends LitElement {
   //   `;
   // }
 
-  private _showError(error: string): TemplateResult {
-    const errorCard = document.createElement('hui-error-card') as LovelaceCard;
-    errorCard.setConfig({
+  private async _showError(error: string): Promise<TemplateResult> {
+    const config = {
       type: 'error',
       error,
       origConfig: this.config,
-    });
+    };
+    let element: LovelaceCard;
+    const HELPERS = (window as any).loadCardHelpers ? (window as any).loadCardHelpers() : undefined;
+    if (HELPERS) {
+      element = (await HELPERS).createCardElement(config);
+    } else {
+      element = createThing(config);
+    }
+    if (this.hass) {
+      element.hass = this.hass;
+    }
 
-    return html` ${errorCard} `;
+    return html` ${element} `;
   }
 
   private _getEntityId(entity: EntityConfigOrStr): string {
