@@ -33,7 +33,7 @@ import { MIN_LABEL_HEIGHT } from './const';
 import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, normalizeStateValue } from './utils';
+import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
 
 /* eslint no-console: 0 */
 console.info(
@@ -76,9 +76,9 @@ export class SankeyChart extends LitElement {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    if (config.test_gui) {
-      getLovelace().setEditMode(true);
-    }
+    // if (config.test_gui) {
+    //   getLovelace().setEditMode(true);
+    // }
 
     this.config = {
       height: 200,
@@ -96,7 +96,7 @@ export class SankeyChart extends LitElement {
     const entities: string[] = [];
     config.sections.forEach(section => {
       section.entities.forEach(ent => {
-        entities.push(this._getEntityId(ent));
+        entities.push(getEntityId(ent));
       });
     });
     this.entities = entities;
@@ -222,35 +222,13 @@ export class SankeyChart extends LitElement {
     const {boxes} = section;
     return boxes.filter(b => b.children.length > 0).map(b => {
       const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
-      let accountedStartState = 0;
-      const connections = children.map(c => {
-        const remainingStartState = b.state - accountedStartState;
-        // remaining c.state could be less because of previous connections
-        const accountedEndState = c.connections.parents.reduce((sum, c) => sum + c.state, 0);
-        const remainingEndState = c.state - accountedEndState;
-        const connectionState = Math.min(remainingStartState, remainingEndState);
-        if (connectionState <= 0) {
-          // only continue if this connection will be rendered
-          return {state: connectionState} as Connection;
+      const connections = getChildConnections(b, children).filter((c, i) => {
+        if (c.state > 0) {
+          children[i].connections.parents.push(c);
+          return true;
         }
-        const startY = accountedStartState / b.state * b.size + b.top;
-        const startSize = Math.max(connectionState / b.state * b.size, 0);
-        const endY = accountedEndState / c.state * c.size + c.top;
-        const endSize = Math.max(connectionState / c.state * c.size, 0);
-        accountedStartState += connectionState;
-
-        const connection = {
-          startY,
-          startSize,
-          startColor: b.color,
-          endY,
-          endSize,
-          endColor: c.color,
-          state: connectionState,
-        };
-        c.connections.parents.push(connection);
-        return connection;
-      }).filter(c => c.state > 0);
+        return false;
+      });
       return svg`
         <defs>
           ${connections.map((c, i) => svg`
@@ -329,7 +307,7 @@ export class SankeyChart extends LitElement {
           return {
             config: entityConf,
             entity,
-            entity_id: this._getEntityId(entityConf),
+            entity_id: getEntityId(entityConf),
             state,
             unit_of_measurement,
             color: finalColor,
@@ -473,12 +451,8 @@ export class SankeyChart extends LitElement {
     return html` ${element} `;
   }
 
-  private _getEntityId(entity: EntityConfigOrStr): string {
-    return typeof entity === 'string' ? entity : entity.entity_id;
-  }
-
   private _getEntityState(entity: EntityConfigOrStr) {
-    return this.hass.states[this._getEntityId(entity)];
+    return this.hass.states[getEntityId(entity)];
   }
 
   static get styles(): CSSResultGroup {
