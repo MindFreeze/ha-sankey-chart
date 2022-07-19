@@ -68,6 +68,7 @@ export class SankeyChart extends LitElement {
   @state() public height = 200;
   @state() private sections: SectionState[] = [];
   @state() private statePerPixelY = 0;
+  @state() private lastUpdate = 0;
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
@@ -110,16 +111,32 @@ export class SankeyChart extends LitElement {
     if (!this.config) {
       return false;
     }
+    const now = Date.now();
+    if (this.config.throttle && now - this.lastUpdate < this.config.throttle) {
+      // woah there
+      const ts = this.lastUpdate;
+      setTimeout(() => {
+        if (ts === this.lastUpdate) {
+          // trigger manual update if no changes since last rejected update
+          this.requestUpdate();
+        }
+      }, now - this.lastUpdate);
+      return false;
+    }
     if (changedProps.has('config')) {
       return true;
     }
-    return this.entities.some(entity => {
-      const oldHass = changedProps.get('hass') as HomeAssistant | undefined;
-      if (oldHass) {
-        return oldHass.states[entity] !== this.hass.states[entity];
-      }
+    const oldHass = changedProps.get('hass') as HomeAssistant | undefined;
+    if (!oldHass) {
       return true;
+    }
+    return this.entities.some(entity => {
+      return oldHass.states[entity] !== this.hass.states[entity];
     });
+  }
+
+  public willUpdate(): void {
+    this.lastUpdate = Date.now();
   }
 
   // https://lit.dev/docs/components/rendering/

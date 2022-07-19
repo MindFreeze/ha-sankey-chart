@@ -49,6 +49,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   show_units?: boolean;
   min_box_height?: number,
   min_box_distance?: number,
+  throttle?: number,
 }
 
 export interface Config extends SankeyChartConfig {

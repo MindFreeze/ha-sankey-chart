@@ -30,6 +30,7 @@ This card is intended to display connections between entities with numeric state
 | show_units        | boolean | **Optional** | true                | Display unit of measurement
 | min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
+| throttle          | number  | **Optional** |                     | Minimum time in ms between updates/rerenders
 
 ### Sections object
 
