@@ -21,7 +21,7 @@ This card is intended to display connections between entities with numeric state
 | sections          | list    | **Required** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
 | title             | string  | **Optional** |                     | Optional header title for the card
 | unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
-| round             | number  | **Optional** | 0                   | Round the value to at most N decimal places.
+| round             | number  | **Optional** | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue #29
 | height            | number  | **Optional** | 200                 | The height of the card in pixels
 | wide              | boolean | **Optional** | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size.
 | show_icons        | boolean | **Optional** | false               | Display entity icons
