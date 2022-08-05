@@ -282,8 +282,8 @@ export class SankeyChart extends LitElement {
           }
           total += state;
           if (extraEntities[sectionIndex]) {
-            extraEntities[sectionIndex].some(e => {
-              if (e.children!.some(c => c === entityConf.entity_id)) {
+            extraEntities[sectionIndex].forEach(e => {
+              if (e.children?.includes(entityConf.entity_id)) {
                 e.accountedState! += state;
               }
             });
@@ -458,8 +458,11 @@ export class SankeyChart extends LitElement {
     return html` ${element} `;
   }
 
-  private _getEntityState(entity: EntityConfigOrStr) {
-    return this.hass.states[getEntityId(entity)];
+  private _getEntityState(entityConf: EntityConfigOrStr) {
+    const entity = this.hass.states[getEntityId(entityConf)];
+    return typeof entityConf === 'object' && entityConf.attribute
+      ? {...entity, state: entity.attributes[entityConf.attribute]}
+      : entity;
   }
 
   static get styles(): CSSResultGroup {

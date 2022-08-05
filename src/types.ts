@@ -11,6 +11,7 @@ declare global {
 
 export type EntityConfig = {
   entity_id: string;
+  attribute?: string;
   children?: string[];
   color?: string;
   name?: string;
