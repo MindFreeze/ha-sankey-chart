@@ -254,7 +254,13 @@ export class SankeyChart extends LitElement {
       const allSectionEntities = section.entities.reduce((acc, conf) => {
         const entityConf: EntityConfigInternal = typeof conf === 'string' ? {entity_id: conf} : conf;
         const other = extraEntities[sectionIndex]
-          .find(e => e.children![e.children!.length - 1] === entityConf.entity_id);
+          .find(e => {
+            if (e.children?.includes(entityConf.entity_id)) {
+              e.foundChildren?.push(entityConf.entity_id);
+              return e.foundChildren?.length === e.children.length;
+            }
+            return false;
+          });
           // position 'remaining' boxes right after all other children of the same parent
         return other ? [...acc, entityConf, other] : [...acc, entityConf];
       }, [] as EntityConfigInternal[]);
@@ -293,6 +299,7 @@ export class SankeyChart extends LitElement {
               color: undefined,
               ...remainingConf,
               accountedState: 0,
+              foundChildren: [],
             });
           }
 

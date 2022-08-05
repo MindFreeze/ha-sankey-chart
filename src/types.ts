@@ -27,6 +27,7 @@ export type EntityConfig = {
 export type EntityConfigInternal = EntityConfig & {
   // children: string[];
   accountedState?: number;
+  foundChildren?: string[];
 }
 
 export type EntityConfigOrStr = string | EntityConfig;
