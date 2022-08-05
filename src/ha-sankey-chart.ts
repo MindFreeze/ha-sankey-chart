@@ -261,7 +261,7 @@ export class SankeyChart extends LitElement {
             }
             return false;
           });
-          // position 'remaining' boxes right after all other children of the same parent
+        // position 'remaining' boxes right after all other children of the same parent
         return other ? [...acc, entityConf, other] : [...acc, entityConf];
       }, [] as EntityConfigInternal[]);
       let boxes: Box[] = allSectionEntities

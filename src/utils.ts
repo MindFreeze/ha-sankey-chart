@@ -1,4 +1,3 @@
-import { svg, SVGTemplateResult } from "lit";
 import { UNIT_PREFIXES } from "./const";
 import { Box, Connection, EntityConfigOrStr } from "./types";
 
