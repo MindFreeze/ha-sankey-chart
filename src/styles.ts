@@ -1,4 +1,4 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 // https://lit.dev/docs/components/styles/
 export default css`
