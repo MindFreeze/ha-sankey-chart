@@ -17,7 +17,7 @@ import {
   // hasAction,
   // ActionHandlerEvent,
   // LovelaceCardEditor,
-  getLovelace,
+  // getLovelace,
   stateIcon,
   fireEvent,
   LovelaceCard,
