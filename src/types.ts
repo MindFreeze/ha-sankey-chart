@@ -9,9 +9,12 @@ declare global {
   }
 }
 
+type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+
 export type EntityConfig = {
   entity_id: string;
   attribute?: string;
+  type?: BoxType;
   children?: string[];
   color?: string;
   name?: string;
@@ -60,6 +63,9 @@ export interface Config extends SankeyChartConfig {
   height: number;
   min_box_height: number;
   min_box_distance: number;
+  sections: {
+    entities: EntityConfig[];
+  }[];
 }
 
 export interface Connection {
@@ -82,6 +88,7 @@ export interface Box {
   color: string;
   size: number;
   top: number;
+  extraSpacers?: number;
   connections: {
     parents: Connection[];
   }

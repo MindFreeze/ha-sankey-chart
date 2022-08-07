@@ -27,13 +27,13 @@ import {
 
 // import './editor';
 
-import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box, EntityConfigInternal, Connection } from './types';
+import type { Config, SankeyChartConfig, SectionState, EntityConfigOrStr, Box, EntityConfigInternal } from './types';
 // import { actionHandler } from './action-handler-directive';
 import { MIN_LABEL_HEIGHT } from './const';
 import {version} from '../package.json';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
+import { formatState, getChildConnections, getEntityId, normalizeConfig, normalizeStateValue } from './utils';
 
 /* eslint no-console: 0 */
 console.info(
@@ -62,7 +62,7 @@ export class SankeyChart extends LitElement {
 
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) private entities: string[] = [];
+  @property({ attribute: false }) private entityIds: string[] = [];
 
   @state() private config!: Config;
   @state() public height = 200;
@@ -80,26 +80,17 @@ export class SankeyChart extends LitElement {
     //   getLovelace().setEditMode(true);
     // }
 
-    this.config = {
-      height: 200,
-      unit_prefix: '',
-      round: 0,
-      min_box_height: 3,
-      min_box_distance: 5,
-      show_states: true,
-      show_units: true,
-      ...config,
-    };
+    this.config = normalizeConfig(config);
 
     this.height = this.config.height;
 
-    const entities: string[] = [];
+    const entityIds: string[] = [];
     config.sections.forEach(section => {
       section.entities.forEach(ent => {
-        entities.push(getEntityId(ent));
+        entityIds.push(getEntityId(ent));
       });
     });
-    this.entities = entities;
+    this.entityIds = entityIds;
   }
 
   public getCardSize(): number {
@@ -130,8 +121,8 @@ export class SankeyChart extends LitElement {
     if (!oldHass) {
       return true;
     }
-    return this.entities.some(entity => {
-      return oldHass.states[entity] !== this.hass.states[entity];
+    return this.entityIds.some(id => {
+      return oldHass.states[id] !== this.hass.states[id];
     });
   }
 
@@ -144,7 +135,7 @@ export class SankeyChart extends LitElement {
     // if (this.config.show_warning) {
     //   return this._showWarning(localize('common.show_warning'));
     // }
-    const errEntityId = this.entities.find(ent => !this._getEntityState(ent));
+    const errEntityId = this.entityIds.find(ent => !this._getEntityState(ent));
     if (errEntityId) {
       return html`${until(this._showError(localize('common.entity_not_found') + ' ' + errEntityId))}`;
     }
@@ -191,26 +182,30 @@ export class SankeyChart extends LitElement {
             null
           }
           ${boxes.map((box, i) => {
+            const {entity, extraSpacers} = box;
             const formattedState = formatState(box.state, this.config.round);
-            const name = box.config.name || box.entity.attributes.friendly_name || '';
+            const isNotPassthrough = box.config.type !== 'passthrough';
+            const name = box.config.name || entity.attributes.friendly_name || '';
             const maxLabelH = box.size + spacerH - 1;
             const labelStyle = maxLabelH < MIN_LABEL_HEIGHT
               ? {maxHeight: maxLabelH+'px', fontSize: `${maxLabelH/MIN_LABEL_HEIGHT}em`}
               : {};
             return html`
               ${i > 0 ? html`<div class="spacerv" style=${styleMap({height: spacerH+'px'})}></div>` : null}
-              <div class="box" style=${styleMap({height: box.size+'px'})}>
+              ${extraSpacers ? html`<div class="spacerv" style=${styleMap({height: extraSpacers+'px'})}></div>` : null}
+              <div class=${'box type-' + box.config.type!} style=${styleMap({height: box.size+'px'})}>
                 <div style=${styleMap({backgroundColor: box.color})}
                   @click=${() => this._handleBoxClick(box)}
                   title=${name}
-                >
-                  ${show_icons ? html`<ha-icon .icon=${stateIcon(box.entity)}></ha-icon>` : null}
+                  >
+                  ${show_icons && isNotPassthrough ? html`<ha-icon .icon=${stateIcon(entity)}></ha-icon>` : null}
                 </div>
                 <div class="label" style=${styleMap(labelStyle)}>
-                  ${show_states ? html`<span class="state">${formattedState}</span>${show_units ? html`<span class="unit">${box.unit_of_measurement}</span>` : null}` : null}
-                  ${show_names ? html`<span class="name">&nbsp;${name}</span>` : null}
+                  ${show_states && isNotPassthrough ? html`<span class="state">${formattedState}</span>${show_units ? html`<span class="unit">${box.unit_of_measurement}</span>` : null}` : null}
+                  ${show_names && isNotPassthrough ? html`<span class="name">&nbsp;${name}</span>` : null}
                 </div>
               </div>
+              ${extraSpacers ? html`<div class="spacerv" style=${styleMap({height: extraSpacers+'px'})}></div>` : null}
             `;
           })}
         </div>
@@ -225,6 +220,17 @@ export class SankeyChart extends LitElement {
       const connections = getChildConnections(b, children).filter((c, i) => {
         if (c.state > 0) {
           children[i].connections.parents.push(c);
+          if (children[i].config.type === 'passthrough' && c.state !== children[i].state) {
+            // virtual entity that must only pass state to the next section
+            children[i].state = c.state;
+            // this could reduce the size of the box moving lower boxes up
+            // so we have to add spacers and adjust some positions
+            const newSize = Math.floor(c.state / this.statePerPixelY);
+            children[i].extraSpacers = (children[i].size - newSize) / 2;
+            c.endY += children[i].extraSpacers!;
+            children[i].top += children[i].extraSpacers!;
+            children[i].size = newSize;
+          }
           return true;
         }
         return false;
@@ -251,8 +257,7 @@ export class SankeyChart extends LitElement {
     const extraEntities: EntityConfigInternal[][] = this.config.sections.map(() => []);
     this.sections = this.config.sections.map((section, sectionIndex) => {
       let total = 0;
-      const allSectionEntities = section.entities.reduce((acc, conf) => {
-        const entityConf: EntityConfigInternal = typeof conf === 'string' ? {entity_id: conf} : conf;
+      const allSectionEntities = section.entities.reduce((acc, entityConf) => {
         const other = extraEntities[sectionIndex]
           .find(e => {
             if (e.children?.includes(entityConf.entity_id)) {
@@ -278,7 +283,7 @@ export class SankeyChart extends LitElement {
             entity.attributes.unit_of_measurement
           );
           if (entityConf.accountedState) {
-            state -= entityConf.accountedState
+            state = Math.max(0, state - entityConf.accountedState);
           }
           total += state;
           if (extraEntities[sectionIndex]) {
@@ -298,6 +303,7 @@ export class SankeyChart extends LitElement {
               ...entityConf,
               color: undefined,
               ...remainingConf,
+              type: 'remaining_parent_state',
               accountedState: 0,
               foundChildren: [],
             });
@@ -323,7 +329,7 @@ export class SankeyChart extends LitElement {
             top: 0,
             size: 0,
           };
-        });
+        }).filter(b => b.state > 0);
       if (!boxes.length) {
         return {
           boxes,

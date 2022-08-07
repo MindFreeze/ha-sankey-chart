@@ -52,6 +52,9 @@ export default css`
         height: 100%;
         cursor: pointer;
     }
+    .box.type-passthrough div:first-child {
+        opacity: 0.4;
+    }
     .box .label {
         flex: 1;
         display: flex;
@@ -67,8 +70,8 @@ export default css`
     .connectors {
         position: absolute;
         top: 0;
-        left: 14px;
-        right: -1px;
+        left: 15px;
+        right: -0.1px;
         height: 100%;
     }
     .connectors svg {

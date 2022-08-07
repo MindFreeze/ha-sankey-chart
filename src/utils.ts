@@ -1,5 +1,9 @@
-import { UNIT_PREFIXES } from "./const";
-import { Box, Connection, EntityConfigOrStr } from "./types";
+import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from "./const";
+import { Box, Config, Connection, EntityConfigOrStr, SankeyChartConfig, SectionConfig } from "./types";
+
+export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
 
 export function formatState(state: number, round: number): string {
   let rounded: string;
@@ -66,4 +70,50 @@ export function getChildConnections(parent: Box, children: Box[]): Connection[] 
     };
     return connection;
   });
+}
+
+export function normalizeConfig(conf: SankeyChartConfig): Config {
+  const config = cloneObj(conf);
+
+  const sections = config.sections.map((section: SectionConfig, sectionIndex: number) => ({
+    entities: section.entities.map(conf => {
+      const entityConf = typeof conf === 'string' 
+        ? {...DEFAULT_ENTITY_CONF, entity_id: conf} 
+        : {...DEFAULT_ENTITY_CONF, ...conf};
+      if (entityConf.children) {
+        entityConf.children.forEach(child => {
+          for (let i = sectionIndex + 1; i < config.sections.length; i++) {
+            const childConf = config.sections[i].entities.find(
+              entity => getEntityId(entity) === child
+            );
+            if (childConf) {
+              if (i > sectionIndex + 1) {
+                for (let j = sectionIndex + 1; j < i; j++) {
+                  config.sections[j].entities.push({
+                    ...(typeof childConf === 'string' ? {entity_id: childConf} : childConf),
+                    type: 'passthrough',
+                    children: [child],
+                  });
+                }
+              }
+              break;
+            }
+          }
+        });
+      }
+      return entityConf;
+    }),
+  }));
+
+  return {
+    height: 200,
+    unit_prefix: '',
+    round: 0,
+    min_box_height: 3,
+    min_box_distance: 5,
+    show_states: true,
+    show_units: true,
+    ...config,
+    sections,
+  };
 }
