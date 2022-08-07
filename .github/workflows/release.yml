@@ -7,7 +7,7 @@ on:
         required: true
         description: Target release tag
   release:
-    types: [created]
+    types: [created, published]
 
 jobs:
   release:
@@ -34,6 +34,7 @@ jobs:
           tag: ${{ github.event.inputs.tag || github.ref }}
           overwrite: true
   validate:
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
