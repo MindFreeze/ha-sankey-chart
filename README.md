@@ -43,8 +43,9 @@ This card is intended to display connections between entities with numeric state
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
-| children          | list    | **Required** |                     | List of entity ids describing child entities (branches). Only entities from subsequent sections will be connected.
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
+| type              | string  | **Optional** | entity              | Don't worry about it. Will be used in the future
+| children          | list    | **Optional** |                     | List of entity ids describing child entities (branches). Only entities from subsequent sections will be connected.
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | color             | string  | **Optional** | var(--primary-color)| Color of the box
 | color_on_state    | boolean | **Optional** | false               | Color the box based on state value
