@@ -1,5 +1,5 @@
 import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from "./const";
-import { Box, Config, Connection, EntityConfigOrStr, SankeyChartConfig, SectionConfig } from "./types";
+import { Box, Config, Connection, ConnectionState, EntityConfigOrStr, SankeyChartConfig, Section, SectionConfig } from "./types";
 
 export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
@@ -41,55 +41,61 @@ export function getEntityId(entity: EntityConfigOrStr): string {
   return typeof entity === 'string' ? entity : entity.entity_id;
 }
 
-export function getChildConnections(parent: Box, children: Box[]): Connection[] {
-  let accountedStartState = 0;
-  return children.map(c => {
-    const remainingStartState = parent.state - accountedStartState;
-    // remaining c.state could be less because of previous connections
-    const accountedEndState = c.connections.parents.reduce((sum, c) => sum + c.state, 0);
-    const remainingEndState = c.state - accountedEndState;
-    const connectionState = Math.min(remainingStartState, remainingEndState);
-    if (connectionState <= 0) {
-      // only continue if this connection will be rendered
-      return {state: connectionState} as Connection;
+export function getChildConnections(parent: Box, children: Box[], connections?: ConnectionState[]): Connection[] {
+  if (parent.config.type === 'remaining_parent_state') {
+    return [];
+  }
+  return children.map(child => {
+    const connection = connections?.find(c => c.child.entity_id === child.entity_id);
+    if (!connection) {
+      throw new Error('Missing connection');
     }
-    const startY = accountedStartState / parent.state * parent.size + parent.top;
-    const startSize = Math.max(connectionState / parent.state * parent.size, 0);
-    const endY = accountedEndState / c.state * c.size + c.top;
-    const endSize = Math.max(connectionState / c.state * c.size, 0);
-    accountedStartState += connectionState;
+    const {state, prevParentState, prevChildState} = connection;
+    if (state <= 0) {
+      // only continue if this connection will be rendered
+      return {state} as Connection;
+    }
+    const startY = prevParentState / parent.state * parent.size + parent.top;
+    const startSize = Math.max(state / parent.state * parent.size, 0);
+    const endY = prevChildState / child.state * child.size + child.top;
+    const endSize = Math.max(state / child.state * child.size, 0);
 
-    const connection = {
+    return {
       startY,
       startSize,
       startColor: parent.color,
       endY,
       endSize,
-      endColor: c.color,
-      state: connectionState,
+      endColor: child.color,
+      state,
     };
-    return connection;
   });
 }
 
 export function normalizeConfig(conf: SankeyChartConfig): Config {
   const config = cloneObj(conf);
 
-  const sections = config.sections.map((section: SectionConfig, sectionIndex: number) => ({
-    entities: section.entities.map(conf => {
-      const entityConf = typeof conf === 'string' 
-        ? {...DEFAULT_ENTITY_CONF, entity_id: conf} 
-        : {...DEFAULT_ENTITY_CONF, ...conf};
-      if (entityConf.children) {
+  const sections: Section[] = config.sections.map((section: SectionConfig) => ({
+    ...section,
+    entities: section.entities.map(entityConf => (
+      typeof entityConf === 'string' 
+        ? {...DEFAULT_ENTITY_CONF, children: [], entity_id: entityConf} 
+        : {...DEFAULT_ENTITY_CONF, children: [], ...entityConf}
+    )),
+  }));
+  sections.forEach((section: Section, sectionIndex: number) => {
+    section.entities.forEach(entityConf => {
+      // handle passthrough
+      if (entityConf.children && entityConf.children.length) {
         entityConf.children.forEach(child => {
-          for (let i = sectionIndex + 1; i < config.sections.length; i++) {
-            const childConf = config.sections[i].entities.find(
+          for (let i = sectionIndex + 1; i < sections.length; i++) {
+            const childConf = sections[i].entities.find(
               entity => getEntityId(entity) === child
             );
             if (childConf) {
               if (i > sectionIndex + 1) {
                 for (let j = sectionIndex + 1; j < i; j++) {
-                  config.sections[j].entities.push({
+                  sections[j].entities.push({
                     ...(typeof childConf === 'string' ? {entity_id: childConf} : childConf),
                     type: 'passthrough',
                     children: [child],
@@ -101,9 +107,41 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
           }
         });
       }
-      return entityConf;
-    }),
-  }));
+      // handle legacy remaining
+      if (entityConf.remaining) {
+        if (sectionIndex === sections.length - 1) {
+          console.warn('Can\'t use `remaining` option in the last section');
+        } else {
+          console.warn('The `remaining` option is deprecated. Use `type: remaining_parent_state` instead.');
+          let children = entityConf.children || [];
+          let lastChildIndex = 0;
+          const nextSectionEntities = sections[sectionIndex + 1].entities;
+          while (children.length && lastChildIndex < nextSectionEntities.length) {
+            children = children.filter(c => c !== nextSectionEntities[lastChildIndex].entity_id);
+            lastChildIndex++;
+          }
+          const newChildId = 'remaining' + Date.now() + Math.random();
+          const remainingConf = typeof entityConf.remaining === 'string'
+            ? {name: entityConf.remaining} : entityConf.remaining;
+          entityConf.children = [...entityConf.children, newChildId];
+          sections[sectionIndex + 1].entities = [
+            ...nextSectionEntities.slice(0, lastChildIndex),
+            {
+              ...entityConf, 
+              ...remainingConf, 
+              entity_id: newChildId, 
+              type: 'remaining_parent_state', 
+              remaining: undefined,
+              // children: [],
+              // accountedState: 0,
+              // foundChildren: [],
+            },
+            ...nextSectionEntities.slice(lastChildIndex),
+          ];
+        }
+      }
+    })
+  });
 
   return {
     height: 200,
