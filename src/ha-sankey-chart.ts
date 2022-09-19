@@ -173,7 +173,11 @@ export class SankeyChart extends LitElement {
     this.connections.forEach((c) => this._calcConnection(c, accountedIn, accountedOut));
   }
 
-  private _calcConnection(connection: ConnectionState, accountedIn, accountedOut) {
+  private _calcConnection(
+    connection: ConnectionState,
+    accountedIn: Map<EntityConfigInternal, number>,
+    accountedOut: Map<EntityConfigInternal, number>,
+  ) {
     const { parent, child } = connection;
     if (parent.type === 'remaining_child_state') {
       this.connectionsByParent.get(parent)!.forEach((c) => {
@@ -236,41 +240,11 @@ export class SankeyChart extends LitElement {
     return this.entityStates.get(entityConf)!;
   }
 
-  // private _getStates() {
-  //   // @TODO error handling
-  //   // const errEntityId = this.entityIds.find(ent => !this._getEntityState({entity_id: ent}));
-  //   // if (errEntityId) {
-  //   //   throw new Error(localize('common.entity_not_found') + ' ' + errEntityId);
-  //   // }
-  //   this.entityIds.forEach((val, entityId) => {
-  //     const entity = this._getEntityState(entityId);
-  //     // eslint-disable-next-line prefer-const
-  //     let {state, unit_of_measurement} = normalizeStateValue(
-  //       this.config.unit_prefix,
-  //       Number(entity.state),
-  //       entity.attributes.unit_of_measurement
-  //     );
-  //   });
-  // }
-
-  private _calcElements() {
+  private _calcBoxes() {
     this.statePerPixelY = 0;
-    // const extraEntities: EntityConfigInternal[][] = this.config.sections.map(() => []);
     this.sections = this.config.sections
       .map((section, sectionIndex) => {
         let total = 0;
-        // const allSectionEntities = section.entities.reduce((acc, entityConf) => {
-        //   const other = extraEntities[sectionIndex]
-        //     .find(e => {
-        //       if (e.children?.includes(entityConf.entity_id)) {
-        //         e.foundChildren?.push(entityConf.entity_id);
-        //         return e.foundChildren?.length === e.children.length;
-        //       }
-        //       return false;
-        //     });
-        //   // position 'remaining' boxes right after all other children of the same parent
-        //   return other ? [...acc, entityConf, other] : [...acc, entityConf];
-        // }, [] as EntityConfigInternal[]);
         let boxes: Box[] = section.entities
           .filter((entityConf) => {
             // remove empty entity boxes
@@ -282,38 +256,9 @@ export class SankeyChart extends LitElement {
             }
             return this._getMemoizedState(entityConf).state;
           })
-          // .filter(entity => {
-          //   const state = Number(this._getEntityState(entity).state);
-          //   return !isNaN(state) && state > 0;
-          // })
           .map((entityConf) => {
             const { state, unit_of_measurement } = this._getMemoizedState(entityConf);
-            // if (entityConf.accountedState) {
-            //   state = Math.max(0, state - entityConf.accountedState);
-            // }
             total += state;
-            // if (extraEntities[sectionIndex]) {
-            //   extraEntities[sectionIndex].forEach(e => {
-            //     if (e.children?.includes(entityConf.entity_id)) {
-            //       e.accountedState! += state;
-            //     }
-            //   });
-            // }
-
-            // const children = entityConf.children || [];
-            // if (entityConf.remaining && extraEntities[sectionIndex + 1]) {
-            //   children = [...children, entityConf.entity_id];
-            //   const remainingConf = typeof entityConf.remaining === 'string'
-            //     ? {name: entityConf.remaining} : entityConf.remaining;
-            //   extraEntities[sectionIndex + 1].push({
-            //     ...entityConf,
-            //     color: undefined,
-            //     ...remainingConf,
-            //     type: 'remaining_parent_state',
-            //     accountedState: 0,
-            //     foundChildren: [],
-            //   });
-            // }
 
             let finalColor = entityConf.color || 'var(--primary-color)';
             if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
@@ -490,7 +435,7 @@ export class SankeyChart extends LitElement {
     }
 
     let entity = this.hass.states[getEntityId(entityConf)];
-    
+
     if (entityConf.type === 'passthrough') {
       const connections = this.connectionsByChild.get(entityConf)!;
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
@@ -501,7 +446,7 @@ export class SankeyChart extends LitElement {
     if (typeof entityConf === 'object' && entityConf.attribute) {
       entity = { ...entity, state: entity.attributes[entityConf.attribute] } as HassEntity;
       if (entityConf.unit_of_measurement) {
-        entity = { ...entity, attributes: { unit_of_measurement: entityConf.unit_of_measurement }};
+        entity = { ...entity, attributes: { unit_of_measurement: entityConf.unit_of_measurement } };
       }
     }
     return entity;
@@ -547,7 +492,9 @@ export class SankeyChart extends LitElement {
                 @click=${() => this._handleBoxClick(box)}
                 title=${name}
               >
-                ${show_icons && isNotPassthrough ? html`<ha-icon .icon=${stateIcon(entity as HassEntity)}></ha-icon>` : null}
+                ${show_icons && isNotPassthrough
+                  ? html`<ha-icon .icon=${stateIcon(entity as HassEntity)}></ha-icon>`
+                  : null}
               </div>
               <div class="label" style=${styleMap(labelStyle)}>
                 ${show_states && isNotPassthrough
@@ -623,7 +570,7 @@ export class SankeyChart extends LitElement {
     // }
     try {
       this._calcConnections();
-      this._calcElements();
+      this._calcBoxes();
     } catch (err) {
       return html`${until(this._showError(String(err)))}`;
     }
