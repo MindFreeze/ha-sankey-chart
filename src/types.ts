@@ -11,17 +11,19 @@ declare global {
 
 type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
 
-export type EntityConfig = {
+export interface EntityConfig {
   entity_id: string;
   attribute?: string;
   type?: BoxType;
   children?: string[];
+  unit_of_measurement?: string; // for attribute
   color?: string;
   name?: string;
   color_on_state?: boolean;
   color_above?: string;
   color_below?: string;
   color_limit?: number;
+  // @deprecated
   remaining?: string | {
     name: string;
     color?: string;
@@ -29,7 +31,7 @@ export type EntityConfig = {
 }
 
 export type EntityConfigInternal = EntityConfig & {
-  // children: string[];
+  children: string[];
   accountedState?: number;
   foundChildren?: string[];
 }
@@ -57,15 +59,17 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   throttle?: number,
 }
 
+export interface Section {
+  entities: EntityConfigInternal[];
+}
+
 export interface Config extends SankeyChartConfig {
   unit_prefix: '' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;
   min_box_height: number;
   min_box_distance: number;
-  sections: {
-    entities: EntityConfig[];
-  }[];
+  sections: Section[];
 }
 
 export interface Connection {
@@ -79,8 +83,10 @@ export interface Connection {
 }
 
 export interface Box {
-  config: EntityConfig;
-  entity: HassEntity;
+  config: EntityConfigInternal;
+  entity: Omit<HassEntity, 'state'> & {
+    state: string | number;
+  };
   entity_id: string;
   state: number;
   unit_of_measurement?: string;
@@ -99,4 +105,18 @@ export interface SectionState {
   total: number,
   spacerH: number,
   statePerPixelY: number,
+}
+
+export interface ConnectionState {
+  parent: EntityConfigInternal,
+  child: EntityConfigInternal,
+  state: number,
+  prevParentState: number,
+  prevChildState: number,
+  ready: boolean,
+}
+
+export interface NormalizedState {
+  state: number,
+  unit_of_measurement?: string,
 }
