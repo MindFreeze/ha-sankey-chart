@@ -66,7 +66,7 @@ This card is intended to display connections between entities with numeric state
 ## Examples
 
 - `entity` - The default value, representing an entity from HA
-- `passthrough` - Used for connecting entities across sections, passing through intermediate sections. The card creates such passtroughs automatically when needed but you can create them manually in order to have the connection pass through a specific place. Here is an example passthrough config:
+- `passthrough` - Used for connecting entities across sections, passing through intermediate sections. The card creates such passtroughs automatically when needed but you can create them manually in order to have the connection pass through a specific place. See issue [#9](https://github.com/MindFreeze/ha-sankey-chart/issues/9). Here is an example passthrough config:
 
 ```yaml
 - entity_id: sensor.child_sensor
