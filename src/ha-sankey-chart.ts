@@ -178,12 +178,15 @@ export class SankeyChart extends LitElement {
     accountedIn: Map<EntityConfigInternal, number>,
     accountedOut: Map<EntityConfigInternal, number>,
   ) {
+    if (connection.ready) {
+      return;
+    }
     const { parent, child } = connection;
     if (parent.type === 'remaining_child_state') {
       this.connectionsByParent.get(parent)!.forEach((c) => {
         if (!c.ready) {
           this.connectionsByChild.get(c.child)?.forEach((conn) => {
-            if (!conn.ready && conn !== connection) {
+            if (conn !== connection) {
               this._calcConnection(conn, accountedIn, accountedOut);
             }
           });
@@ -194,7 +197,7 @@ export class SankeyChart extends LitElement {
       this.connectionsByChild.get(child)!.forEach((c) => {
         if (!c.ready) {
           this.connectionsByParent.get(c.parent)?.forEach((conn) => {
-            if (!conn.ready && conn !== connection) {
+            if (conn !== connection) {
               this._calcConnection(conn, accountedIn, accountedOut);
             }
           });
@@ -243,7 +246,7 @@ export class SankeyChart extends LitElement {
   private _calcBoxes() {
     this.statePerPixelY = 0;
     this.sections = this.config.sections
-      .map((section, sectionIndex) => {
+      .map(section => {
         let total = 0;
         let boxes: Box[] = section.entities
           .filter((entityConf) => {
@@ -422,13 +425,19 @@ export class SankeyChart extends LitElement {
 
   private _getEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
-      const connections = this.connectionsByChild.get(entityConf)!;
+      const connections = this.connectionsByChild.get(entityConf);
+      if (!connections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
       const { parent } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       return { ...this.hass.states[parent.entity_id], state };
     }
     if (entityConf.type === 'remaining_child_state') {
-      const connections = this.connectionsByParent.get(entityConf)!;
+      const connections = this.connectionsByParent.get(entityConf);
+      if (!connections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
       const { child } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       return { ...this.hass.states[child.entity_id], state };
@@ -437,7 +446,10 @@ export class SankeyChart extends LitElement {
     let entity = this.hass.states[getEntityId(entityConf)];
 
     if (entityConf.type === 'passthrough') {
-      const connections = this.connectionsByChild.get(entityConf)!;
+      const connections = this.connectionsByChild.get(entityConf);
+      if (!connections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       if (state !== Infinity) {
         return { ...entity, state };
@@ -446,7 +458,10 @@ export class SankeyChart extends LitElement {
     if (typeof entityConf === 'object' && entityConf.attribute) {
       entity = { ...entity, state: entity.attributes[entityConf.attribute] } as HassEntity;
       if (entityConf.unit_of_measurement) {
-        entity = { ...entity, attributes: { unit_of_measurement: entityConf.unit_of_measurement } };
+        entity = { 
+          ...entity, 
+          attributes: { ...entity.attributes, unit_of_measurement: entityConf.unit_of_measurement } 
+        };
       }
     }
     return entity;
@@ -572,6 +587,7 @@ export class SankeyChart extends LitElement {
       this._calcConnections();
       this._calcBoxes();
     } catch (err) {
+      console.error(err);
       return html`${until(this._showError(String(err)))}`;
     }
 
