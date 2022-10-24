@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.0.0...v1.1.0) (2022-10-24)
+
+
+### Features
+
+* **39:** highlight entity connections on hover ([559cf06](https://github.com/MindFreeze/ha-sankey-chart/commit/559cf064c5e35d44b2da33c488c090beeeb24578))
+
 ## [1.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v0.11.0...v1.0.0) (2022-10-24)
 
 
