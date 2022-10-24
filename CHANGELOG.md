@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v0.11.0...v1.0.0) (2022-10-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **28:** configurable object locations
+
+### Features
+
+* **15:** show missing parent state via `remaining_child_state` ([96927e1](https://github.com/MindFreeze/ha-sankey-chart/commit/96927e1dadf796b2d54580c537fef0a4ddcd0034))
+* **28:** calc all connections first ([8a58ddf](https://github.com/MindFreeze/ha-sankey-chart/commit/8a58ddf92fdd3239cdcbce290b6ddd5c9327df05))
+* **28:** configurable object locations ([96927e1](https://github.com/MindFreeze/ha-sankey-chart/commit/96927e1dadf796b2d54580c537fef0a4ddcd0034))
+
+
+### Bug Fixes
+
+* a few fixes for entity types ([1c75c01](https://github.com/MindFreeze/ha-sankey-chart/commit/1c75c01f18a8f25285d8ac80056a1090e5a815f3))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([35859ae](https://github.com/MindFreeze/ha-sankey-chart/commit/35859aefe18d04864a46c01d8e3842478c9c517e))
+
 ## [0.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v0.10.1...v0.11.0) (2022-08-07)
 
 
