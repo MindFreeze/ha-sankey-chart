@@ -55,6 +55,9 @@ export default css`
     .box.type-passthrough div:first-child {
         opacity: 0.4;
     }
+    .box.type-passthrough div.hl:first-child {
+        opacity: 0.85;
+    }
     .box .label {
         flex: 1;
         display: flex;
@@ -77,9 +80,5 @@ export default css`
     .connectors svg {
         width: 100%;
         height: 100%;
-    }
-    .connectors path {
-        /* fill: var(--primary-color); */
-        opacity: 0.4;
     }
 `;

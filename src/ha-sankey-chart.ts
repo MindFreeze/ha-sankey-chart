@@ -74,6 +74,7 @@ export class SankeyChart extends LitElement {
   @state() private statePerPixelY = 0;
   @state() private lastUpdate = 0;
   @state() private entityStates: Map<EntityConfigInternal, NormalizedState> = new Map();
+  @state() private highlightedEntities: EntityConfigInternal[] = [];
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
@@ -135,6 +136,9 @@ export class SankeyChart extends LitElement {
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
       return false;
+    }
+    if (changedProps.has('highlightedEntities')) {
+      return true;
     }
     const now = Date.now();
     if (this.config.throttle && now - this.lastUpdate < this.config.throttle) {
@@ -386,8 +390,37 @@ export class SankeyChart extends LitElement {
     return { boxes: result, statePerPixelY: this.statePerPixelY };
   }
 
+  private highlightPath(entityConf: EntityConfigInternal, direction: 'parents' | 'children') {
+    this.highlightedEntities.push(entityConf);
+    if (direction === 'children') {
+      this.connectionsByParent.get(entityConf)?.forEach(c => {
+        c.highlighted = true;
+        this.highlightPath(c.child, 'children');
+      });
+    } else {
+      this.connectionsByChild.get(entityConf)?.forEach(c => {
+        c.highlighted = true;
+        this.highlightPath(c.parent, 'parents');
+      });
+    }
+  }
+
   private _handleBoxClick(box: Box): void {
     fireEvent(this, 'hass-more-info', { entityId: box.entity_id });
+  }
+
+  private _handleMouseEnter(box: Box): void {
+    this.highlightPath(box.config, 'children');
+    this.highlightPath(box.config, 'parents');
+    // trigger rerender
+    this.highlightedEntities = [...this.highlightedEntities];
+  }
+
+  private _handleMouseLeave(): void {
+    this.highlightedEntities = [];
+    this.connections.forEach(c => {
+      c.highlighted = false;
+    });
   }
 
   // private _handleAction(ev: ActionHandlerEvent): void {
@@ -505,7 +538,10 @@ export class SankeyChart extends LitElement {
               <div
                 style=${styleMap({ backgroundColor: box.color })}
                 @click=${() => this._handleBoxClick(box)}
+                @mouseenter=${() => this._handleMouseEnter(box)}
+                @mouseleave=${this._handleMouseLeave}
                 title=${name}
+                class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
               >
                 ${show_icons && isNotPassthrough
                   ? html`<ha-icon .icon=${stateIcon(entity as HassEntity)}></ha-icon>`
@@ -570,7 +606,7 @@ export class SankeyChart extends LitElement {
           <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY + c.endSize} C50,${
             c.endY + c.endSize
           } 50,${c.startY + c.startSize} 0,${c.startY + c.startSize} Z"
-            fill="url(#gradient${b.entity_id + i})" />
+            fill="url(#gradient${b.entity_id + i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
         `,
         )}
       `;

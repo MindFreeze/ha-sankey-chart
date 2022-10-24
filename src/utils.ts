@@ -68,6 +68,7 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
       endSize,
       endColor: child.color,
       state,
+      highlighted: connection.highlighted,
     };
   });
 }

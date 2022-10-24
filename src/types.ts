@@ -80,6 +80,7 @@ export interface Connection {
   state: number;
   startColor?: string;
   endColor?: string;
+  highlighted?: boolean,
 }
 
 export interface Box {
@@ -114,6 +115,7 @@ export interface ConnectionState {
   prevParentState: number,
   prevChildState: number,
   ready: boolean,
+  highlighted?: boolean,
 }
 
 export interface NormalizedState {
