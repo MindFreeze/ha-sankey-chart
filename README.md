@@ -141,10 +141,9 @@ This card is intended to display connections between entities with numeric state
     - entities:
         - entity_id: sensor.garage
           color: purple
-          remaining:
-            name: Other
           children:
             - sensor.ev_charger
+            - garage_other
         - entity_id: sensor.floor1
           children:
             - sensor.living_room
@@ -152,6 +151,9 @@ This card is intended to display connections between entities with numeric state
         - entity_id: sensor.floor2
     - entities:
         - sensor.ev_charger
+        - entity_id: garage_other
+          type: remaining_parent_state
+          name: Other
         - sensor.living_room
         - sensor.washer
 ```
