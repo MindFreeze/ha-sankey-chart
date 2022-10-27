@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.1.0...v1.1.1) (2022-10-27)
+
+
+### Bug Fixes
+
+* **48:** fixed rendering issue with remaining power ([25fb509](https://github.com/MindFreeze/ha-sankey-chart/commit/25fb5092a63ab637968d510ce54636b2eb195025))
+
 ## [1.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.0.0...v1.1.0) (2022-10-24)
 
 
