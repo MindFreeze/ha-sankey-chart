@@ -464,7 +464,13 @@ export class SankeyChart extends LitElement {
       }
       const { parent } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      return { ...this.hass.states[parent.entity_id], state };
+      const parentEntity = this._getEntityState(parent);
+      const { unit_of_measurement } = normalizeStateValue(
+        this.config.unit_prefix,
+        0,
+        parentEntity.attributes.unit_of_measurement,
+      );
+      return { ...parentEntity, state, attributes: { ...parentEntity.attributes, unit_of_measurement } };
     }
     if (entityConf.type === 'remaining_child_state') {
       const connections = this.connectionsByParent.get(entityConf);
