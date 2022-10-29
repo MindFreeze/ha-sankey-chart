@@ -63,8 +63,6 @@ This card is intended to display connections between entities with numeric state
 
 ### Entity types
 
-## Examples
-
 - `entity` - The default value, representing an entity from HA
 - `passthrough` - Used for connecting entities across sections, passing through intermediate sections. The card creates such passtroughs automatically when needed but you can create them manually in order to have the connection pass through a specific place. See issue [#9](https://github.com/MindFreeze/ha-sankey-chart/issues/9). Here is an example passthrough config:
 
@@ -90,6 +88,8 @@ This card is intended to display connections between entities with numeric state
   type: remaining_child_state
   name: Discrepancy
 ```
+
+## Examples
 
 ### Simple
 
@@ -157,6 +157,8 @@ This card is intended to display connections between entities with numeric state
         - sensor.living_room
         - sensor.washer
 ```
+
+You can find more examples and help in the HA forum <https://community.home-assistant.io/t/anyone-using-the-sankey-chart-card/423125>
 
 ## Development
 
