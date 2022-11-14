@@ -63,11 +63,11 @@ export class SankeyChart extends LitElement {
 
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) private entityIds: string[] = [];
 
   @state() private config!: Config;
   @state() public height = 200;
   @state() private sections: SectionState[] = [];
+  @state() private entityIds: string[] = [];
   @state() private connections: ConnectionState[] = [];
   @state() private connectionsByParent: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private connectionsByChild: Map<EntityConfigInternal, ConnectionState[]> = new Map();
