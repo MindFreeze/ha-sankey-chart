@@ -11,6 +11,8 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 This card is intended to display connections between entities with numeric state. It is not a general graph card.
 
+Supports partial Energy dashboard integration. You still need to specify the entities and connections for now. See `energy_date_selection` option.
+
 ![Example card](img/example.png)
 
 ## Options
@@ -19,7 +21,7 @@ This card is intended to display connections between entities with numeric state
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | type              | string  | **Required** |                     | `custom:sankey-chart`
 | sections          | list    | **Required** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
-| energy_date_selection | boolean | **Optional** | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them. In the future we may use areas to auto configure the chart.
+| energy_date_selection | boolean | **Optional** | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
 | title             | string  | **Optional** |                     | Optional header title for the card
 | unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
 | round             | number  | **Optional** | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
