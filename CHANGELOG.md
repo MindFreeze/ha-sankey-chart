@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.1.1...v1.2.0) (2022-11-15)
+
+
+### Features
+
+* Energy dashboard integration! See `energy_date_selection` in README ([a8b0e9d](https://github.com/MindFreeze/ha-sankey-chart/commit/a8b0e9d7e462e597a9e4ca7f9fd3a656745fac95))
+
+
+### Bug Fixes
+
+* negative values are now treated as 0 ([b3abe29](https://github.com/MindFreeze/ha-sankey-chart/commit/b3abe292341ea0f2a19d66ed9041b892781bb945))
+
 ## [1.1.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.1.0...v1.1.1) (2022-10-27)
 
 
