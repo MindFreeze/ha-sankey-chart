@@ -4,6 +4,7 @@
     "invalid_configuration": "Invalid configuration",
     "show_warning": "Show Warning",
     "entity_not_found": "Entity state not found",
-    "missing_child": "Missing child entity"
+    "missing_child": "Missing child entity",
+    "loading": "Loading..."
   }
 }

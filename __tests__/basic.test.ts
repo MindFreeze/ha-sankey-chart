@@ -38,7 +38,6 @@ describe('SankeyChart', () => {
     sankeyChart = window.document.createElement(ROOT_TAG) as SankeyChart;
     // @ts-ignore
     sankeyChart.hass = hass as HomeAssistant;
-    document.body.appendChild(sankeyChart);
   });
 
   afterEach(() => {
@@ -61,6 +60,7 @@ describe('SankeyChart', () => {
       ],
     };
     sankeyChart.setConfig(config);
+    document.body.appendChild(sankeyChart);
     await sankeyChart.updateComplete;
 
     expect(sankeyChart.shadowRoot?.innerHTML.replace(/<!--.+-->/g, '')).toMatchSnapshot();

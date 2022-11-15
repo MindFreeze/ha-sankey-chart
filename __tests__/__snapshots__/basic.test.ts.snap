@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SankeyChart aaaaaaaaaaaa 1`] = `
+exports[`SankeyChart matches a simple snapshot 1`] = `
 "<!---->
       <ha-card tabindex="0" label="Sankey Chart">
         <div class=" container " style="height:200px;">
@@ -160,4 +160,10 @@ exports[`SankeyChart aaaaaaaaaaaa 1`] = `
         height: 100%;
     }
 </style>"
+`;
+
+exports[`SankeyChart matches a simple snapshot 1`] = `
+"<!---->
+      <sankey-chart-base></sankey-chart-base>
+    "
 `;

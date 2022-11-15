@@ -48,7 +48,7 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
   return children.map(child => {
     const connection = connections?.find(c => c.child.entity_id === child.entity_id);
     if (!connection) {
-      throw new Error('Missing connection');
+      throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
     }
     const {state, prevParentState, prevChildState} = connection;
     if (state <= 0) {
