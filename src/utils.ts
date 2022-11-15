@@ -22,17 +22,18 @@ export function normalizeStateValue(
   state: number,
   unit_of_measurement?: string,
 ): { state: number; unit_of_measurement?: string } {
+  const validState = Math.max(0, state);
   if (!unit_of_measurement) {
-    return { state, unit_of_measurement };
+    return { state: validState, unit_of_measurement };
   }
   const prefix = Object.keys(UNIT_PREFIXES).find((p) => unit_of_measurement!.indexOf(p) === 0) || '';
   const currentFactor = UNIT_PREFIXES[prefix] || 1;
   const targetFactor = UNIT_PREFIXES[unit_prefix] || 1;
   if (currentFactor === targetFactor) {
-    return { state, unit_of_measurement };
+    return { state: validState, unit_of_measurement };
   }
   return {
-    state: (state * currentFactor) / targetFactor,
+    state: (validState * currentFactor) / targetFactor,
     unit_of_measurement: prefix ? unit_of_measurement.replace(prefix, unit_prefix) : unit_prefix + unit_of_measurement,
   };
 }
