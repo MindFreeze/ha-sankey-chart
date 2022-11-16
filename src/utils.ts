@@ -43,9 +43,6 @@ export function getEntityId(entity: EntityConfigOrStr): string {
 }
 
 export function getChildConnections(parent: Box, children: Box[], connections?: ConnectionState[]): Connection[] {
-  if (parent.config.type === 'remaining_parent_state') {
-    return [];
-  }
   return children.map(child => {
     const connection = connections?.find(c => c.child.entity_id === child.entity_id);
     if (!connection) {
@@ -134,7 +131,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
               entity_id: newChildId, 
               type: 'remaining_parent_state', 
               remaining: undefined,
-              // children: [],
+              children: [],
               // accountedState: 0,
               // foundChildren: [],
             },

@@ -72,31 +72,29 @@ export class Chart extends LitElement {
           if (ent.type === 'entity') {
             this.entityIds.push(ent.entity_id);
           }
-          if (ent.type !== 'remaining_parent_state') {
-            ent.children.forEach((childId) => {
-              const child = this.config.sections[sectionIndex + 1]?.entities.find((e) => e.entity_id === childId);
-              if (!child) {
-                throw new Error(localize('common.missing_child') + ' ' + childId);
-              }
-              const connection: ConnectionState = {
-                parent: ent,
-                child,
-                state: 0,
-                prevParentState: 0,
-                prevChildState: 0,
-                ready: false,
-              };
-              this.connections.push(connection);
-              if (!this.connectionsByParent.has(ent)) {
-                this.connectionsByParent.set(ent, []);
-              }
-              this.connectionsByParent.get(ent)!.push(connection);
-              if (!this.connectionsByChild.has(child)) {
-                this.connectionsByChild.set(child, []);
-              }
-              this.connectionsByChild.get(child)!.push(connection);
-            });
-          }
+          ent.children.forEach((childId) => {
+            const child = this.config.sections[sectionIndex + 1]?.entities.find((e) => e.entity_id === childId);
+            if (!child) {
+              throw new Error(localize('common.missing_child') + ' ' + childId);
+            }
+            const connection: ConnectionState = {
+              parent: ent,
+              child,
+              state: 0,
+              prevParentState: 0,
+              prevChildState: 0,
+              ready: false,
+            };
+            this.connections.push(connection);
+            if (!this.connectionsByParent.has(ent)) {
+              this.connectionsByParent.set(ent, []);
+            }
+            this.connectionsByParent.get(ent)!.push(connection);
+            if (!this.connectionsByChild.has(child)) {
+              this.connectionsByChild.set(child, []);
+            }
+            this.connectionsByChild.get(child)!.push(connection);
+          });
         });
       });
     }
