@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.2.0...v1.3.0) (2022-11-16)
+
+
+### Features
+
+* allow children of `remaining_parent_state` entities ([2626001](https://github.com/MindFreeze/ha-sankey-chart/commit/2626001ca2f30e51678c82c5ed3369bac43804d3))
+
 ## [1.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.1.1...v1.2.0) (2022-11-15)
 
 
