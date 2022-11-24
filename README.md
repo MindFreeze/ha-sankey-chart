@@ -11,8 +11,6 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 
 This card is intended to display connections between entities with numeric state. It is not a general graph card.
 
-Supports partial Energy dashboard integration. You still need to specify the entities and connections for now. See `energy_date_selection` option.
-
 ![Example card](img/example.png)
 
 ## Options
@@ -112,7 +110,7 @@ Supports partial Energy dashboard integration. You still need to specify the ent
       - sensor.other_power
 ```
 
-### Daily energy use
+### Energy use
 
 ![Energy example card](img/example-energy.png)
 
@@ -127,16 +125,16 @@ Supports partial Energy dashboard integration. You still need to specify the ent
         - entity_id: sensor.solar
           color: var(--warning-color)
           children:
-            - sensor.daily_energy
+            - sensor.total_energy
         - entity_id: sensor.grid
           children:
-            - sensor.daily_energy
+            - sensor.total_energy
         - entity_id: sensor.battery
           color: var(--success-color)
           children:
-            - sensor.daily_energy
+            - sensor.total_energy
     - entities:
-        - entity_id: sensor.daily_energy
+        - entity_id: sensor.total_energy
           children:
             - sensor.floor1
             - sensor.floor2
@@ -162,6 +160,16 @@ Supports partial Energy dashboard integration. You still need to specify the ent
 ```
 
 You can find more examples and help in the HA forum <https://community.home-assistant.io/t/anyone-using-the-sankey-chart-card/423125>
+
+## Energy Dashboard
+
+This card supports partial Energy dashboard integration. You still need to specify the entities and connections for now. See `energy_date_selection` option.
+
+Currently this chart just shows historical data based on a energy-date-selection card. It doesn’t know/care if your entities are in the default energy dashboard.
+
+### Total [daily] energy
+
+There isn’t a general Consumed Energy sensor in the HA Energy dashboard AFAIK. HA calculates it based on all the in/out kWh values. I can’t tell you exactly how to calculate it because it depends on what values you can monitor. Some people already have a Total Consumption sensor, others have a Current Consumption and create an integration sensor from that, etc.
 
 ## Development
 
