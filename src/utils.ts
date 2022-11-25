@@ -43,17 +43,20 @@ export function getEntityId(entity: EntityConfigOrStr): string {
 }
 
 export function getChildConnections(parent: Box, children: Box[], connections?: ConnectionState[]): Connection[] {
+  // @NOTE don't take prevParentState from connection because it is different
+  let prevParentState = 0;
   return children.map(child => {
     const connection = connections?.find(c => c.child.entity_id === child.entity_id);
     if (!connection) {
       throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
     }
-    const {state, prevParentState, prevChildState} = connection;
+    const {state, prevChildState} = connection;
     if (state <= 0) {
       // only continue if this connection will be rendered
       return {state} as Connection;
     }
     const startY = prevParentState / parent.state * parent.size + parent.top;
+    prevParentState += state;
     const startSize = Math.max(state / parent.state * parent.size, 0);
     const endY = prevChildState / child.state * child.size + child.top;
     const endSize = Math.max(state / child.state * child.size, 0);
