@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.0...v1.3.1) (2022-11-25)
+
+
+### Bug Fixes
+
+* fixed rendering order of connections ([e5eb1c1](https://github.com/MindFreeze/ha-sankey-chart/commit/e5eb1c11ec08d104cc1c2a3093f4f8fb3b516eab))
+
 ## [1.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.2.0...v1.3.0) (2022-11-16)
 
 
