@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.1...v1.3.2) (2022-11-27)
+
+
+### Bug Fixes
+
+* **#56:** fix overwriting global hass state bug ([132a725](https://github.com/MindFreeze/ha-sankey-chart/commit/132a7253d29064481c35c7b84581323040895fab))
+
 ## [1.3.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.0...v1.3.1) (2022-11-25)
 
 
