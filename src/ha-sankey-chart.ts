@@ -73,8 +73,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
           const stats = await getStatistics(this.hass, data, this.entityIds);
           const states: HassEntities = {};
           Object.keys(stats).forEach(id => {
-            states[id] = this.hass.states[id];
-            states[id].state = String(stats[id]);
+            states[id] = {...this.hass.states[id], state: String(stats[id])};
           });
           this.states = states;
           // this.requestUpdate();
