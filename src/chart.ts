@@ -415,6 +415,9 @@ export class Chart extends LitElement {
     }
 
     let entity = this.states[getEntityId(entityConf)];
+    if (!entity) {
+      throw new Error('Entity not found ' + getEntityId(entityConf));
+    }
 
     if (entityConf.type === 'passthrough') {
       const connections = this.connectionsByChild.get(entityConf);
