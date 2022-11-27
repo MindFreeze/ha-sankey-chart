@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.2...v1.3.3) (2022-11-27)
+
+
+### Bug Fixes
+
+* fix for missing entities ([cf917cc](https://github.com/MindFreeze/ha-sankey-chart/commit/cf917cca92cbfb2cfd4f068c01fc7285e2c93bce))
+* fix Maximum call stack size exceeded error with remaining_*_state ([3b7c4f7](https://github.com/MindFreeze/ha-sankey-chart/commit/3b7c4f7cac5909a5384bc8a0a91b90e2fad5837f))
+
 ## [1.3.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.1...v1.3.2) (2022-11-27)
 
 
