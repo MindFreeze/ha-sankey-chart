@@ -122,7 +122,7 @@ export class Chart extends LitElement {
       this.connectionsByParent.get(parent)!.forEach((c) => {
         if (!c.ready) {
           this.connectionsByChild.get(c.child)?.forEach((conn) => {
-            if (conn !== connection) {
+            if (conn.parent !== connection.parent) {
               this._calcConnection(conn, accountedIn, accountedOut);
             }
           });
@@ -133,7 +133,7 @@ export class Chart extends LitElement {
       this.connectionsByChild.get(child)!.forEach((c) => {
         if (!c.ready) {
           this.connectionsByParent.get(c.parent)?.forEach((conn) => {
-            if (conn !== connection) {
+            if (conn.child !== connection.child) {
               this._calcConnection(conn, accountedIn, accountedOut);
             }
           });
