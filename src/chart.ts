@@ -237,23 +237,9 @@ export class Chart extends LitElement {
         const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
         // calc sizes to determine statePerPixelY ratio and find the best one
         const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
-        boxes = calcResults.boxes;
-        const totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
-        const extraSpace = this.config.height - totalSize;
-        const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
-        let offset = 0;
-        boxes = boxes.map((box) => {
-          const top = offset;
-          offset += box.size + spacerH;
-          return {
-            ...box,
-            top,
-          };
-        });
         return {
-          boxes,
+          boxes: calcResults.boxes,
           total,
-          spacerH,
           statePerPixelY: calcResults.statePerPixelY,
         };
       })
@@ -276,7 +262,7 @@ export class Chart extends LitElement {
         }
         // calc vertical margin size
         const extraSpace = this.config.height - totalSize;
-        const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : 0;
+        const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : this.config.height;
         let offset = 0;
         // calc y positions. needed for connectors
         boxes = boxes.map((box) => {
