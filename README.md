@@ -46,7 +46,7 @@ This card is intended to display connections between entities with numeric state
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
 | type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
-| children          | list    | **Optional** |                     | List of entity ids describing child entities (branches). Only entities in subsequent sections will be connected.
+| children          | list    | **Optional** |                     | List of entity ids describing child entities (branches). Only entities in subsequent sections will be connected. *The last section must not contain `children:`*
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | color             | string  | **Optional** | var(--primary-color)| Color of the box
 | color_on_state    | boolean | **Optional** | false               | Color the box based on state value
@@ -167,9 +167,19 @@ This card supports partial Energy dashboard integration. You still need to speci
 
 Currently this chart just shows historical data based on a energy-date-selection card. It doesn’t know/care if your entities are in the default energy dashboard.
 
-### Total [daily] energy
+## FAQ
 
-There isn’t a general Consumed Energy sensor in the HA Energy dashboard AFAIK. HA calculates it based on all the in/out kWh values. I can’t tell you exactly how to calculate it because it depends on what values you can monitor. Some people already have a Total Consumption sensor, others have a Current Consumption and create an integration sensor from that, etc.
+**Q: Do my entities need to be added to the energy dashboard first?**
+
+**A:** This card doesn't know/care if an entity is in the energy dashboard.
+
+**Q: How do I get total [daily] energy?**
+
+**A:** There isn’t a general Consumed Energy sensor in the HA Energy dashboard AFAIK. HA calculates it based on all the in/out kWh values. I can’t tell you exactly how to calculate it because it depends on what values you can monitor. Some people already have a Total Consumption sensor, others have a Current Consumption and create an integration sensor from that, etc.
+
+**Q: Can I group/sum entities in the chart?**
+
+**A:** The easiest way is to do it with a template sensor in HA. However it can be done in the chart without a new HA entity. If you have an entity with `type: remaining_parent_state` and it is the only child of its parents, it will just be a sum of all the parents. Similarly if you have an entity with `type: remaining_child_state` and it is the only parent of all its children, it will be a sum of all the children.
 
 ## Development
 
