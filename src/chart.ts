@@ -118,29 +118,31 @@ export class Chart extends LitElement {
       return;
     }
     const { parent, child } = connection;
-    if (parent.type === 'remaining_child_state') {
-      this.connectionsByParent.get(parent)!.forEach((c) => {
-        if (!c.ready) {
-          this.connectionsByChild.get(c.child)?.forEach((conn) => {
-            if (conn.parent !== connection.parent) {
-              this._calcConnection(conn, accountedIn, accountedOut);
-            }
-          });
-        }
-      });
-    }
-    if (child.type === 'remaining_parent_state') {
-      this.connectionsByChild.get(child)!.forEach((c) => {
-        if (!c.ready) {
-          this.connectionsByParent.get(c.parent)?.forEach((conn) => {
-            if (conn.child !== connection.child) {
-              this._calcConnection(conn, accountedIn, accountedOut);
-            }
-          });
-        }
-      });
-    }
-
+    [parent, child].forEach(ent => {
+      if (ent.type === 'remaining_child_state') {
+        this.connectionsByParent.get(ent)!.forEach((c) => {
+          if (!c.ready) {
+            this.connectionsByChild.get(c.child)?.forEach((conn) => {
+              if (conn.parent !== parent) {
+                this._calcConnection(conn, accountedIn, accountedOut);
+              }
+            });
+          }
+        });
+      }
+      if (ent.type === 'remaining_parent_state') {
+        this.connectionsByChild.get(ent)!.forEach((c) => {
+          if (!c.ready) {
+            this.connectionsByParent.get(c.parent)?.forEach((conn) => {
+              if (conn.child !== child) {
+                this._calcConnection(conn, accountedIn, accountedOut);
+              }
+            });
+          }
+        });
+      }
+    });
+    
     const parentStateNormalized = this._getMemoizedState(parent);
     const parentStateFull = parentStateNormalized.state ?? 0;
     connection.prevParentState = accountedOut.get(parent) ?? 0;
@@ -149,6 +151,7 @@ export class Chart extends LitElement {
     const childStateFull = childStateNormalized.state ?? 0;
     connection.prevChildState = accountedIn.get(child) ?? 0;
     const childState = Math.max(0, childStateFull - connection.prevChildState);
+
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
