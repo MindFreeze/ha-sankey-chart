@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.3...v1.3.4) (2022-11-28)
+
+
+### Bug Fixes
+
+* fix for complex remaining_* configs ([ea8f500](https://github.com/MindFreeze/ha-sankey-chart/commit/ea8f500f983c7eebb3b220bbff7440570df40db7))
+
 ## [1.3.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.2...v1.3.3) (2022-11-27)
 
 
