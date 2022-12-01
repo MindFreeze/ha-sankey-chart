@@ -18,7 +18,8 @@ This card is intended to display connections between entities with numeric state
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | type              | string  | **Required** |                     | `custom:sankey-chart`
-| sections          | list    | **Required** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
+| autoconfig        | string  | **Optional** | false               | Experimental
+| sections          | list    | **Optional** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
 | energy_date_selection | boolean | **Optional** | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
 | title             | string  | **Optional** |                     | Optional header title for the card
 | unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
@@ -53,7 +54,8 @@ This card is intended to display connections between entities with numeric state
 | color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
 | color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
-| remaining         | [object](#remaining-object) | **Optional** | | This configures wheter to display a box for the remaining state if the sum of entity states from children is less than this entity's state.
+| add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
+| substract_entities| list    | **Optional** |                     | Experimental. List of entity ids. Their states will be substracted from this entity's state
 
 ### Remaining object
 

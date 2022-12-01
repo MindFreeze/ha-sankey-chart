@@ -173,6 +173,29 @@ export class Chart extends LitElement {
         Number(entity.state),
         entity.attributes.unit_of_measurement,
       );
+      if (entityConf.add_entities) {
+        entityConf.add_entities.forEach(subId => {
+          const subEntity = this._getEntityState({entity_id: subId, children: []});
+          const {state} = normalizeStateValue(
+            this.config.unit_prefix,
+            Number(subEntity.state),
+            subEntity.attributes.unit_of_measurement,
+          );
+          normalized.state += state;
+        });
+      }
+      if (entityConf.substract_entities) {
+        entityConf.substract_entities.forEach(subId => {
+          const subEntity = this._getEntityState({entity_id: subId, children: []});
+          const {state} = normalizeStateValue(
+            this.config.unit_prefix,
+            Number(subEntity.state),
+            subEntity.attributes.unit_of_measurement,
+          );
+          // stay positive
+          normalized.state -= Math.min(state, normalized.state);
+        });
+      }
       if (normalized.state === Infinity) {
         // don't cache infinity
         return normalized;
@@ -187,7 +210,7 @@ export class Chart extends LitElement {
     this.sections = this.config.sections
       .map(section => {
         let total = 0;
-        let boxes: Box[] = section.entities
+        const boxes: Box[] = section.entities
           .filter((entityConf) => {
             // remove empty entity boxes
             if (entityConf.type === 'remaining_parent_state') {
@@ -560,7 +583,7 @@ export class Chart extends LitElement {
         return html`
           <ha-card label="Sankey Chart" .header=${this.config.title}>
             <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
-              ${localize('loading')}
+              ${localize('common.loading')}
             </div>
           </ha-card>
         `;

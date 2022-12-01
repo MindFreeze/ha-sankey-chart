@@ -36,10 +36,26 @@ export interface StatisticValue {
   state: number | null;
 }
 
+export interface EnergySource {
+  type: string;
+  stat_energy_from?: string;
+  stat_energy_to?: string;
+  flow_from: {
+    stat_energy_from: string;
+  }[];
+  flow_to: {
+    stat_energy_to: string;
+  }[];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface DeviceConsumptionEnergyPreference {
+  stat_consumption: string;
+}
+
 export interface EnergyPreferences {
-  // energy_sources: EnergySource[];
-  // device_consumption: DeviceConsumptionEnergyPreference[];
+  energy_sources: EnergySource[];
+  device_consumption: DeviceConsumptionEnergyPreference[];
 }
 
 export interface EnergyInfo {
@@ -139,4 +155,14 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
     ...states,
     [id]: calculateStatisticSumGrowth(data[id]),
   }), {})
+}
+
+export function getEnergySourceColor(type: string) {
+  if (type === 'solar') {
+    return 'var(--warning-color)';
+  }
+  if (type === 'battery') {
+    return 'var(--success-color)';
+  }
+  return undefined;
 }

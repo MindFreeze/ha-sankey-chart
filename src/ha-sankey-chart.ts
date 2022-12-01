@@ -8,6 +8,7 @@ import {
 import type {
   Config,
   SankeyChartConfig,
+  Section,
 } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
@@ -16,7 +17,7 @@ import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import { Chart } from './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
-import { EnergyCollection, getEnergyDataCollection, getStatistics } from './energy';
+import { EnergyCollection, getEnergyDataCollection, getEnergySourceColor, getStatistics } from './energy';
 
 /* eslint no-console: 0 */
 console.info(
@@ -69,6 +70,9 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
     return [
       energyPromise.then(collection => {
+        if (this.config.autoconfig) {
+          this.autoconfig(collection);
+        }
         return collection.subscribe(async (data) => {
           const stats = await getStatistics(this.hass, data, this.entityIds);
           const states: HassEntities = {};
@@ -86,7 +90,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: SankeyChartConfig): void {
-    if (!config || !Array.isArray(config.sections)) {
+    if (typeof config !== 'object') {
       throw new Error(localize('common.invalid_configuration'));
     }
 
@@ -94,7 +98,11 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     //   getLovelace().setEditMode(true);
     // }
 
-    this.config = normalizeConfig(config);
+    this.setNormalizedConfig(normalizeConfig(config));
+  }
+  
+  private setNormalizedConfig(config: Config): void {
+    this.config = config;
 
     this.entityIds = [];
     this.config.sections.forEach(({ entities }) => {
@@ -102,8 +110,79 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         if (ent.type === 'entity') {
           this.entityIds.push(ent.entity_id);
         }
+        if (ent.add_entities) {
+          ent.add_entities.forEach(e => this.entityIds.push(e));
+        }
+        if (ent.substract_entities) {
+          ent.substract_entities.forEach(e => this.entityIds.push(e));
+        }
       });
     });
+  }
+  
+  private autoconfig(collection: EnergyCollection): void {
+    console.log('collection', collection);
+    const sources = (collection.prefs?.energy_sources || [])
+      .filter(s => s.stat_energy_from || s.flow_from?.length)
+      .sort((s1, s2) => {
+        // sort to solar, battery, grid
+        if (s1.type === s2.type) {
+          return 0;
+        }
+        if (s1.type === 'solar') {
+          return -1;
+        }
+        if (s1.type === 'battery' && s2.type !== 'solar') {
+          return -1;
+        }
+        return 1;
+      });
+    const deviceIds = (collection.prefs?.device_consumption || []).map(d => d.stat_consumption);
+    const sections: Section[] = [{
+      entities: sources.map(source => {
+        const substract = source.stat_energy_to ? [source.stat_energy_to] : (
+          source.flow_to?.length > 1 ? source.flow_to.slice(1).map(e => e.stat_energy_to): undefined
+        );
+        return {
+          entity_id: source.stat_energy_from || source.flow_from[0].stat_energy_from,
+          add_entities: source.flow_from?.length > 1 ? source.flow_from.slice(1).map(e => e.stat_energy_from): undefined,
+          substract_entities: substract,
+          type: 'entity',
+          color: getEnergySourceColor(source.type),
+          children: ['total'],
+        };
+      }),
+    }, {
+      entities: [{
+        entity_id: 'total',
+        type: 'remaining_parent_state',
+        name: 'Total Consumption',
+        children: deviceIds,
+      }],
+    }, {
+      entities: deviceIds.map(id => ({
+        entity_id: id,
+        type: 'entity',
+        children: [],
+      })),
+    }];
+
+    const battery = sources.find(s => s.type === 'battery');
+    if (battery && battery.stat_energy_from && battery.stat_energy_to) {
+      sections[1].entities.unshift({
+        entity_id: battery.stat_energy_to,
+        substract_entities: [battery.stat_energy_from],
+        type: 'entity',
+        color: getEnergySourceColor(battery.type),
+        children: [],
+      });
+      sections[0].entities.forEach(entity => {
+        entity.children.unshift(battery.stat_energy_to!);
+      });
+    }
+    
+    console.log('sections', sections);
+    this.setNormalizedConfig({...this.config, sections});
   }
 
   public getCardSize(): number {

@@ -75,7 +75,16 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
 }
 
 export function normalizeConfig(conf: SankeyChartConfig): Config {
-  const config = cloneObj(conf);
+  let config = {sections: [], ...cloneObj(conf)};
+
+  if (conf.autoconfig) {
+    config = {
+      energy_date_selection: true,
+      unit_prefix: 'k',
+      round: 1,
+      ...config,
+    };
+  }
 
   const sections: Section[] = config.sections.map((section: SectionConfig) => ({
     ...section,
