@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.4...v1.4.0) (2022-12-02)
+
+
+### Features
+
+* **#60:** autoconfig with sources and devices ([4894a49](https://github.com/MindFreeze/ha-sankey-chart/commit/4894a498b1ca00c62db55ab12806edf04a5c6242))
+* **#60:** show auto generated config ([1072b61](https://github.com/MindFreeze/ha-sankey-chart/commit/1072b6144790cc259c8c6e6478b3173cabd76fb7))
+
+
+### Bug Fixes
+
+* **#42:** fix min font size when only 1 item in section ([08b5fa1](https://github.com/MindFreeze/ha-sankey-chart/commit/08b5fa10c715dd9cd79d1b19748fb7f461049f1e))
+
 ## [1.3.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.3...v1.3.4) (2022-11-28)
 
 
