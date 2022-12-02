@@ -9,10 +9,12 @@ declare global {
   }
 }
 
-type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+export type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
 
 export interface EntityConfig {
   entity_id: string;
+  add_entities?: string[];
+  substract_entities?: string[];
   attribute?: string;
   type?: BoxType;
   children?: string[];
@@ -44,8 +46,11 @@ export interface SectionConfig {
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
+  autoconfig?: {
+    print_yaml?: boolean
+  };
   title?: string;
-  sections: SectionConfig[];
+  sections?: SectionConfig[];
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
   round?: number;
   height?: number;

@@ -3,26 +3,13 @@ import { styleMap } from 'lit/directives/style-map';
 import { classMap } from 'lit/directives/class-map';
 import { until } from 'lit/directives/until.js';
 import { customElement, property, state } from 'lit/decorators';
-import {
-  HomeAssistant,
-  stateIcon,
-  fireEvent,
-  LovelaceCard,
-  createThing,
-} from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
+import { HomeAssistant, stateIcon, fireEvent } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
-import type {
-  Config,
-  SectionState,
-  Box,
-  ConnectionState,
-  EntityConfigInternal,
-  NormalizedState,
-} from './types';
+import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
 import { MIN_LABEL_HEIGHT } from './const';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
+import { formatState, getChildConnections, getEntityId, normalizeStateValue, renderError } from './utils';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 
 @customElement('sankey-chart-base')
@@ -40,7 +27,7 @@ export class Chart extends LitElement {
   @state() private statePerPixelY = 0;
   @state() private entityStates: Map<EntityConfigInternal, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
-  
+
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
@@ -56,7 +43,7 @@ export class Chart extends LitElement {
     if (!oldStates || !Object.keys(oldStates).length) {
       return true;
     }
-    return this.entityIds.some((id) => {
+    return this.entityIds.some(id => {
       return oldStates[id] !== this.states[id] && oldStates[id].state !== this.states[id].state;
     });
   }
@@ -68,12 +55,12 @@ export class Chart extends LitElement {
       this.connectionsByParent.clear();
       this.connectionsByChild.clear();
       this.config.sections.forEach(({ entities }, sectionIndex) => {
-        entities.forEach((ent) => {
+        entities.forEach(ent => {
           if (ent.type === 'entity') {
             this.entityIds.push(ent.entity_id);
           }
-          ent.children.forEach((childId) => {
-            const child = this.config.sections[sectionIndex + 1]?.entities.find((e) => e.entity_id === childId);
+          ent.children.forEach(childId => {
+            const child = this.config.sections[sectionIndex + 1]?.entities.find(e => e.entity_id === childId);
             if (!child) {
               throw new Error(localize('common.missing_child') + ' ' + childId);
             }
@@ -103,10 +90,10 @@ export class Chart extends LitElement {
   private _calcConnections() {
     const accountedIn = new Map<EntityConfigInternal, number>();
     const accountedOut = new Map<EntityConfigInternal, number>();
-    this.connections.forEach((c) => {
+    this.connections.forEach(c => {
       c.ready = false;
     });
-    this.connections.forEach((c) => this._calcConnection(c, accountedIn, accountedOut));
+    this.connections.forEach(c => this._calcConnection(c, accountedIn, accountedOut));
   }
 
   private _calcConnection(
@@ -120,9 +107,9 @@ export class Chart extends LitElement {
     const { parent, child } = connection;
     [parent, child].forEach(ent => {
       if (ent.type === 'remaining_child_state') {
-        this.connectionsByParent.get(ent)!.forEach((c) => {
+        this.connectionsByParent.get(ent)!.forEach(c => {
           if (!c.ready) {
-            this.connectionsByChild.get(c.child)?.forEach((conn) => {
+            this.connectionsByChild.get(c.child)?.forEach(conn => {
               if (conn.parent !== parent) {
                 this._calcConnection(conn, accountedIn, accountedOut);
               }
@@ -131,9 +118,9 @@ export class Chart extends LitElement {
         });
       }
       if (ent.type === 'remaining_parent_state') {
-        this.connectionsByChild.get(ent)!.forEach((c) => {
+        this.connectionsByChild.get(ent)!.forEach(c => {
           if (!c.ready) {
-            this.connectionsByParent.get(c.parent)?.forEach((conn) => {
+            this.connectionsByParent.get(c.parent)?.forEach(conn => {
               if (conn.child !== child) {
                 this._calcConnection(conn, accountedIn, accountedOut);
               }
@@ -142,7 +129,7 @@ export class Chart extends LitElement {
         });
       }
     });
-    
+
     const parentStateNormalized = this._getMemoizedState(parent);
     const parentStateFull = parentStateNormalized.state ?? 0;
     connection.prevParentState = accountedOut.get(parent) ?? 0;
@@ -173,6 +160,29 @@ export class Chart extends LitElement {
         Number(entity.state),
         entity.attributes.unit_of_measurement,
       );
+      if (entityConf.add_entities) {
+        entityConf.add_entities.forEach(subId => {
+          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const { state } = normalizeStateValue(
+            this.config.unit_prefix,
+            Number(subEntity.state),
+            subEntity.attributes.unit_of_measurement,
+          );
+          normalized.state += state;
+        });
+      }
+      if (entityConf.substract_entities) {
+        entityConf.substract_entities.forEach(subId => {
+          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const { state } = normalizeStateValue(
+            this.config.unit_prefix,
+            Number(subEntity.state),
+            subEntity.attributes.unit_of_measurement,
+          );
+          // stay positive
+          normalized.state -= Math.min(state, normalized.state);
+        });
+      }
       if (normalized.state === Infinity) {
         // don't cache infinity
         return normalized;
@@ -187,18 +197,18 @@ export class Chart extends LitElement {
     this.sections = this.config.sections
       .map(section => {
         let total = 0;
-        let boxes: Box[] = section.entities
-          .filter((entityConf) => {
+        const boxes: Box[] = section.entities
+          .filter(entityConf => {
             // remove empty entity boxes
             if (entityConf.type === 'remaining_parent_state') {
-              return this.connectionsByChild.get(entityConf)?.some((c) => c.state);
+              return this.connectionsByChild.get(entityConf)?.some(c => c.state);
             }
             if (entityConf.type === 'remaining_child_state') {
-              return this.connectionsByParent.get(entityConf)?.some((c) => c.state);
+              return this.connectionsByParent.get(entityConf)?.some(c => c.state);
             }
             return this._getMemoizedState(entityConf).state;
           })
-          .map((entityConf) => {
+          .map(entityConf => {
             const { state, unit_of_measurement } = this._getMemoizedState(entityConf);
             total += state;
 
@@ -243,13 +253,13 @@ export class Chart extends LitElement {
           statePerPixelY: calcResults.statePerPixelY,
         };
       })
-      .filter((s) => s.boxes.length > 0)
-      .map((section) => {
+      .filter(s => s.boxes.length > 0)
+      .map(section => {
         // calc sizes again with the best statePerPixelY
         let totalSize = 0;
         let { boxes } = section;
         if (section.statePerPixelY !== this.statePerPixelY) {
-          boxes = boxes.map((box) => {
+          boxes = boxes.map(box => {
             const size = Math.max(this.config.min_box_height, Math.floor(box.state / this.statePerPixelY));
             totalSize += size;
             return {
@@ -265,7 +275,7 @@ export class Chart extends LitElement {
         const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : this.config.height;
         let offset = 0;
         // calc y positions. needed for connectors
-        boxes = boxes.map((box) => {
+        boxes = boxes.map(box => {
           const top = offset;
           offset += box.size + spacerH;
           return {
@@ -291,7 +301,7 @@ export class Chart extends LitElement {
       this.statePerPixelY = statePerPixelY;
     }
     let deficitHeight = 0;
-    const result = boxes.map((box) => {
+    const result = boxes.map(box => {
       if (box.size === this.config.min_box_height) {
         return box;
       }
@@ -351,32 +361,6 @@ export class Chart extends LitElement {
   //   }
   // }
 
-  // private _showWarning(warning: string): TemplateResult {
-  //   return html`
-  //     <hui-warning>${warning}</hui-warning>
-  //   `;
-  // }
-
-  private async _showError(error: string): Promise<TemplateResult> {
-    const config = {
-      type: 'error',
-      error,
-      origConfig: this.config,
-    };
-    let element: LovelaceCard;
-    const HELPERS = (window as any).loadCardHelpers ? (window as any).loadCardHelpers() : undefined;
-    if (HELPERS) {
-      element = (await HELPERS).createCardElement(config);
-    } else {
-      element = createThing(config);
-    }
-    if (this.hass) {
-      element.hass = this.hass;
-    }
-
-    return html` ${element} `;
-  }
-
   private _getEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
       const connections = this.connectionsByChild.get(entityConf);
@@ -421,9 +405,9 @@ export class Chart extends LitElement {
     if (typeof entityConf === 'object' && entityConf.attribute) {
       entity = { ...entity, state: entity.attributes[entityConf.attribute] } as HassEntity;
       if (entityConf.unit_of_measurement) {
-        entity = { 
-          ...entity, 
-          attributes: { ...entity.attributes, unit_of_measurement: entityConf.unit_of_measurement } 
+        entity = {
+          ...entity,
+          attributes: { ...entity.attributes, unit_of_measurement: entityConf.unit_of_measurement },
         };
       }
     }
@@ -438,7 +422,7 @@ export class Chart extends LitElement {
     const { show_names, show_icons, show_states, show_units } = this.config;
     const section = this.sections[index];
     const { boxes, spacerH } = section;
-    const hasChildren = index < this.sections.length - 1 && boxes.some((b) => b.children.length > 0);
+    const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
 
     return html`
       <div class="section">
@@ -499,9 +483,9 @@ export class Chart extends LitElement {
     const section = this.sections[index];
     const { boxes } = section;
     return boxes
-      .filter((b) => b.children.length > 0)
-      .map((b) => {
-        const children = this.sections[index + 1].boxes.filter((child) => b.children.includes(child.entity_id));
+      .filter(b => b.children.length > 0)
+      .map(b => {
+        const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
         const connections = getChildConnections(b, children, this.connectionsByParent.get(b.config)).filter((c, i) => {
           if (c.state > 0) {
             children[i].connections.parents.push(c);
@@ -545,11 +529,8 @@ export class Chart extends LitElement {
 
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
-    this.entityStates.clear();
-    // if (this.config.show_warning) {
-    //   return this._showWarning(localize('common.show_warning'));
-    // }
     try {
+      this.entityStates.clear();
       const containerClasses = classMap({
         container: true,
         wide: !!this.config.wide,
@@ -560,7 +541,7 @@ export class Chart extends LitElement {
         return html`
           <ha-card label="Sankey Chart" .header=${this.config.title}>
             <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
-              ${localize('loading')}
+              ${localize('common.loading')}
             </div>
           </ha-card>
         `;
@@ -582,8 +563,8 @@ export class Chart extends LitElement {
         </ha-card>
       `;
     } catch (err) {
-        console.error(err);
-        return html`${until(this._showError(String(err)))}`;
+      console.error(err);
+      return html`${until(renderError(String(err), this.config, this.hass))}`;
     }
   }
 }
