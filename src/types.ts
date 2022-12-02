@@ -46,7 +46,9 @@ export interface SectionConfig {
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
-  autoconfig?: boolean;
+  autoconfig?: {
+    print_yaml?: boolean
+  };
   title?: string;
   sections?: SectionConfig[];
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;

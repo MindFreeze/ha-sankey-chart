@@ -18,8 +18,8 @@ This card is intended to display connections between entities with numeric state
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | type              | string  | **Required** |                     | `custom:sankey-chart`
-| autoconfig        | string  | **Optional** | false               | Experimental
-| sections          | list    | **Optional** |                     | Entities to show divided by sections, see [sections object](#sections-object) for additional options.
+| autoconfig        | object  | **Optional** |                     | Experimental. See [autoconfig](#autoconfig)
+| sections          | list    | **Required** |                     | Not required if using autoconfig. Entities to show divided by sections, see [sections object](#sections-object) for additional options.
 | energy_date_selection | boolean | **Optional** | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
 | title             | string  | **Optional** |                     | Optional header title for the card
 | unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
@@ -57,13 +57,6 @@ This card is intended to display connections between entities with numeric state
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | substract_entities| list    | **Optional** |                     | Experimental. List of entity ids. Their states will be substracted from this entity's state
 
-### Remaining object
-
-| Name              | Type    | Requirement  | Default              | Description                                 |
-| ----------------- | ------- | ------------ | -------------------- | ------------------------------------------- |
-| name              | string  | **Required** |                      | Label for this entity. For example 'Other'
-| color             | string  | **Optional** | var(--primary-color) | Color of the box
-
 ### Entity types
 
 - `entity` - The default value, representing an entity from HA
@@ -91,6 +84,21 @@ This card is intended to display connections between entities with numeric state
   type: remaining_child_state
   name: Discrepancy
 ```
+
+### Autoconfig
+
+This card supports automatic configuration generation. It will set default values for some config parameters and populate the `sections` param. Use it like this:
+
+```yaml
+- type: custom:sankey-chart
+  # ...any other options
+  autoconfig:
+    # any additional autoconfig options (listed below)
+```
+
+| Name              | Type    | Requirement  | Default             | Description                                 |
+| ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| print_yaml        | boolean | **Optional** | false               | Prints the auto generated configuration after the card so you can use it as a starting point for customization. It shows up like an error. Don't worry about it.
 
 ## Examples
 
