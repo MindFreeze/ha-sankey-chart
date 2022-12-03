@@ -63,6 +63,6 @@ describe('SankeyChart', () => {
     document.body.appendChild(sankeyChart);
     await sankeyChart.updateComplete;
 
-    expect(sankeyChart.shadowRoot?.innerHTML.replace(/<!--.+-->/g, '')).toMatchSnapshot();
+    expect(sankeyChart.shadowRoot?.innerHTML.replace(/<!--.*-->/g, '')).toMatchSnapshot();
   });
 });
