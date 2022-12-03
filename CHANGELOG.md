@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.4.0...v1.5.0) (2022-12-03)
+
+
+### Features
+
+* **#60:** add areas to autoconfig ([ab34532](https://github.com/MindFreeze/ha-sankey-chart/commit/ab3453235f6f3b2b8e0c3648c8451b961ef32def))
+
 ## [1.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.3.4...v1.4.0) (2022-12-02)
 
 
