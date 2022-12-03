@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LitElement, html, TemplateResult } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators';
-import { HomeAssistant } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
-import type { Config, SankeyChartConfig, Section } from './types';
+import type { Config, EntityConfigInternal, SankeyChartConfig, Section } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
 import { normalizeConfig, renderError } from './utils';
@@ -13,6 +12,7 @@ import { Chart } from './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
 import { EnergyCollection, getEnergyDataCollection, getEnergySourceColor, getStatistics } from './energy';
 import { until } from 'lit/directives/until';
+import { getEntitiesByArea, HomeAssistantReal } from './hass';
 
 /* eslint no-console: 0 */
 console.info(
@@ -43,7 +43,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   }
 
   // https://lit.dev/docs/components/properties/
-  @property({ attribute: false }) public hass!: HomeAssistant;
+  @property({ attribute: false }) public hass!: HomeAssistantReal;
 
   @query('ha-chart-base') private _chart?: Chart;
 
@@ -72,11 +72,14 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     };
     const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
     return [
-      energyPromise.then(collection => {
-        if (typeof this.config.autoconfig === 'object') {
-          this.autoconfig(collection);
+      energyPromise.then(async collection => {
+        if (typeof this.config.autoconfig === 'object' && !this.config.sections.length) {
+          await this.autoconfig(collection);
         }
         return collection.subscribe(async data => {
+          if (typeof this.config.autoconfig === 'object' && !this.config.sections.length) {
+            await this.autoconfig(collection);
+          }
           const stats = await getStatistics(this.hass, data, this.entityIds);
           const states: HassEntities = {};
           Object.keys(stats).forEach(id => {
@@ -123,7 +126,10 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     });
   }
 
-  private autoconfig(collection: EnergyCollection): void {
+  private async autoconfig(collection: EnergyCollection) {
+    if (!collection.prefs) {
+      return;
+    }
     const sources = (collection.prefs?.energy_sources || [])
       .filter(s => s.stat_energy_from || s.flow_from?.length)
       .sort((s1, s2) => {
@@ -140,12 +146,18 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         return 1;
       });
     const deviceIds = (collection.prefs?.device_consumption || []).map(d => d.stat_consumption);
+    const areasResult = await getEntitiesByArea(this.hass, deviceIds);
+    const areas = Object.values(areasResult)
+      // put 'No area' last
+      .sort((a, b) => a.area.name === 'No area' ? 1 : (b.area.name === 'No area' ? -1 : 0));
+    const orderedDeviceIds = areas.reduce((all: string[], a) => ([...all, ...a.entities]), []);
+
     const sections: Section[] = [
       {
         entities: sources.map(source => {
           const substract = source.stat_energy_to
             ? [source.stat_energy_to]
-            : (source.flow_to || []).map(e => e.stat_energy_to);
+            : (source.flow_to?.map(e => e.stat_energy_to) || undefined);
           return {
             entity_id: source.stat_energy_from || source.flow_from[0].stat_energy_from,
             add_entities:
@@ -163,12 +175,27 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
             entity_id: 'total',
             type: 'remaining_parent_state',
             name: 'Total Consumption',
-            children: deviceIds,
+            children: [...areas.map(a => a.area.area_id), 'unknown'],
           },
         ],
       },
       {
-        entities: deviceIds.map(id => ({
+        entities: [
+          ...areas.map(({area, entities}): EntityConfigInternal => ({
+            entity_id: area.area_id,
+            type: 'remaining_child_state',
+            name: area.name,
+            children: entities,
+          })), {
+            entity_id: 'unknown',
+            type: 'remaining_parent_state',
+            name: 'Unknown',
+            children: [],
+          },
+        ],
+      },
+      {
+        entities: orderedDeviceIds.map(id => ({
           entity_id: id,
           type: 'entity',
           children: [],

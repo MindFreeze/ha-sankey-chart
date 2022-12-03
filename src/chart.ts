@@ -40,7 +40,10 @@ export class Chart extends LitElement {
       return true;
     }
     const oldStates = changedProps.get('states') as HomeAssistant | undefined;
-    if (!oldStates || !Object.keys(oldStates).length) {
+    if (!oldStates) {
+      return false;
+    }
+    if (!Object.keys(oldStates).length) {
       return true;
     }
     return this.entityIds.some(id => {
@@ -138,7 +141,7 @@ export class Chart extends LitElement {
     const childStateFull = childStateNormalized.state ?? 0;
     connection.prevChildState = accountedIn.get(child) ?? 0;
     const childState = Math.max(0, childStateFull - connection.prevChildState);
-
+    
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
@@ -384,7 +387,13 @@ export class Chart extends LitElement {
       }
       const { child } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      return { ...this.states[child.entity_id], state };
+      const childEntity = this._getEntityState(child);
+      const { unit_of_measurement } = normalizeStateValue(
+        this.config.unit_prefix,
+        0,
+        childEntity.attributes.unit_of_measurement,
+      );
+      return { ...childEntity, state, attributes: { ...childEntity.attributes, unit_of_measurement } };
     }
 
     let entity = this.states[getEntityId(entityConf)];
