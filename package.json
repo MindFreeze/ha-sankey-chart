@@ -15,9 +15,9 @@
   "author": "Ian Richardson <iantrich@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "custom-card-helpers": "^1.7.2",
+    "custom-card-helpers": "^1.9.0",
     "date-fns": "^2.29.3",
-    "home-assistant-js-websocket": "^5.11.1",
+    "home-assistant-js-websocket": "^8.0.1",
     "lit": "^2.0.0-rc.2"
   },
   "devDependencies": {
