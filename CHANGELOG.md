@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.1...v1.5.2) (2022-12-07)
+
+
+### Bug Fixes
+
+* **#60:** handle boolean autoconfig option ([969acb3](https://github.com/MindFreeze/ha-sankey-chart/commit/969acb356ce1fdcff1b143bbf596e1fb80f91376))
+
 ## [1.5.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.0...v1.5.1) (2022-12-07)
 
 
