@@ -4,6 +4,8 @@ import { HomeAssistant } from "custom-card-helpers";
 import { Collection } from "home-assistant-js-websocket";
 import { addHours, differenceInDays } from 'date-fns';
 
+export const ENERGY_SOURCE_TYPES = ['grid', 'solar', 'battery'];
+
 export interface EnergyData {
   start: Date;
   end?: Date;

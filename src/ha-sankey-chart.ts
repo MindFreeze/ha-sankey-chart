@@ -10,7 +10,13 @@ import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import { Chart } from './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
-import { EnergyCollection, getEnergyDataCollection, getEnergySourceColor, getStatistics } from './energy';
+import {
+  EnergyCollection,
+  ENERGY_SOURCE_TYPES,
+  getEnergyDataCollection,
+  getEnergySourceColor,
+  getStatistics,
+} from './energy';
 import { until } from 'lit/directives/until';
 import { getEntitiesByArea, HomeAssistantReal } from './hass';
 
@@ -71,6 +77,11 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       }
     };
     const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
+    setTimeout(() => {
+      if (!this.error && !Object.keys(this.states).length) {
+        this.error = new Error('Something went wrong. No energy data received.');
+      }
+    }, ENERGY_DATA_TIMEOUT * 2);
     return [
       energyPromise.then(async collection => {
         if (typeof this.config.autoconfig === 'object' && !this.config.sections.length) {
@@ -131,7 +142,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       return;
     }
     const sources = (collection.prefs?.energy_sources || [])
-      .filter(s => s.stat_energy_from || s.flow_from?.length)
+      .filter(s => ENERGY_SOURCE_TYPES.includes(s.type) && (s.stat_energy_from || s.flow_from?.length))
       .sort((s1, s2) => {
         // sort to solar, battery, grid
         if (s1.type === s2.type) {
@@ -149,15 +160,15 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const areasResult = await getEntitiesByArea(this.hass, deviceIds);
     const areas = Object.values(areasResult)
       // put 'No area' last
-      .sort((a, b) => a.area.name === 'No area' ? 1 : (b.area.name === 'No area' ? -1 : 0));
-    const orderedDeviceIds = areas.reduce((all: string[], a) => ([...all, ...a.entities]), []);
+      .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
+    const orderedDeviceIds = areas.reduce((all: string[], a) => [...all, ...a.entities], []);
 
     const sections: Section[] = [
       {
         entities: sources.map(source => {
           const substract = source.stat_energy_to
             ? [source.stat_energy_to]
-            : (source.flow_to?.map(e => e.stat_energy_to) || undefined);
+            : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
             entity_id: source.stat_energy_from || source.flow_from[0].stat_energy_from,
             add_entities:
@@ -181,12 +192,15 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       },
       {
         entities: [
-          ...areas.map(({area, entities}): EntityConfigInternal => ({
-            entity_id: area.area_id,
-            type: 'remaining_child_state',
-            name: area.name,
-            children: entities,
-          })), {
+          ...areas.map(
+            ({ area, entities }): EntityConfigInternal => ({
+              entity_id: area.area_id,
+              type: 'remaining_child_state',
+              name: area.name,
+              children: entities,
+            }),
+          ),
+          {
             entity_id: 'unknown',
             type: 'remaining_parent_state',
             name: 'Unknown',
