@@ -88,7 +88,8 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
 export function normalizeConfig(conf: SankeyChartConfig): Config {
   let config = { sections: [], ...cloneObj(conf) };
 
-  if (typeof conf.autoconfig === 'object') {
+  const { autoconfig } = conf;
+  if (autoconfig || typeof autoconfig === 'object') {
     config = {
       energy_date_selection: true,
       unit_prefix: 'k',

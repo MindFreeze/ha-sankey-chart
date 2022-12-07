@@ -84,11 +84,12 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     }, ENERGY_DATA_TIMEOUT * 2);
     return [
       energyPromise.then(async collection => {
-        if (typeof this.config.autoconfig === 'object' && !this.config.sections.length) {
+        const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
+        if (isAutoconfig && !this.config.sections.length) {
           await this.autoconfig(collection);
         }
         return collection.subscribe(async data => {
-          if (typeof this.config.autoconfig === 'object' && !this.config.sections.length) {
+          if (isAutoconfig && !this.config.sections.length) {
             await this.autoconfig(collection);
           }
           const stats = await getStatistics(this.hass, data, this.entityIds);
