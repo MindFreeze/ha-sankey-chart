@@ -94,6 +94,7 @@ This card supports automatic configuration generation based on the HA energy das
 - type: custom:sankey-chart
   # ...any other options
   autoconfig:
+    print_yaml: false # optional
     # any additional autoconfig options (listed below)
 ```
 
