@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.0...v1.5.1) (2022-12-07)
+
+
+### Bug Fixes
+
+* **#60:** ignore water and gas in autoconfig ([598361e](https://github.com/MindFreeze/ha-sankey-chart/commit/598361ee765d927b02c59c779f326d30f55d1eff))
+
 ## [1.5.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.4.0...v1.5.0) (2022-12-03)
 
 
