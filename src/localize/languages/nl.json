@@ -1,0 +1,10 @@
+{
+  "common": {
+    "version": "Version",
+    "invalid_configuration": "Invalid configuration",
+    "show_warning": "Show Warning",
+    "entity_not_found": "Entity state not found",
+    "missing_child": "Ontbrekende onderliggende entiteit",
+    "loading": "Laden..."
+  }
+}
