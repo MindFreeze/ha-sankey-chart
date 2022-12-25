@@ -1,9 +1,9 @@
 {
   "common": {
-    "version": "Version",
-    "invalid_configuration": "Invalid configuration",
-    "show_warning": "Show Warning",
-    "entity_not_found": "Entity state not found",
+    "version": "Versie",
+    "invalid_configuration": "Ongeldige configuratie",
+    "show_warning": "Toon waarschuwing",
+    "entity_not_found": "Entiteit niet gevonden",
     "missing_child": "Ontbrekende onderliggende entiteit",
     "loading": "Laden..."
   }
