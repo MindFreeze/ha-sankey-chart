@@ -1,0 +1,10 @@
+{
+  "common": {
+    "version": "Versie",
+    "invalid_configuration": "Ongeldige configuratie",
+    "show_warning": "Toon waarschuwing",
+    "entity_not_found": "Entiteit niet gevonden",
+    "missing_child": "Ontbrekende onderliggende entiteit",
+    "loading": "Laden..."
+  }
+}
