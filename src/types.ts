@@ -21,6 +21,7 @@ export interface EntityConfig {
   unit_of_measurement?: string; // for attribute
   color?: string;
   name?: string;
+  icon?: string;
   color_on_state?: boolean;
   color_above?: string;
   color_below?: string;

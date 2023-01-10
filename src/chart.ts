@@ -447,6 +447,7 @@ export class Chart extends LitElement {
           const formattedState = formatState(box.state, this.config.round);
           const isNotPassthrough = box.config.type !== 'passthrough';
           const name = box.config.name || entity.attributes.friendly_name || '';
+          const icon = box.config.icon || stateIcon(entity as HassEntity);
           const maxLabelH = box.size + spacerH - 1;
           const labelStyle =
             maxLabelH < MIN_LABEL_HEIGHT
@@ -467,7 +468,7 @@ export class Chart extends LitElement {
                 class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
               >
                 ${show_icons && isNotPassthrough
-                  ? html`<ha-icon .icon=${stateIcon(entity as HassEntity)}></ha-icon>`
+                  ? html`<ha-icon .icon=${icon}></ha-icon>`
                   : null}
               </div>
               <div class="label" style=${styleMap(labelStyle)}>
