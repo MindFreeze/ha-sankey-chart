@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.6.0...v1.7.0) (2023-01-10)
+
+
+### Features
+
+* **#68:** allow custom icons ([d6b23a7](https://github.com/MindFreeze/ha-sankey-chart/commit/d6b23a7659adbd93c43f49f358973a7963fa835c))
+
 ## [1.6.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.2...v1.6.0) (2023-01-09)
 
 
