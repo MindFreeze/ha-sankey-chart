@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.2...v1.6.0) (2023-01-09)
+
+
+### Features
+
+* dutch translation ([#69](https://github.com/MindFreeze/ha-sankey-chart/issues/69)) ([53c8ee8](https://github.com/MindFreeze/ha-sankey-chart/commit/53c8ee8f6df7b557e6691772414238063ed9976b))
+
+
+### Bug Fixes
+
+* better handling of missing energy data ([ee188a2](https://github.com/MindFreeze/ha-sankey-chart/commit/ee188a2c4536f855e87a0fe2426584c71a191d25))
+
 ## [1.5.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.5.1...v1.5.2) (2022-12-07)
 
 
