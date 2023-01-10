@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.8.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.7.0...v1.8.0) (2023-01-10)
+
+
+### Features
+
+* **#40:** custom unit_of_measurement ([bc93023](https://github.com/MindFreeze/ha-sankey-chart/commit/bc930236879637c1ec7d2f5c308a303be25cf5d2))
+* **#6:** sorting option per section ([63c247a](https://github.com/MindFreeze/ha-sankey-chart/commit/63c247a22d8c41c976edb1285de5324a84584996))
+
+
+### Bug Fixes
+
+* **#17:** fix connection rendering bug ([c9bfcf1](https://github.com/MindFreeze/ha-sankey-chart/commit/c9bfcf1e4358304f5beb94cda525f57d7e3011ff))
+
 ## [1.7.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.6.0...v1.7.0) (2023-01-10)
 
 
