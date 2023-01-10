@@ -160,6 +160,17 @@ export class Chart extends LitElement {
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
+
+      if (entityConf.type === 'passthrough') {
+        const connections = this.connectionsByChild.get(entityConf);
+        if (!connections) {
+          throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+        }
+        const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
+        if (state !== Infinity) {
+          normalized.state = state;
+        }
+      }
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
           const subEntity = this._getEntityState({ entity_id: subId, children: [] });
@@ -292,13 +303,12 @@ export class Chart extends LitElement {
   }
 
   private _sortBoxes(boxes: Box[], sort?: string, dir = 'desc') {
-    console.log('sort', sort);
     if (sort === 'state') {
       console.log('boxes', boxes);
       if (dir === 'desc') {
-        boxes.sort((a, b) => a.state > b.state ? -1 : (a.state < b.state ? 1 : 0));
+        boxes.sort((a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0));
       } else {
-        boxes.sort((a, b) => a.state < b.state ? -1 : (a.state > b.state ? 1 : 0));
+        boxes.sort((a, b) => (a.state < b.state ? -1 : a.state > b.state ? 1 : 0));
       }
     }
     return boxes;
@@ -411,16 +421,6 @@ export class Chart extends LitElement {
       throw new Error('Entity not found ' + getEntityId(entityConf));
     }
 
-    if (entityConf.type === 'passthrough') {
-      const connections = this.connectionsByChild.get(entityConf);
-      if (!connections) {
-        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
-      }
-      const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      if (state !== Infinity) {
-        return { ...entity, state };
-      }
-    }
     if (typeof entityConf === 'object' && entityConf.attribute) {
       entity = { ...entity, state: entity.attributes[entityConf.attribute] } as HassEntity;
       if (entityConf.unit_of_measurement) {
