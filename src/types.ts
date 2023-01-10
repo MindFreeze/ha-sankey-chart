@@ -43,6 +43,8 @@ export type EntityConfigOrStr = string | EntityConfig;
 
 export interface SectionConfig {
   entities: EntityConfigOrStr[];
+  sort_by?: 'state';
+  sort_dir?: 'asc' | 'desc';
 }
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
@@ -68,6 +70,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
 
 export interface Section {
   entities: EntityConfigInternal[];
+  sort_by?: 'state';
+  sort_dir?: 'asc' | 'desc';
 }
 
 export interface Config extends SankeyChartConfig {

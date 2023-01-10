@@ -141,7 +141,7 @@ export class Chart extends LitElement {
     const childStateFull = childStateNormalized.state ?? 0;
     connection.prevChildState = accountedIn.get(child) ?? 0;
     const childState = Math.max(0, childStateFull - connection.prevChildState);
-    
+
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
@@ -159,11 +159,7 @@ export class Chart extends LitElement {
     if (!this.entityStates.has(entityConf)) {
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
-      const normalized = normalizeStateValue(
-        this.config.unit_prefix,
-        Number(entity.state),
-        unit_of_measurement,
-      );
+      const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
           const subEntity = this._getEntityState({ entity_id: subId, children: [] });
@@ -252,7 +248,7 @@ export class Chart extends LitElement {
         // calc sizes to determine statePerPixelY ratio and find the best one
         const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
         return {
-          boxes: calcResults.boxes,
+          boxes: this._sortBoxes(calcResults.boxes, section.sort_by, section.sort_dir),
           total,
           statePerPixelY: calcResults.statePerPixelY,
         };
@@ -293,6 +289,19 @@ export class Chart extends LitElement {
           spacerH,
         };
       });
+  }
+
+  private _sortBoxes(boxes: Box[], sort?: string, dir = 'desc') {
+    console.log('sort', sort);
+    if (sort === 'state') {
+      console.log('boxes', boxes);
+      if (dir === 'desc') {
+        boxes.sort((a, b) => a.state > b.state ? -1 : (a.state < b.state ? 1 : 0));
+      } else {
+        boxes.sort((a, b) => a.state < b.state ? -1 : (a.state > b.state ? 1 : 0));
+      }
+    }
+    return boxes;
   }
 
   private _calcBoxHeights(
@@ -468,9 +477,7 @@ export class Chart extends LitElement {
                 title=${name}
                 class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
               >
-                ${show_icons && isNotPassthrough
-                  ? html`<ha-icon .icon=${icon}></ha-icon>`
-                  : null}
+                ${show_icons && isNotPassthrough ? html`<ha-icon .icon=${icon}></ha-icon>` : null}
               </div>
               <div class="label" style=${styleMap(labelStyle)}>
                 ${show_states && isNotPassthrough
