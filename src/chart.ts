@@ -158,10 +158,11 @@ export class Chart extends LitElement {
   private _getMemoizedState(entityConf: EntityConfigInternal) {
     if (!this.entityStates.has(entityConf)) {
       const entity = this._getEntityState(entityConf);
+      const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
       const normalized = normalizeStateValue(
         this.config.unit_prefix,
         Number(entity.state),
-        entity.attributes.unit_of_measurement,
+        unit_of_measurement,
       );
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
@@ -169,7 +170,7 @@ export class Chart extends LitElement {
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
-            subEntity.attributes.unit_of_measurement,
+            subEntity.attributes.unit_of_measurement || unit_of_measurement,
           );
           normalized.state += state;
         });
@@ -180,7 +181,7 @@ export class Chart extends LitElement {
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
-            subEntity.attributes.unit_of_measurement,
+            subEntity.attributes.unit_of_measurement || unit_of_measurement,
           );
           // stay positive
           normalized.state -= Math.min(state, normalized.state);
