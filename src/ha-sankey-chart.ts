@@ -75,6 +75,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         this.error = new Error(
           'No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.',
         );
+        console.debug(getEnergyDataCollection(this.hass));
         reject(this.error);
       } else {
         setTimeout(() => getEnergyDataCollectionPoll(resolve, reject), 100);
@@ -84,6 +85,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     setTimeout(() => {
       if (!this.error && !Object.keys(this.states).length) {
         this.error = new Error('Something went wrong. No energy data received.');
+        console.debug(getEnergyDataCollection(this.hass));
       }
     }, ENERGY_DATA_TIMEOUT * 2);
     return [
@@ -171,13 +173,14 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const sections: Section[] = [
       {
         entities: sources.map(source => {
+          const flow_from = source.flow_from || [];
           const substract = source.stat_energy_to
             ? [source.stat_energy_to]
             : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
-            entity_id: source.stat_energy_from || source.flow_from[0].stat_energy_from,
+            entity_id: source.stat_energy_from || flow_from[0].stat_energy_from,
             add_entities:
-              source.flow_from?.length > 1 ? source.flow_from.slice(1).map(e => e.stat_energy_from) : undefined,
+              flow_from?.length > 1 ? flow_from.slice(1).map(e => e.stat_energy_from) : undefined,
             substract_entities: substract,
             type: 'entity',
             color: getEnergySourceColor(source.type),
@@ -223,7 +226,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     ];
 
     const grid = sources.find(s => s.type === 'grid');
-    if (grid && grid.flow_to.length) {
+    if (grid && grid?.flow_to?.length) {
       // grid export
       sections[1].entities.unshift({
         entity_id: grid.flow_to[0].stat_energy_to,

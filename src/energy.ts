@@ -42,10 +42,10 @@ export interface EnergySource {
   type: string;
   stat_energy_from?: string;
   stat_energy_to?: string;
-  flow_from: {
+  flow_from?: {
     stat_energy_from: string;
   }[];
-  flow_to: {
+  flow_to?: {
     stat_energy_to: string;
   }[];
 }
