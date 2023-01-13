@@ -304,7 +304,6 @@ export class Chart extends LitElement {
 
   private _sortBoxes(boxes: Box[], sort?: string, dir = 'desc') {
     if (sort === 'state') {
-      console.log('boxes', boxes);
       if (dir === 'desc') {
         boxes.sort((a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0));
       } else {
