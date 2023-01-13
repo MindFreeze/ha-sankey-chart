@@ -39,7 +39,7 @@ This card is intended to display connections between entities with numeric state
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
-| sort_by           | string  | **Optional** |                     | Sort the entities in this section. Valid options are: 'state'
+| sort_by           | string  | **Optional** |                     | Sort the entities in this section. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
 | sort_dir          | string  | **Optional** | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
 
 ### Entities object
