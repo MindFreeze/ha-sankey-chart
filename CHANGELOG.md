@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.0...v1.8.1) (2023-01-18)
+
+
+### Bug Fixes
+
+* **#60:** ignore missing entities in autoconfig ([e5f9eb8](https://github.com/MindFreeze/ha-sankey-chart/commit/e5f9eb86446ef57ef8303ebf14347f717c8723f4))
+
 ## [1.8.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.7.0...v1.8.0) (2023-01-10)
 
 
