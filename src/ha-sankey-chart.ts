@@ -19,6 +19,7 @@ import {
 } from './energy';
 import { until } from 'lit/directives/until';
 import { getEntitiesByArea, HomeAssistantReal } from './hass';
+import { LovelaceCardEditor } from 'custom-card-helpers';
 
 /* eslint no-console: 0 */
 console.info(
@@ -40,12 +41,13 @@ const ENERGY_DATA_TIMEOUT = 10000;
 
 @customElement('sankey-chart')
 export class SankeyChart extends SubscribeMixin(LitElement) {
-  // public static async getConfigElement(): Promise<LovelaceCardEditor> {
-  //   return document.createElement('sankey-chart-editor');
-  // }
+  public static async getConfigElement(): Promise<LovelaceCardEditor> {
+    await import('./editor');
+    return document.createElement('sankey-chart-editor');
+  }
 
   public static getStubConfig(): Record<string, unknown> {
-    return {};
+    return { autoconfig: { print_yaml: false } };
   }
 
   // https://lit.dev/docs/components/properties/

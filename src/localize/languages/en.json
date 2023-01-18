@@ -6,5 +6,11 @@
     "entity_not_found": "Entity state not found",
     "missing_child": "Missing child entity",
     "loading": "Loading..."
+  },
+  "editor": {
+    "yaml_disclaimer": "Please use yaml mode for the other options",
+    "autoconfig": "Autoconfig",
+    "enable": "Enable",
+    "print": "Print auto generated config yaml"
   }
 }
