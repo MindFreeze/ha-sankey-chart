@@ -16,6 +16,7 @@ import {
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
+  EnergySource,
 } from './energy';
 import { until } from 'lit/directives/until';
 import { getEntitiesByArea, HomeAssistantReal } from './hass';
@@ -161,7 +162,20 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       return;
     }
     const sources = (collection.prefs?.energy_sources || [])
-      .filter(s => ENERGY_SOURCE_TYPES.includes(s.type) && (s.stat_energy_from || s.flow_from?.length))
+      .map(s => ({
+        ...s,
+        ids: [s, ...(s.flow_from || [])].map(f => f.stat_energy_from)
+          .filter(id => {
+            if (!id || !this.hass.states[id]) {
+              if (id) {
+                console.warn('Ignoring missing entity ' + id);
+              }
+              return false;
+            }
+            return true;
+          }) as string[],
+      }))
+      .filter(s => ENERGY_SOURCE_TYPES.includes(s.type) && s.ids.length)
       .sort((s1, s2) => {
         // sort to solar, battery, grid
         if (s1.type === s2.type) {
@@ -193,13 +207,12 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const sections: Section[] = [
       {
         entities: sources.map(source => {
-          const flow_from = source.flow_from || [];
           const substract = source.stat_energy_to
             ? [source.stat_energy_to]
             : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
-            entity_id: source.stat_energy_from || flow_from[0].stat_energy_from,
-            add_entities: flow_from?.length > 1 ? flow_from.slice(1).map(e => e.stat_energy_from) : undefined,
+            entity_id: source.ids[0],
+            add_entities: source.ids?.length > 1 ? source.ids.slice(1) : undefined,
             substract_entities: substract,
             type: 'entity',
             color: getEnergySourceColor(source.type),

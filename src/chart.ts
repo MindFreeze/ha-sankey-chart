@@ -121,7 +121,7 @@ export class Chart extends LitElement {
         });
       }
       if (ent.type === 'remaining_parent_state') {
-        this.connectionsByChild.get(ent)!.forEach(c => {
+        this.connectionsByChild.get(ent)?.forEach(c => {
           if (!c.ready) {
             this.connectionsByParent.get(c.parent)?.forEach(conn => {
               if (conn.child !== child) {
