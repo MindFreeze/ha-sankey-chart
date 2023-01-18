@@ -68,6 +68,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
           </ha-formfield>
         </div>
         <p>${localize('editor.yaml_disclaimer')}</p>
+        <p><a href="https://github.com/MindFreeze/ha-sankey-chart/blob/master/README.md">Documentation</a></p>
       </div>
     `;
   }
