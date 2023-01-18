@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.1...v1.8.2) (2023-01-18)
+
+
+### Bug Fixes
+
+* **#60:** type fix ([cd2278b](https://github.com/MindFreeze/ha-sankey-chart/commit/cd2278b0f07f1f224e51aeda4085d35b850eda5b))
+
 ## [1.8.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.0...v1.8.1) (2023-01-18)
 
 
