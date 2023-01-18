@@ -176,7 +176,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const deviceIds = (collection.prefs?.device_consumption || [])
       .map(d => d.stat_consumption)
       .filter(id => {
-        if (!this.hass.entities[id]) {
+        if (!this.hass.states[id]) {
           console.warn('Ignoring missing entity ' + id);
           return false;
         }
