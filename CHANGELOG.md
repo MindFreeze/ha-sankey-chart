@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.2...v1.9.0) (2023-01-18)
+
+
+### Features
+
+* **#77:** Basic visual editor support ([693e722](https://github.com/MindFreeze/ha-sankey-chart/commit/693e7220a235504d67349573e8b6d9c062c2c416))
+
+
+### Bug Fixes
+
+* **#60:** ingore missing source entities in autoconfig ([66da293](https://github.com/MindFreeze/ha-sankey-chart/commit/66da29319526b3789461ba42ee72149d2567cd5d))
+
 ## [1.8.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.1...v1.8.2) (2023-01-18)
 
 
