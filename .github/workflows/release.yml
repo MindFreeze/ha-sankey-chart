@@ -7,7 +7,7 @@ on:
         required: true
         description: Target release tag
   release:
-    types: [created, published, released]
+    types: [created, published, released, prereleased, edited]
 
 jobs:
   release:
