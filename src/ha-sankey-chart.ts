@@ -57,7 +57,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private states: HassEntities = {};
   @state() private entityIds: string[] = [];
   @state() private lastUpdate = 0;
-  @state() private error?: Error;
+  @state() private error?: Error | unknown;
 
   public hassSubscribe() {
     if (!this.config.energy_date_selection) {
@@ -72,11 +72,10 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       if (energyCollection) {
         resolve(energyCollection);
       } else if (Date.now() - start > ENERGY_DATA_TIMEOUT) {
-        this.error = new Error(
-          'No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.',
-        );
         console.debug(getEnergyDataCollection(this.hass));
-        reject(this.error);
+        reject(
+          new Error('No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.'),
+        );
       } else {
         setTimeout(() => getEnergyDataCollectionPoll(resolve, reject), 100);
       }
@@ -88,15 +87,27 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         console.debug(getEnergyDataCollection(this.hass));
       }
     }, ENERGY_DATA_TIMEOUT * 2);
+    energyPromise.catch(err => {
+      this.error = err;
+    });
     return [
       energyPromise.then(async collection => {
         const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
         if (isAutoconfig && !this.config.sections.length) {
-          await this.autoconfig(collection);
+          try {
+            await this.autoconfig(collection);
+          } catch (err: any) {
+            this.error = new Error(err?.message || err);
+          }
         }
         return collection.subscribe(async data => {
           if (isAutoconfig && !this.config.sections.length) {
-            await this.autoconfig(collection);
+            try {
+              await this.autoconfig(collection);
+            } catch (err: any) {
+              this.error = new Error(err?.message || err);
+              return;
+            }
           }
           const stats = await getStatistics(this.hass, data, this.entityIds);
           const states: HassEntities = {};
@@ -106,7 +117,6 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
             }
           });
           this.states = states;
-          // this.requestUpdate();
         });
       }),
     ];
@@ -163,7 +173,15 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         }
         return 1;
       });
-    const deviceIds = (collection.prefs?.device_consumption || []).map(d => d.stat_consumption);
+    const deviceIds = (collection.prefs?.device_consumption || [])
+      .map(d => d.stat_consumption)
+      .filter(id => {
+        if (!this.hass.entities[id]) {
+          console.warn('Ignoring missing entity ' + id);
+          return false;
+        }
+        return true;
+      });
     const areasResult = await getEntitiesByArea(this.hass, deviceIds);
     const areas = Object.values(areasResult)
       // put 'No area' last
@@ -179,8 +197,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
             : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
             entity_id: source.stat_energy_from || flow_from[0].stat_energy_from,
-            add_entities:
-              flow_from?.length > 1 ? flow_from.slice(1).map(e => e.stat_energy_from) : undefined,
+            add_entities: flow_from?.length > 1 ? flow_from.slice(1).map(e => e.stat_energy_from) : undefined,
             substract_entities: substract,
             type: 'entity',
             color: getEnergySourceColor(source.type),
