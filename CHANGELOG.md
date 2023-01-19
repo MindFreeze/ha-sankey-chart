@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.1...v1.9.2) (2023-01-19)
+
+
+### Bug Fixes
+
+* **#60:** fix for grid export in autoconfig ([df63b1f](https://github.com/MindFreeze/ha-sankey-chart/commit/df63b1f8dc61c04cfe455fa06cd94a1cf6fc572a))
+
 ## [1.9.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.0...v1.9.1) (2023-01-19)
 
 
