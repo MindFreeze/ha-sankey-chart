@@ -260,15 +260,17 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const grid = sources.find(s => s.type === 'grid');
     if (grid && grid?.flow_to?.length) {
       // grid export
-      sections[1].entities.unshift({
-        entity_id: grid.flow_to[0].stat_energy_to,
-        substract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
-        type: 'entity',
-        color: getEnergySourceColor(grid.type),
-        children: [],
-      });
-      sections[0].entities.forEach(entity => {
-        entity.children.unshift(grid.stat_energy_to!);
+      grid?.flow_to.forEach(({stat_energy_to}) => {
+        sections[1].entities.unshift({
+          entity_id: stat_energy_to,
+          substract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
+          type: 'entity',
+          color: getEnergySourceColor(grid.type),
+          children: [],
+        });
+        sections[0].entities.forEach(entity => {
+          entity.children.unshift(stat_energy_to);
+        });
       });
     }
 
