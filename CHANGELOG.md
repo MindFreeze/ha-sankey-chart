@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.0...v1.9.1) (2023-01-19)
+
+
+### Bug Fixes
+
+* **#81:** fix build issue ([96ce77d](https://github.com/MindFreeze/ha-sankey-chart/commit/96ce77dc706c356eef098bd23f652a243c7a17dd))
+
 ## [1.9.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.8.2...v1.9.0) (2023-01-18)
 
 
