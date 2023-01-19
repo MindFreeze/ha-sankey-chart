@@ -16,11 +16,11 @@ import {
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
-  EnergySource,
 } from './energy';
 import { until } from 'lit/directives/until';
 import { getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
+import './editor';
 
 /* eslint no-console: 0 */
 console.info(
@@ -43,7 +43,7 @@ const ENERGY_DATA_TIMEOUT = 10000;
 @customElement('sankey-chart')
 export class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    await import('./editor');
+    // await import('./editor');
     return document.createElement('sankey-chart-editor');
   }
 
