@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.2...v1.9.3) (2023-01-24)
+
+
+### Bug Fixes
+
+* **#74:** fixed passthrough with multiple parents. fixes [#71](https://github.com/MindFreeze/ha-sankey-chart/issues/71) as well ([a45fed5](https://github.com/MindFreeze/ha-sankey-chart/commit/a45fed5baaac84a8b44468509d5bc9632364dc40))
+
 ## [1.9.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.1...v1.9.2) (2023-01-19)
 
 
