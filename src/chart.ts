@@ -506,16 +506,21 @@ export class Chart extends LitElement {
         const connections = getChildConnections(b, children, this.connectionsByParent.get(b.config)).filter((c, i) => {
           if (c.state > 0) {
             children[i].connections.parents.push(c);
-            if (children[i].config.type === 'passthrough' && c.state !== children[i].state) {
-              // virtual entity that must only pass state to the next section
-              children[i].state = c.state;
-              // this could reduce the size of the box moving lower boxes up
-              // so we have to add spacers and adjust some positions
-              const newSize = Math.floor(c.state / this.statePerPixelY);
-              children[i].extraSpacers = (children[i].size - newSize) / 2;
-              c.endY += children[i].extraSpacers!;
-              children[i].top += children[i].extraSpacers!;
-              children[i].size = newSize;
+            if (children[i].config.type === 'passthrough') {
+              // @FIXME not sure if this is needed anymore after v1.0.0
+              const sumState =
+                this.connectionsByChild.get(children[i].config)?.reduce((sum, conn) => sum + conn.state, 0) || 0;
+              if (sumState !== children[i].state) {
+                // virtual entity that must only pass state to the next section
+                children[i].state = sumState;
+                // this could reduce the size of the box moving lower boxes up
+                // so we have to add spacers and adjust some positions
+                const newSize = Math.floor(sumState / this.statePerPixelY);
+                children[i].extraSpacers = (children[i].size - newSize) / 2;
+                c.endY += children[i].extraSpacers!;
+                children[i].top += children[i].extraSpacers!;
+                children[i].size = newSize;
+              }
             }
             return true;
           }
