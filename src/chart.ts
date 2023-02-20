@@ -27,10 +27,23 @@ export class Chart extends LitElement {
   @state() private statePerPixelY = 0;
   @state() private entityStates: Map<EntityConfigInternal, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
+  @state() private lastUpdate = 0;
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
+      return false;
+    }
+    const now = Date.now();
+    if (this.config.throttle && now - this.lastUpdate < this.config.throttle) {
+      // woah there
+      const ts = this.lastUpdate;
+      setTimeout(() => {
+        if (ts === this.lastUpdate) {
+          // trigger manual update if no changes since last rejected update
+          this.requestUpdate();
+        }
+      }, now - this.lastUpdate);
       return false;
     }
     if (changedProps.has('highlightedEntities')) {
@@ -571,6 +584,8 @@ export class Chart extends LitElement {
 
       this._calcConnections();
       this._calcBoxes();
+
+      this.lastUpdate = Date.now();
 
       // @action=${this._handleAction}
       // .actionHandler=${actionHandler({

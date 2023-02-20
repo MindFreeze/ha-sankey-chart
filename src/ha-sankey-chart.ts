@@ -59,7 +59,6 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private config!: Config;
   @state() private states: HassEntities = {};
   @state() private entityIds: string[] = [];
-  @state() private lastUpdate = 0;
   @state() private error?: Error | unknown;
 
   public hassSubscribe() {
@@ -294,30 +293,6 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
 
   public getCardSize(): number {
     return 4;
-  }
-
-  // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
-  protected shouldUpdate(): boolean {
-    if (!this.config) {
-      return false;
-    }
-    const now = Date.now();
-    if (this.config.throttle && now - this.lastUpdate < this.config.throttle) {
-      // woah there
-      const ts = this.lastUpdate;
-      setTimeout(() => {
-        if (ts === this.lastUpdate) {
-          // trigger manual update if no changes since last rejected update
-          this.requestUpdate();
-        }
-      }, now - this.lastUpdate);
-      return false;
-    }
-    return true;
-  }
-
-  public willUpdate(): void {
-    this.lastUpdate = Date.now();
   }
 
   // https://lit.dev/docs/components/rendering/
