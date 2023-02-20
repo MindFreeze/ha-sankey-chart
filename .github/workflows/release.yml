@@ -20,7 +20,7 @@ jobs:
       - name: Build the file
         run: |
           cd /home/runner/work/ha-sankey-chart/ha-sankey-chart
-          npm install
+          npm ci
           npm run build
 
       # Upload build file to the releas as an asset.
