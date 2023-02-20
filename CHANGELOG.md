@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.3...v1.9.4) (2023-02-20)
+
+
+### Bug Fixes
+
+* **#90:** Runtime error RangeError: toFixed() ([3847550](https://github.com/MindFreeze/ha-sankey-chart/commit/38475503694b781be6df7b2ed41e047db507ac26))
+* **#93:** delay throttle until chart is really drawn ([da4c89a](https://github.com/MindFreeze/ha-sankey-chart/commit/da4c89a4332fbb766bc51ae0d444a2690762440b))
+
 ## [1.9.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.2...v1.9.3) (2023-01-24)
 
 
