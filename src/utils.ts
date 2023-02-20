@@ -22,7 +22,7 @@ export function formatState(state: number, round: number): string {
   do {
     // round to first significant digit
     rounded = state.toFixed(decimals++);
-  } while (/^[0\.]*$/.test(rounded));
+  } while (/^[0\.]*$/.test(rounded) && decimals < 100);
 
   const formattedState = parseFloat(rounded).toLocaleString();
   return formattedState;
