@@ -17,6 +17,7 @@ export class Chart extends LitElement {
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public states!: HassEntities;
+  @property({ attribute: false }) public forceUpdateTs!: number;
 
   @state() private config!: Config;
   @state() private sections: SectionState[] = [];
@@ -33,6 +34,9 @@ export class Chart extends LitElement {
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
       return false;
+    }
+    if (changedProps.has('forceUpdateTs')) {
+      return true;
     }
     const now = Date.now();
     if (this.config.throttle && now - this.lastUpdate < this.config.throttle) {

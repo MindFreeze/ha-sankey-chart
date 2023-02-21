@@ -60,6 +60,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private states: HassEntities = {};
   @state() private entityIds: string[] = [];
   @state() private error?: Error | unknown;
+  @state() private forceUpdateTs?: number;
 
   public hassSubscribe() {
     if (!this.config.energy_date_selection) {
@@ -119,6 +120,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
             }
           });
           this.states = states;
+          this.forceUpdateTs = Date.now();
         });
       }),
     ];
@@ -163,7 +165,8 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const sources = (collection.prefs?.energy_sources || [])
       .map(s => ({
         ...s,
-        ids: [s, ...(s.flow_from || [])].map(f => f.stat_energy_from)
+        ids: [s, ...(s.flow_from || [])]
+          .map(f => f.stat_energy_from)
           .filter(id => {
             if (!id || !this.hass.states[id]) {
               if (id) {
@@ -259,7 +262,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const grid = sources.find(s => s.type === 'grid');
     if (grid && grid?.flow_to?.length) {
       // grid export
-      grid?.flow_to.forEach(({stat_energy_to}) => {
+      grid?.flow_to.forEach(({ stat_energy_to }) => {
         sections[1].entities.unshift({
           entity_id: stat_energy_to,
           substract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
@@ -306,6 +309,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         .hass=${this.hass}
         .states=${this.config.energy_date_selection ? this.states : this.hass.states}
         .config=${this.config}
+        .forceUpdateTs=${this.forceUpdateTs}
       ></sankey-chart-base>
       ${print_yaml && this.config.sections.length
         ? html`${until(renderError('', { ...this.config, autoconfig: undefined }, this.hass))}`
