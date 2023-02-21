@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.5](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.4...v1.9.5) (2023-02-21)
+
+
+### Bug Fixes
+
+* **#93:** force update on date change ([9e67fe4](https://github.com/MindFreeze/ha-sankey-chart/commit/9e67fe4369b88d420109d0cc938dc4da9b7c06d1))
+
 ## [1.9.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.3...v1.9.4) (2023-02-20)
 
 
