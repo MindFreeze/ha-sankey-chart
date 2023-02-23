@@ -66,6 +66,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   min_box_height?: number,
   min_box_distance?: number,
   throttle?: number,
+  min_state?: number,
 }
 
 export interface Section {
@@ -80,6 +81,7 @@ export interface Config extends SankeyChartConfig {
   height: number;
   min_box_height: number;
   min_box_distance: number;
+  min_state: number;
   sections: Section[];
 }
 

@@ -227,14 +227,16 @@ export class Chart extends LitElement {
         let total = 0;
         const boxes: Box[] = section.entities
           .filter(entityConf => {
+            const {min_state} = this.config;
             // remove empty entity boxes
             if (entityConf.type === 'remaining_parent_state') {
-              return this.connectionsByChild.get(entityConf)?.some(c => c.state);
+              return this.connectionsByChild.get(entityConf)?.some(c => c.state && c.state >= min_state);
             }
             if (entityConf.type === 'remaining_child_state') {
-              return this.connectionsByParent.get(entityConf)?.some(c => c.state);
+              return this.connectionsByParent.get(entityConf)?.some(c => c.state && c.state >= min_state);
             }
-            return this._getMemoizedState(entityConf).state;
+            const { state } = this._getMemoizedState(entityConf);
+            return state && state >= min_state;
           })
           .map(entityConf => {
             const { state, unit_of_measurement } = this._getMemoizedState(entityConf);

@@ -173,6 +173,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
     show_states: true,
     show_units: true,
     ...config,
+    min_state: config.min_state ? Math.abs(config.min_state) : 0,
     sections,
   };
 }
