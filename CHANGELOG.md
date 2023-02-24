@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.5...v1.10.0) (2023-02-23)
+
+
+### Features
+
+* **#87:** configurable min state threshold ([63bcb9a](https://github.com/MindFreeze/ha-sankey-chart/commit/63bcb9aec1411d658fcebff6d56dfbf075edcb10))
+
 ## [1.9.5](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.4...v1.9.5) (2023-02-21)
 
 
