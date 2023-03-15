@@ -2,6 +2,9 @@ import { css } from 'lit';
 
 // https://lit.dev/docs/components/styles/
 export default css`
+    ha-card {
+        overflow-x: auto;
+    }
     .container {
         display: flex;
         position: relative;

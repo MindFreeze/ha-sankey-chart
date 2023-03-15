@@ -227,7 +227,7 @@ export class Chart extends LitElement {
         let total = 0;
         const boxes: Box[] = section.entities
           .filter(entityConf => {
-            const {min_state} = this.config;
+            const { min_state } = this.config;
             // remove empty entity boxes
             if (entityConf.type === 'remaining_parent_state') {
               return this.connectionsByChild.get(entityConf)?.some(c => c.state && c.state >= min_state);
@@ -460,9 +460,10 @@ export class Chart extends LitElement {
     const section = this.sections[index];
     const { boxes, spacerH } = section;
     const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
+    const { min_width: minWidth } = this.config.sections[index];
 
     return html`
-      <div class="section">
+      <div class="section" style=${styleMap({ minWidth })}>
         ${hasChildren
           ? html`<div class="connectors">
               <svg viewBox="0 0 100 ${this.config.height}" preserveAspectRatio="none">
