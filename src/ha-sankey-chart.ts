@@ -151,8 +151,8 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
         if (ent.add_entities) {
           ent.add_entities.forEach(e => this.entityIds.push(e));
         }
-        if (ent.substract_entities) {
-          ent.substract_entities.forEach(e => this.entityIds.push(e));
+        if (ent.subtract_entities) {
+          ent.subtract_entities.forEach(e => this.entityIds.push(e));
         }
       });
     });
@@ -209,13 +209,13 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     const sections: Section[] = [
       {
         entities: sources.map(source => {
-          const substract = source.stat_energy_to
+          const subtract = source.stat_energy_to
             ? [source.stat_energy_to]
             : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
             entity_id: source.ids[0],
             add_entities: source.ids?.length > 1 ? source.ids.slice(1) : undefined,
-            substract_entities: substract,
+            subtract_entities: subtract,
             type: 'entity',
             color: getEnergySourceColor(source.type),
             children: ['total'],
@@ -265,7 +265,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       grid?.flow_to.forEach(({ stat_energy_to }) => {
         sections[1].entities.unshift({
           entity_id: stat_energy_to,
-          substract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
+          subtract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
           type: 'entity',
           color: getEnergySourceColor(grid.type),
           children: [],
@@ -281,7 +281,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       // battery charging
       sections[1].entities.unshift({
         entity_id: battery.stat_energy_to,
-        substract_entities: [battery.stat_energy_from],
+        subtract_entities: [battery.stat_energy_from],
         type: 'entity',
         color: getEnergySourceColor(battery.type),
         children: [],

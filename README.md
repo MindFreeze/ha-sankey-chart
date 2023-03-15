@@ -60,7 +60,7 @@ This card is intended to display connections between entities with numeric state
 | color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
-| substract_entities| list    | **Optional** |                     | Experimental. List of entity ids. Their states will be substracted from this entity's state
+| subtract_entities| list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
 
 ### Entity types
 

@@ -199,8 +199,8 @@ export class Chart extends LitElement {
           normalized.state += state;
         });
       }
-      if (entityConf.substract_entities) {
-        entityConf.substract_entities.forEach(subId => {
+      if (entityConf.subtract_entities) {
+        entityConf.subtract_entities.forEach(subId => {
           const subEntity = this._getEntityState({ entity_id: subId, children: [] });
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
