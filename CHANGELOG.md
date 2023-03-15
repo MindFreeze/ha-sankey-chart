@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.10.1...v1.11.0) (2023-03-15)
+
+
+### Features
+
+* **#62:** min_width for sections. Also fixes [#91](https://github.com/MindFreeze/ha-sankey-chart/issues/91) ([c9d89db](https://github.com/MindFreeze/ha-sankey-chart/commit/c9d89db1e707ff120ee365eb64ee330b2c348ae8))
+
 ## [1.10.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.10.0...v1.10.1) (2023-03-15)
 
 
