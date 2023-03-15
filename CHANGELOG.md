@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.10.0...v1.10.1) (2023-03-15)
+
+
+### Bug Fixes
+
+* **#100:** fix subtract spelling ([47d2fe3](https://github.com/MindFreeze/ha-sankey-chart/commit/47d2fe3d882e217f64091e5ef4efc1dd74d22e95))
+
 ## [1.10.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.9.5...v1.10.0) (2023-02-23)
 
 
