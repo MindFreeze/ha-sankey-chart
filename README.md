@@ -189,7 +189,7 @@ Currently this chart just shows historical data based on a energy-date-selection
 
 **Q: Do my entities need to be added to the energy dashboard first?**
 
-**A:** This card doesn't know/care if an entity is in the energy dashboard.
+**A:** This card doesn't know/care if an entity is in the energy dashboard. Unless you use `autoconfig` because that relies entirely on the energy dashboard.
 
 **Q: How do I get total [daily] energy?**
 
