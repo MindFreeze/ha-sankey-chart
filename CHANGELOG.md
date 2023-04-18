@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.11.0...v1.12.0) (2023-04-18)
+
+
+### Features
+
+* **#106:** allow multiline names ([6e80b29](https://github.com/MindFreeze/ha-sankey-chart/commit/6e80b29456da1e421c78205b8ca3229442561a82))
+
 ## [1.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.10.1...v1.11.0) (2023-03-15)
 
 
