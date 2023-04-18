@@ -478,10 +478,28 @@ export class Chart extends LitElement {
           const name = box.config.name || entity.attributes.friendly_name || '';
           const icon = box.config.icon || stateIcon(entity as HassEntity);
           const maxLabelH = box.size + spacerH - 1;
-          const labelStyle =
-            maxLabelH < MIN_LABEL_HEIGHT
-              ? { maxHeight: maxLabelH + 'px', fontSize: `${maxLabelH / MIN_LABEL_HEIGHT}em` }
-              : {};
+
+          // reduce label size if it doesn't fit
+          const labelStyle: Record<string, string> = {lineHeight: MIN_LABEL_HEIGHT + 'px'};
+          const nameStyle: Record<string, string> = {};
+          if (maxLabelH < MIN_LABEL_HEIGHT) {
+            const fontSize = maxLabelH / MIN_LABEL_HEIGHT;
+            // labelStyle.maxHeight = maxLabelH + 'px';
+            labelStyle.fontSize = `${fontSize}em`;
+            labelStyle.lineHeight = `${fontSize}em`;
+          }
+          const numLines = name.split('\n').filter(v => v).length;
+          if (numLines > 1) {
+            nameStyle.whiteSpace = 'pre';
+            if (labelStyle.fontSize) {
+              nameStyle.fontSize = `${1 / numLines + 0.1}rem`;
+              nameStyle.lineHeight = `${1 / numLines + 0.1}rem`;
+            } else if (maxLabelH < MIN_LABEL_HEIGHT * numLines) {
+              nameStyle.fontSize = `${maxLabelH / MIN_LABEL_HEIGHT / numLines * 1.1}em`;
+              nameStyle.lineHeight = `${maxLabelH / MIN_LABEL_HEIGHT / numLines * 1.1}em`;
+            }
+          }
+          
           return html`
             ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerH + 'px' })}></div>` : null}
             ${extraSpacers
@@ -504,7 +522,9 @@ export class Chart extends LitElement {
                         ? html`<span class="unit">${box.unit_of_measurement}</span>`
                         : null}`
                   : null}
-                ${show_names && isNotPassthrough ? html`<span class="name">&nbsp;${name}</span>` : null}
+                ${show_names && isNotPassthrough
+                  ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
+                  : null}
               </div>
             </div>
             ${extraSpacers
