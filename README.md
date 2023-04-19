@@ -9,6 +9,8 @@ A Home Assistant lovelace card to display a sankey chart. For example for power 
 ![Project Maintenance][maintenance-shield]
 [![GitHub Activity][commits-shield]][commits]
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/mindfreeze)
+
 This card is intended to display connections between entities with numeric state. It is not a general graph card.
 
 ![Example card](img/example.png)
