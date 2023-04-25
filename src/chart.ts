@@ -2,8 +2,9 @@ import { LitElement, html, svg, TemplateResult, SVGTemplateResult, PropertyValue
 import { styleMap } from 'lit/directives/style-map';
 import { classMap } from 'lit/directives/class-map';
 import { until } from 'lit/directives/until.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
-import { HomeAssistant, stateIcon, fireEvent } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
+import { HomeAssistant, stateIcon } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
 import { MIN_LABEL_HEIGHT } from './const';
@@ -11,6 +12,7 @@ import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getChildConnections, getEntityId, normalizeStateValue, renderError } from './utils';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
+import { handleAction } from './handle-actions';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -378,7 +380,7 @@ export class Chart extends LitElement {
   }
 
   private _handleBoxClick(box: Box): void {
-    fireEvent(this, 'hass-more-info', { entityId: box.entity_id });
+    handleAction(this, this.hass, box.config, 'tap');
   }
 
   private _handleMouseEnter(box: Box): void {

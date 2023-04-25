@@ -1,5 +1,5 @@
-import { LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
-import { HassEntity } from 'home-assistant-js-websocket';
+import { ActionConfig, BaseActionConfig, ConfirmationRestrictionConfig, HapticType, LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
+import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import {UNIT_PREFIXES} from './const';
 
 declare global {
@@ -28,6 +28,7 @@ export interface EntityConfig {
   color_above?: string;
   color_below?: string;
   color_limit?: number;
+  tap_action?: ActionConfigExtended;
   // @deprecated
   remaining?: string | {
     name: string;
@@ -42,6 +43,28 @@ export type EntityConfigInternal = EntityConfig & {
 }
 
 export type EntityConfigOrStr = string | EntityConfig;
+
+export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig;
+
+export interface MoreInfoActionConfig extends BaseActionConfig {
+  action: "more-info";
+  entity?: string;
+  data?: {
+      entity_id?: string | [string];
+  };
+};
+
+export interface CallServiceActionConfig extends BaseActionConfig {
+  action: "call-service";
+  service: string;
+  data?: {
+      entity_id?: string | [string];
+      [key: string]: unknown;
+  };
+  target?: HassServiceTarget;
+  repeat?: number;
+  haptic?: HapticType;
+};
 
 export interface SectionConfig {
   entities: EntityConfigOrStr[];
