@@ -129,11 +129,12 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     this._entityConfig = { sectionIndex, entityIndex, entity: sections[sectionIndex].entities[entityIndex] };
   }
 
-  private _handleEntityConfig(entityConf: EntityConfig): void {
+  private _handleEntityConfig = (entityConf: EntityConfig): void => {
     this._editEntity({
       detail: { value: entityConf },
       target: { section: this._entityConfig?.sectionIndex, index: this._entityConfig?.entityIndex },
     });
+    this._entityConfig = { ...this._entityConfig!, entity: entityConf };
   }
 
   private _updateConfig(): void {
@@ -154,7 +155,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         <sankey-chart-entity-editor
           .hass=${this.hass}
           .entity=${this._entityConfig.entity}
-          .onChange=${this._handleEntityConfig.bind(this)}
+          .onChange=${this._handleEntityConfig}
           .onClose=${() => {
             this._entityConfig = undefined;
           }}

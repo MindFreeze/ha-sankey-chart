@@ -20,7 +20,15 @@
     "entity_editor": "Entity editor",
     "fields": {
       "entity": "Entity",
+      "type": "Type",
+      "children": "Children",
       "name": "Name"
+    },
+    "entity_types": {
+      "entity": "Entity",
+      "remaining_parent_state": "Remaining parent state",
+      "remaining_child_state": "Remaining child state",
+      "passthrough": "Passthrough"
     }
   }
 }
