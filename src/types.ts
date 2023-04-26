@@ -1,6 +1,13 @@
-import { ActionConfig, BaseActionConfig, ConfirmationRestrictionConfig, HapticType, LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from 'custom-card-helpers';
+import {
+  ActionConfig,
+  BaseActionConfig,
+  HapticType,
+  LovelaceCard,
+  LovelaceCardConfig,
+  LovelaceCardEditor,
+} from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
-import {UNIT_PREFIXES} from './const';
+import { UNIT_PREFIXES } from './const';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -30,41 +37,43 @@ export interface EntityConfig {
   color_limit?: number;
   tap_action?: ActionConfigExtended;
   // @deprecated
-  remaining?: string | {
-    name: string;
-    color?: string;
-  },
+  remaining?:
+    | string
+    | {
+        name: string;
+        color?: string;
+      };
 }
 
 export type EntityConfigInternal = EntityConfig & {
   children: string[];
   accountedState?: number;
   foundChildren?: string[];
-}
+};
 
 export type EntityConfigOrStr = string | EntityConfig;
 
 export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig;
 
 export interface MoreInfoActionConfig extends BaseActionConfig {
-  action: "more-info";
+  action: 'more-info';
   entity?: string;
   data?: {
-      entity_id?: string | [string];
+    entity_id?: string | [string];
   };
-};
+}
 
 export interface CallServiceActionConfig extends BaseActionConfig {
-  action: "call-service";
+  action: 'call-service';
   service: string;
   data?: {
-      entity_id?: string | [string];
-      [key: string]: unknown;
+    entity_id?: string | [string];
+    [key: string]: unknown;
   };
   target?: HassServiceTarget;
   repeat?: number;
   haptic?: HapticType;
-};
+}
 
 export interface SectionConfig {
   entities: EntityConfigOrStr[];
@@ -76,7 +85,7 @@ export interface SectionConfig {
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
-    print_yaml?: boolean
+    print_yaml?: boolean;
   };
   title?: string;
   sections?: SectionConfig[];
@@ -89,10 +98,10 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   show_states?: boolean;
   show_units?: boolean;
   energy_date_selection?: boolean;
-  min_box_height?: number,
-  min_box_distance?: number,
-  throttle?: number,
-  min_state?: number,
+  min_box_height?: number;
+  min_box_distance?: number;
+  throttle?: number;
+  min_state?: number;
 }
 
 export interface Section {
@@ -120,7 +129,7 @@ export interface Connection {
   state: number;
   startColor?: string;
   endColor?: string;
-  highlighted?: boolean,
+  highlighted?: boolean;
 }
 
 export interface Box {
@@ -138,27 +147,27 @@ export interface Box {
   extraSpacers?: number;
   connections: {
     parents: Connection[];
-  }
+  };
 }
 
 export interface SectionState {
-  boxes: Box[],
-  total: number,
-  spacerH: number,
-  statePerPixelY: number,
+  boxes: Box[];
+  total: number;
+  spacerH: number;
+  statePerPixelY: number;
 }
 
 export interface ConnectionState {
-  parent: EntityConfigInternal,
-  child: EntityConfigInternal,
-  state: number,
-  prevParentState: number,
-  prevChildState: number,
-  ready: boolean,
-  highlighted?: boolean,
+  parent: EntityConfigInternal;
+  child: EntityConfigInternal;
+  state: number;
+  prevParentState: number;
+  prevChildState: number;
+  ready: boolean;
+  highlighted?: boolean;
 }
 
 export interface NormalizedState {
-  state: number,
-  unit_of_measurement?: string,
+  state: number;
+  unit_of_measurement?: string;
 }

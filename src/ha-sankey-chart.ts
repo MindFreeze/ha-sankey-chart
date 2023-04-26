@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LitElement, html, TemplateResult } from 'lit';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, query, state } from 'lit/decorators';
 
 import type { Config, EntityConfigInternal, SankeyChartConfig, Section } from './types';
@@ -20,7 +21,7 @@ import {
 import { until } from 'lit/directives/until';
 import { getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
-import './editor';
+import './editor/index';
 
 /* eslint no-console: 0 */
 console.info(
@@ -112,14 +113,16 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
               return;
             }
           }
-          const stats = await getStatistics(this.hass, data, this.entityIds);
-          const states: HassEntities = {};
-          Object.keys(stats).forEach(id => {
-            if (this.hass.states[id]) {
-              states[id] = { ...this.hass.states[id], state: String(stats[id]) };
-            }
-          });
-          this.states = states;
+          if (this.entityIds.length) {
+            const stats = await getStatistics(this.hass, data, this.entityIds);
+            const states: HassEntities = {};
+            Object.keys(stats).forEach(id => {
+              if (this.hass.states[id]) {
+                states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+              }
+            });
+            this.states = states;
+          }
           this.forceUpdateTs = Date.now();
         });
       }),
@@ -132,11 +135,8 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    // if (config.test_gui) {
-    //   getLovelace().setEditMode(true);
-    // }
-
     this.setNormalizedConfig(normalizeConfig(config));
+    this.resetSubscriptions();
   }
 
   private setNormalizedConfig(config: Config): void {

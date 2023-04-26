@@ -9,8 +9,18 @@
   },
   "editor": {
     "yaml_disclaimer": "Please use yaml mode for the other options",
+    "docs": "Documentation",
     "autoconfig": "Autoconfig",
     "enable": "Enable",
-    "print": "Print auto generated config yaml"
+    "print": "Print auto generated config yaml",
+    "sections": "Sections",
+    "section": "Section",
+    "add_section": "+ Add section",
+    "add_entity": "+ Add entity",
+    "entity_editor": "Entity editor",
+    "fields": {
+      "entity": "Entity",
+      "name": "Name"
+    }
   }
 }

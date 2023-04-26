@@ -95,6 +95,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
       unit_prefix: 'k',
       round: 1,
       ...config,
+      sections: [],
     };
   }
 

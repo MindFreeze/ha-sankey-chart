@@ -29,6 +29,28 @@ export const SubscribeMixin = <T extends Constructor<ReactiveElement>>(
 
     public disconnectedCallback() {
       super.disconnectedCallback();
+      this.hassUnsubscribe();
+    }
+
+    protected updated(changedProps: PropertyValues) {
+      super.updated(changedProps);
+      if (changedProps.has("hass")) {
+        this.__checkSubscribed();
+      }
+    }
+
+    public resetSubscriptions(): void {
+      this.hassUnsubscribe();
+      this.__checkSubscribed();
+    }
+
+    protected hassSubscribe(): Array<
+      UnsubscribeFunc | Promise<UnsubscribeFunc>
+    > {
+      return [];
+    }
+
+    protected hassUnsubscribe() {
       if (this.__unsubs) {
         while (this.__unsubs.length) {
           const unsub = this.__unsubs.pop()!;
@@ -40,19 +62,6 @@ export const SubscribeMixin = <T extends Constructor<ReactiveElement>>(
         }
         this.__unsubs = undefined;
       }
-    }
-
-    protected updated(changedProps: PropertyValues) {
-      super.updated(changedProps);
-      if (changedProps.has("hass")) {
-        this.__checkSubscribed();
-      }
-    }
-
-    protected hassSubscribe(): Array<
-      UnsubscribeFunc | Promise<UnsubscribeFunc>
-    > {
-      return [];
     }
 
     private __checkSubscribed(): void {
