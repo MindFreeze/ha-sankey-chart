@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.13.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.12.0...v1.13.0) (2023-04-30)
+
+
+### Features
+
+* **#105:** custom tap_action per entity ([25c76f7](https://github.com/MindFreeze/ha-sankey-chart/commit/25c76f74e296f712e709c3855a1696f74274522b))
+* **#77:** added more functionality to visual editor ([0ba1eaa](https://github.com/MindFreeze/ha-sankey-chart/commit/0ba1eaae9bc3debe2c162535bf920669048ea43e))
+* **#77:** added more functionality to visual editor ([7d032ae](https://github.com/MindFreeze/ha-sankey-chart/commit/7d032ae7b2b9bb94e59676ec76bd5b317ebdd5dc))
+* **#77:** editor support for entity options ([cc70f31](https://github.com/MindFreeze/ha-sankey-chart/commit/cc70f317a2801f8cf76fd7c5770f3e402f49b336))
+
 ## [1.12.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.11.0...v1.12.0) (2023-04-18)
 
 
