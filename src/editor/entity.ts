@@ -1,12 +1,13 @@
-import { HomeAssistant } from 'custom-card-helpers';
+import { HomeAssistant, stateIcon } from 'custom-card-helpers';
 import { LitElement, html, TemplateResult, css, CSSResultGroup } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property } from 'lit/decorators';
-import { EntityConfigOrStr } from '../types';
+import { EntityConfig, EntityConfigOrStr } from '../types';
 import { localize } from '../localize/localize';
 import { repeat } from 'lit/directives/repeat';
+import { DEFAULT_ENTITY_CONF } from '../const';
 
-const schema = [
+const computeSchema = (entityConf: EntityConfig, icon: string) => [
   {
     name: 'type',
     selector: {
@@ -22,7 +23,35 @@ const schema = [
     },
   },
   { name: 'entity_id', selector: { entity: {} } },
+  {
+    type: 'grid',
+    name: '',
+    schema: [
+      { name: 'attribute', selector: { attribute: { entity_id: entityConf.entity_id } } },
+      { name: 'unit_of_measurement', selector: { text: {} } },
+    ],
+  },
   { name: 'name', selector: { text: {} } },
+  {
+    type: 'grid',
+    name: '',
+    schema: [
+      { name: 'icon', selector: { icon: { placeholder: icon } } },
+      { name: 'color', selector: { text: {} } },
+    ],
+  },
+  { name: 'tap_action', selector: { 'ui-action': {} } },
+  { name: 'color_on_state', selector: { boolean: {} } },
+  ...(entityConf.color_on_state
+    ? [
+        {
+          name: 'color_limit',
+          selector: { number: { mode: 'box', unit_of_measurement: entityConf.unit_of_measurement } },
+        },
+        { name: 'color_above', selector: { text: {} } },
+        { name: 'color_below', selector: { text: {} } },
+      ]
+    : []),
 ];
 
 @customElement('sankey-chart-entity-editor')
@@ -60,8 +89,18 @@ export class SankeyChartEntityEditor extends LitElement {
     this.onChange({ ...conf, children });
   }
 
+  private _getEntityIcon(entityId: string) {
+    const entityState = this.hass.states[entityId];
+    return entityState ? stateIcon(entityState) : undefined;
+  }
+
   protected render(): TemplateResult | void {
-    const data = typeof this.entity === 'string' ? { entity_id: this.entity } : this.entity;
+    const conf = typeof this.entity === 'string' ? { entity_id: this.entity } : this.entity;
+    const data = { ...DEFAULT_ENTITY_CONF, ...conf };
+
+    const icon = data.icon || this._getEntityIcon(conf.entity_id);
+
+    const schema = computeSchema(data, icon);
     return html`
       <div class="header">
         <ha-icon-button .label=${this.hass!.localize('ui.common.back')} @click=${this.onClose}>
@@ -95,7 +134,12 @@ export class SankeyChartEntityEditor extends LitElement {
               </div>
             `,
           )}
-          <ha-entity-picker class="add-entity" .hass=${this.hass} @value-changed=${this._editChild}></ha-entity-picker>
+          <ha-entity-picker
+            class="add-entity"
+            allow-custom-entity
+            .hass=${this.hass}
+            @value-changed=${this._editChild}
+          ></ha-entity-picker>
         </ha-card>
       </div>
     `;

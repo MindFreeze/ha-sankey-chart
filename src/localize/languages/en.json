@@ -22,7 +22,15 @@
       "entity": "Entity",
       "type": "Type",
       "children": "Children",
-      "name": "Name"
+      "name": "Name",
+      "icon": "Icon",
+      "color": "Color",
+      "unit_of_measurement": "Unit of measurement",
+      "tap_action": "Tap action",
+      "color_on_state": "Change color based on state",
+      "color_limit": "State limit for color change",
+      "color_above": "Color above limit",
+      "color_below": "Color below limit"
     },
     "entity_types": {
       "entity": "Entity",

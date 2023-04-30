@@ -64,7 +64,7 @@ This card is intended to display connections between entities with numeric state
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
-| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported actions are `more-info`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
+| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
 
 ### Entity types
 

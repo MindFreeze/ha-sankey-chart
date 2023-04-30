@@ -135,7 +135,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       target: { section: this._entityConfig?.sectionIndex, index: this._entityConfig?.entityIndex },
     });
     this._entityConfig = { ...this._entityConfig!, entity: entityConf };
-  }
+  };
 
   private _updateConfig(): void {
     fireEvent(this, 'config-changed', { config: this._config });
@@ -220,7 +220,6 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                         </div>
                         <ha-entity-picker
                           allow-custom-entity
-                          hideClearIcon
                           .hass=${this.hass}
                           .value=${getEntityId(entityConf)}
                           .section=${sectionIndex}
@@ -239,6 +238,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                   )}
                 </div>
                 <ha-entity-picker
+                  allow-custom-entity
                   class="add-entity"
                   .hass=${this.hass}
                   .section=${sectionIndex}
