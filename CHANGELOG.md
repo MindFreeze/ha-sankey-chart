@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.13.0...v1.14.0) (2023-05-01)
+
+
+### Features
+
+* **#77:** top level options in the visual editor ([7da04cc](https://github.com/MindFreeze/ha-sankey-chart/commit/7da04cc1b2a3f54ea27d106c8743615e7c6b4fa1))
+
 ## [1.13.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.12.0...v1.13.0) (2023-04-30)
 
 
