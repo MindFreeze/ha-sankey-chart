@@ -7,9 +7,10 @@ import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
 import { EntityConfig, SankeyChartConfig, SectionConfig } from '../types';
 import { localize } from '../localize/localize';
-import { getEntityId } from '../utils';
+import { getEntityId, normalizeConfig } from '../utils';
 import './entity';
 import { EntityConfigOrStr } from '../types';
+import { UNIT_PREFIXES } from '../const';
 
 @customElement('sankey-chart-editor')
 export class SankeyChartEditor extends LitElement implements LovelaceCardEditor {
@@ -70,6 +71,8 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
           [target.configValue]: target.checked !== undefined ? target.checked : target.value,
         };
       }
+    } else {
+      this._config = { ...ev.detail.value };
     }
     this._updateConfig();
   }
@@ -141,12 +144,63 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     fireEvent(this, 'config-changed', { config: this._config });
   }
 
+  private _computeSchema() {
+    return [
+      // {
+      //   type: 'grid',
+      //   name: '',
+      //   schema: [
+      //     { name: 'autoconfig', selector: { boolean: {} } },
+      //     { name: 'autoconfig.print_yaml', selector: { boolean: {} } },
+      //   ],
+      // },
+      { name: 'title', selector: { text: {} } },
+      { name: 'show_names', selector: { boolean: {} } },
+      { name: 'show_icons', selector: { boolean: {} } },
+      { name: 'show_states', selector: { boolean: {} } },
+      { name: 'show_units', selector: { boolean: {} } },
+      { name: 'energy_date_selection', selector: { boolean: {} } },
+      {
+        type: 'grid',
+        name: '',
+        schema: [
+          { name: 'wide', selector: { boolean: {} } },
+          { name: 'height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+          { name: 'min_box_height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+          { name: 'min_box_distance', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+        ],
+      },
+      {
+        type: 'grid',
+        name: '',
+        schema: [
+          { name: 'min_state', selector: { number: { mode: 'box' } } },
+          { name: 'round', selector: { number: { mode: 'box', unit_of_measurement: localize('editor.decimals') } } },
+          { name: 'throttle', selector: { number: { mode: 'box', unit_of_measurement: 'ms' } } },
+          {
+            name: 'unit_prefix',
+            selector: {
+              select: {
+                mode: 'dropdown',
+                options: [{ value: '' }, ...Object.keys(UNIT_PREFIXES).map(key => ({ value: key, label: key }))],
+              },
+            },
+          },
+        ],
+      },
+    ];
+  }
+
+  private _computeLabel = (schema: { name: string }) => {
+    return localize('editor.fields.' + schema.name);
+  };
+
   protected render(): TemplateResult | void {
     if (!this.hass || !this._helpers) {
       return html``;
     }
 
-    const config = this._config || ({} as SankeyChartConfig);
+    const config = normalizeConfig(this._config || ({} as SankeyChartConfig));
     const { autoconfig } = config;
     const sections: SectionConfig[] = config.sections || [];
 
@@ -166,31 +220,40 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     return html`
       <div class="card-config">
         <div class="options">
-          <h3>${localize('editor.autoconfig')}</h3>
-          <ha-formfield .label=${localize('editor.enable')}>
-            <ha-switch
-              .checked=${!!autoconfig}
-              .configValue=${(conf, val: boolean) => {
-                const newConf = { ...conf };
-                if (val && !conf.autoconfig) {
-                  newConf.autoconfig = { print_yaml: false };
-                } else if (!val && conf.autoconfig) {
-                  delete newConf.autoconfig;
-                }
-                return newConf;
-              }}
-              @change=${this._valueChanged}
-            ></ha-switch>
-          </ha-formfield>
-          ${autoconfig
-            ? html`<ha-formfield .label=${localize('editor.print')}>
-                <ha-switch
-                  .checked=${!!autoconfig?.print_yaml}
-                  .configValue=${(conf, print_yaml) => ({ ...conf, autoconfig: { print_yaml } })}
-                  @change=${this._valueChanged}
-                ></ha-switch>
-              </ha-formfield>`
-            : nothing}
+          <div class="autoconfig">
+            <ha-formfield .label=${localize('editor.fields.autoconfig')}>
+              <ha-switch
+                .checked=${!!autoconfig}
+                .configValue=${(conf, val: boolean) => {
+                  const newConf = { ...conf };
+                  if (val && !conf.autoconfig) {
+                    newConf.autoconfig = { print_yaml: false };
+                  } else if (!val && conf.autoconfig) {
+                    delete newConf.autoconfig;
+                  }
+                  return newConf;
+                }}
+                @change=${this._valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            ${autoconfig
+              ? html`<ha-formfield .label=${localize('editor.fields.print_yaml')}>
+                  <ha-switch
+                    .checked=${!!autoconfig?.print_yaml}
+                    .configValue=${(conf, print_yaml) => ({ ...conf, autoconfig: { print_yaml } })}
+                    @change=${this._valueChanged}
+                  ></ha-switch>
+                </ha-formfield>`
+              : nothing}
+          </div>
+
+          <ha-form
+            .hass=${this.hass}
+            .data=${config}
+            .schema=${this._computeSchema()}
+            .computeLabel=${this._computeLabel}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
         ${autoconfig ? nothing : this._renderSections(sections)}
         <p>${localize('editor.yaml_disclaimer')}</p>
@@ -268,6 +331,11 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       .options {
         display: grid;
         margin-bottom: 20px;
+      }
+      .autoconfig {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
       }
       .sections {
         display: flex;
