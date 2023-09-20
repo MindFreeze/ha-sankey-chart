@@ -438,7 +438,7 @@ export class Chart extends LitElement {
 
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
-      throw new Error('Entity not found ' + getEntityId(entityConf));
+      throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
     }
 
     if (typeof entityConf === 'object' && entityConf.attribute) {
