@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.14.0...v1.14.1) (2023-09-20)
+
+
+### Bug Fixes
+
+* improved error msg ([4bd6a80](https://github.com/MindFreeze/ha-sankey-chart/commit/4bd6a80ce9fa978228e4f23fbba73b7a6544479f))
+
 ## [1.14.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.13.0...v1.14.0) (2023-05-01)
 
 
