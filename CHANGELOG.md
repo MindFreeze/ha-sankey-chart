@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.15.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.14.1...v1.15.0) (2023-10-01)
+
+
+### Features
+
+* **#104:** Drilldown / Zoom action ([71354bd](https://github.com/MindFreeze/ha-sankey-chart/commit/71354bd1d14d5c6de832077c2f8dc5440509222c))
+
+
+### Bug Fixes
+
+* even more error logging ([e84c9e1](https://github.com/MindFreeze/ha-sankey-chart/commit/e84c9e1d92a26d90062e9b0e2661f87978402dd2))
+
 ## [1.14.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.14.0...v1.14.1) (2023-09-20)
 
 
