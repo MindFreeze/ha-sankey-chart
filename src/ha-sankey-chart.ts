@@ -301,6 +301,7 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
     if (this.error) {
+      console.error(this.error);
       return html`${until(renderError(String(this.error), this.config, this.hass))}`;
     }
     const print_yaml = this.config.autoconfig?.print_yaml;

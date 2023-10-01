@@ -19,7 +19,7 @@ export class Chart extends LitElement {
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public states!: HassEntities;
-  @property({ attribute: false }) public forceUpdateTs!: number;
+  @property({ attribute: false }) public forceUpdateTs?: number;
 
   @state() private config!: Config;
   @state() private sections: SectionState[] = [];
