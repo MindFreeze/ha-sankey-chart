@@ -13,6 +13,7 @@ import styles from './styles';
 import { formatState, getChildConnections, getEntityId, normalizeStateValue, renderError } from './utils';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
+import { filterConfigByZoomEntity } from './zoom';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -31,13 +32,14 @@ export class Chart extends LitElement {
   @state() private entityStates: Map<EntityConfigInternal, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
+  @state() public zoomEntity?: EntityConfigInternal;
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
       return false;
     }
-    if (changedProps.has('forceUpdateTs')) {
+    if (changedProps.has('config') || changedProps.has('forceUpdateTs') || changedProps.has('highlightedEntities') || changedProps.has('zoomEntity')) {
       return true;
     }
     const now = Date.now();
@@ -52,12 +54,7 @@ export class Chart extends LitElement {
       }, now - this.lastUpdate);
       return false;
     }
-    if (changedProps.has('highlightedEntities')) {
-      return true;
-    }
-    if (changedProps.has('config')) {
-      return true;
-    }
+
     const oldStates = changedProps.get('states') as HomeAssistant | undefined;
     if (!oldStates) {
       return false;
@@ -224,7 +221,8 @@ export class Chart extends LitElement {
 
   private _calcBoxes() {
     this.statePerPixelY = 0;
-    this.sections = this.config.sections
+    const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
+    this.sections = filteredConfig.sections
       .map(section => {
         let total = 0;
         const boxes: Box[] = section.entities
@@ -379,8 +377,12 @@ export class Chart extends LitElement {
     }
   }
 
-  private _handleBoxClick(box: Box): void {
+  private _handleBoxTap(box: Box): void {
     handleAction(this, this.hass, box.config, 'tap');
+  }
+
+  private _handleBoxDoubleTap(box: Box): void {
+    handleAction(this, this.hass, box.config, 'double_tap');
   }
 
   private _handleMouseEnter(box: Box): void {
@@ -396,13 +398,6 @@ export class Chart extends LitElement {
       c.highlighted = false;
     });
   }
-
-  // private _handleAction(ev: ActionHandlerEvent): void {
-  //   console.log('@TODO');
-  //   if (this.hass && this.config && ev.detail.action) {
-  //     // handleAction(this, this.hass, this.config, ev.detail.action);
-  //   }
-  // }
 
   private _getEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
@@ -510,7 +505,8 @@ export class Chart extends LitElement {
             <div class=${'box type-' + box.config.type!} style=${styleMap({ height: box.size + 'px' })}>
               <div
                 style=${styleMap({ backgroundColor: box.color })}
-                @click=${() => this._handleBoxClick(box)}
+                @click=${() => this._handleBoxTap(box)}
+                @dblclick=${() => this._handleBoxDoubleTap(box)}
                 @mouseenter=${() => this._handleMouseEnter(box)}
                 @mouseleave=${this._handleMouseLeave}
                 title=${name}
@@ -616,11 +612,6 @@ export class Chart extends LitElement {
 
       this.lastUpdate = Date.now();
 
-      // @action=${this._handleAction}
-      // .actionHandler=${actionHandler({
-      //   hasHold: hasAction(this.config.hold_action),
-      //   hasDoubleClick: hasAction(this.config.double_tap_action),
-      // })}
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
           <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
@@ -634,3 +625,5 @@ export class Chart extends LitElement {
     }
   }
 }
+
+export default Chart;

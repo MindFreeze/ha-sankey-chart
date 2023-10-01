@@ -64,7 +64,7 @@ This card is intended to display connections between entities with numeric state
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
-| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
+| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
 
 ### Entity types
 
@@ -203,6 +203,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 **Q: Can I group/sum entities in the chart?**
 
 **A:** The easiest way is to do it with a template sensor in HA. However it can be done in the chart without a new HA entity. If you have an entity with `type: remaining_parent_state` and it is the only child of its parents, it will just be a sum of all the parents. Similarly if you have an entity with `type: remaining_child_state` and it is the only parent of all its children, it will be a sum of all the children.
+
+**Q: How do I zoom back out after using the zoom action?**
+
+**A:** Tap the same (currently top level) entity again to reset the zoom level.
 
 ## Development
 

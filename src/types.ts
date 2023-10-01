@@ -36,6 +36,8 @@ export interface EntityConfig {
   color_below?: string;
   color_limit?: number;
   tap_action?: ActionConfigExtended;
+  double_tap_action?: ActionConfigExtended;
+  hold_action?: ActionConfigExtended;
   // @deprecated
   remaining?:
     | string
@@ -53,7 +55,7 @@ export type EntityConfigInternal = EntityConfig & {
 
 export type EntityConfigOrStr = string | EntityConfig;
 
-export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig;
+export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig | ZoomActionConfig;
 
 export interface MoreInfoActionConfig extends BaseActionConfig {
   action: 'more-info';
@@ -61,6 +63,10 @@ export interface MoreInfoActionConfig extends BaseActionConfig {
   data?: {
     entity_id?: string | [string];
   };
+}
+
+export interface ZoomActionConfig extends BaseActionConfig {
+  action: 'zoom';
 }
 
 export interface CallServiceActionConfig extends BaseActionConfig {

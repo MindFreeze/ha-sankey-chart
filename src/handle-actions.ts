@@ -1,5 +1,6 @@
 import { HomeAssistant, fireEvent, forwardHaptic, navigate, toggleEntity } from "custom-card-helpers";
-import { ActionConfigExtended } from "./types";
+import type { EntityConfigInternal } from "./types";
+import type Chart from "./chart";
 
 interface ToastActionParams {
     action: () => void;
@@ -15,14 +16,9 @@ const showToast = (el: HTMLElement, params: ShowToastParams) =>
     fireEvent(el, "hass-notification", params);
 
 export const handleAction = async (
-    node: HTMLElement,
+    node: Chart,
     hass: HomeAssistant,
-    config: {
-        entity_id: string;
-        hold_action?: ActionConfigExtended;
-        tap_action?: ActionConfigExtended;
-        double_tap_action?: ActionConfigExtended;
-    },
+    config: EntityConfigInternal,
     action: string
 ): Promise<void> => {
     let actionConfig = config.tap_action;
@@ -119,6 +115,15 @@ export const handleAction = async (
         }
         case "fire-dom-event": {
             fireEvent(node, "ll-custom", actionConfig);
+            break;
+        }
+        case "zoom": {
+            if (node.zoomEntity === config) {
+                node.zoomEntity = undefined;
+                break;
+            }
+            node.zoomEntity = config;
+            break;
         }
     }
 };
