@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.15.0...v1.15.1) (2023-10-06)
+
+
+### Bug Fixes
+
+* **#126:** default to 'no area' when area call errors out ([c5ecb30](https://github.com/MindFreeze/ha-sankey-chart/commit/c5ecb30959ae16590f1856c00fa359844177e170))
+
 ## [1.15.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.14.1...v1.15.0) (2023-10-01)
 
 
