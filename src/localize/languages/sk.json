@@ -1,0 +1,55 @@
+{
+  "common": {
+    "version": "Verzia",
+    "invalid_configuration": "Nesprávna konfigurácia",
+    "show_warning": "Zobraziť upozornenie",
+    "entity_not_found": "Stav entity sa nenašiel",
+    "missing_child": "Chýbajúca podriadená entita",
+    "loading": "Načítanie..."
+  },
+  "editor": {
+    "yaml_disclaimer": "Pre ostatné možnosti použite režim yaml",
+    "docs": "Documentácia",
+    "sections": "Oddiely",
+    "section": "Oddiel",
+    "add_section": "+ Pridať oddiel",
+    "add_entity": "+ Pridať entitu",
+    "entity_editor": "Editor entity",
+    "decimals": "desatinné miesta",
+    "fields": {
+      "autoconfig": "Autokonfig",
+      "print_yaml": "Vytlačte automaticky generovanú konfiguráciu yaml",
+      "show_names": "Zobraziť názvy",
+      "show_icons": "Zobraziť ikony",
+      "show_states": "Zobraziť stavy",
+      "show_units": "Zobraziť jednotky",
+      "energy_date_selection": "Synchronizácia s komponentom energy_date_selection",
+      "height": "Výška",
+      "wide": "Šírka",
+      "min_box_height": "Min. výška boxu",
+      "min_box_distance": "Minimálna vzdialenosť boxu",
+      "min_state": "Min stav",
+      "round": "Zaokrúhliť",
+      "throttle": "Plyn",
+      "unit_prefix": "Predpona jednotky",
+      "entity": "Entita",
+      "type": "Typ",
+      "children": "Podriadený",
+      "name": "Názov",
+      "icon": "Ikona",
+      "color": "Farba",
+      "unit_of_measurement": "Jednotky merania",
+      "tap_action": "Klepnite na akciu",
+      "color_on_state": "Zmeňte farbu podľa stavu",
+      "color_limit": "Štátny limit pre zmenu farby",
+      "color_above": "Farba nad limitom",
+      "color_below": "Farba pod limitom"
+    },
+    "entity_types": {
+      "entity": "Entita",
+      "remaining_parent_state": "Zostávajúci rodičovský stav",
+      "remaining_child_state": "Zostávajúci podriadený stav",
+      "passthrough": "Prejsť cez"
+    }
+  }
+}
