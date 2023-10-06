@@ -44,8 +44,13 @@ export const getExtendedEntityRegistryEntry = (
   });
 
 export async function getEntityArea(hass: HomeAssistant, entityId: string) {
-  const extended = await getExtendedEntityRegistryEntry(hass, entityId);
-  return extended.area_id;
+  try {
+    const extended = await getExtendedEntityRegistryEntry(hass, entityId);
+    return extended.area_id;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }
 
 export async function getEntitiesByArea(hass: HomeAssistantReal, entityIds: string[]) {
