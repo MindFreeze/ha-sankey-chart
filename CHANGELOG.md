@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.16.0...v1.16.1) (2023-10-18)
+
+
+### Bug Fixes
+
+* **#118:** fix incorrect energy values when there is a gap in the statistics ([#139](https://github.com/MindFreeze/ha-sankey-chart/issues/139)) ([b49326f](https://github.com/MindFreeze/ha-sankey-chart/commit/b49326f23ca38cdb7a674064e80a4350c09692a1))
+
 ## [1.16.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.15.1...v1.16.0) (2023-10-18)
 
 
