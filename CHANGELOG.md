@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.16.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.15.1...v1.16.0) (2023-10-18)
+
+
+### Features
+
+* **#135:** sort boxes by parent first ([#138](https://github.com/MindFreeze/ha-sankey-chart/issues/138)) ([73edbdb](https://github.com/MindFreeze/ha-sankey-chart/commit/73edbdb1df43b842a9be705b8b77059743ac4ed6))
+* SK translations ([19f89e5](https://github.com/MindFreeze/ha-sankey-chart/commit/19f89e5b48c84ad66fb3c9582008158ca6b9286b))
+
 ## [1.15.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.15.0...v1.15.1) (2023-10-06)
 
 
