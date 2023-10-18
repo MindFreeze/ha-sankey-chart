@@ -39,7 +39,12 @@ export class Chart extends LitElement {
     if (!this.config) {
       return false;
     }
-    if (changedProps.has('config') || changedProps.has('forceUpdateTs') || changedProps.has('highlightedEntities') || changedProps.has('zoomEntity')) {
+    if (
+      changedProps.has('config') ||
+      changedProps.has('forceUpdateTs') ||
+      changedProps.has('highlightedEntities') ||
+      changedProps.has('zoomEntity')
+    ) {
       return true;
     }
     const now = Date.now();
@@ -272,8 +277,9 @@ export class Chart extends LitElement {
       const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
       // calc sizes to determine statePerPixelY ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
+      const parentBoxes = this.sections[this.sections.length - 1]?.boxes || [];
       const sectionState = {
-        boxes: this._sortBoxes(calcResults.boxes, section.sort_by, section.sort_dir),
+        boxes: this._sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
         total,
         statePerPixelY: calcResults.statePerPixelY,
       };
@@ -306,20 +312,26 @@ export class Chart extends LitElement {
           top,
         };
       });
-      return {
-        ...section,
+      this.sections.push({
+        ...sectionState,
         boxes: sizedBoxes,
         spacerH,
-      };
+      });
     });
   }
 
-  private _sortBoxes(boxes: Box[], sort?: string, dir = 'desc') {
+  private _sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
     if (sort === 'state') {
+      const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
+        const parentIndexA = parentBoxes.findIndex(p => p.children.includes(a.entity_id));
+        const parentIndexB = parentBoxes.findIndex(p => p.children.includes(b.entity_id));
+        return parentIndexA < parentIndexB ? -1 : parentIndexA > parentIndexB ? 1 : realSort(a, b);
+      };
+
       if (dir === 'desc') {
-        boxes.sort((a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0));
+        boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0)));
       } else {
-        boxes.sort((a, b) => (a.state < b.state ? -1 : a.state > b.state ? 1 : 0));
+        boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state < b.state ? -1 : a.state > b.state ? 1 : 0)));
       }
     }
     return boxes;
@@ -470,7 +482,7 @@ export class Chart extends LitElement {
           const maxLabelH = box.size + spacerH - 1;
 
           // reduce label size if it doesn't fit
-          const labelStyle: Record<string, string> = {lineHeight: MIN_LABEL_HEIGHT + 'px'};
+          const labelStyle: Record<string, string> = { lineHeight: MIN_LABEL_HEIGHT + 'px' };
           const nameStyle: Record<string, string> = {};
           if (maxLabelH < MIN_LABEL_HEIGHT) {
             const fontSize = maxLabelH / MIN_LABEL_HEIGHT;
@@ -485,11 +497,11 @@ export class Chart extends LitElement {
               nameStyle.fontSize = `${1 / numLines + 0.1}rem`;
               nameStyle.lineHeight = `${1 / numLines + 0.1}rem`;
             } else if (maxLabelH < MIN_LABEL_HEIGHT * numLines) {
-              nameStyle.fontSize = `${maxLabelH / MIN_LABEL_HEIGHT / numLines * 1.1}em`;
-              nameStyle.lineHeight = `${maxLabelH / MIN_LABEL_HEIGHT / numLines * 1.1}em`;
+              nameStyle.fontSize = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
+              nameStyle.lineHeight = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
             }
           }
-          
+
           return html`
             ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerH + 'px' })}></div>` : null}
             ${extraSpacers
