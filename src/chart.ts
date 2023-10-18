@@ -222,103 +222,96 @@ export class Chart extends LitElement {
   private _calcBoxes() {
     this.statePerPixelY = 0;
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
-    this.sections = filteredConfig.sections
-      .map(section => {
-        let total = 0;
-        const boxes: Box[] = section.entities
-          .filter(entityConf => {
-            const { min_state } = this.config;
-            // remove empty entity boxes
-            if (entityConf.type === 'remaining_parent_state') {
-              return this.connectionsByChild.get(entityConf)?.some(c => c.state && c.state >= min_state);
-            }
-            if (entityConf.type === 'remaining_child_state') {
-              return this.connectionsByParent.get(entityConf)?.some(c => c.state && c.state >= min_state);
-            }
-            const { state } = this._getMemoizedState(entityConf);
-            return state && state >= min_state;
-          })
-          .map(entityConf => {
-            const { state, unit_of_measurement } = this._getMemoizedState(entityConf);
-            total += state;
+    this.sections = [];
+    filteredConfig.sections.forEach(section => {
+      let total = 0;
+      const boxes: Box[] = section.entities
+        .filter(entityConf => {
+          const { min_state } = this.config;
+          // remove empty entity boxes
+          if (entityConf.type === 'remaining_parent_state') {
+            return this.connectionsByChild.get(entityConf)?.some(c => c.state && c.state >= min_state);
+          }
+          if (entityConf.type === 'remaining_child_state') {
+            return this.connectionsByParent.get(entityConf)?.some(c => c.state && c.state >= min_state);
+          }
+          const { state } = this._getMemoizedState(entityConf);
+          return state && state >= min_state;
+        })
+        .map(entityConf => {
+          const { state, unit_of_measurement } = this._getMemoizedState(entityConf);
+          total += state;
 
-            let finalColor = entityConf.color || 'var(--primary-color)';
-            if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
-              const colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
-              const colorBelow =
-                typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
-              const colorAbove =
-                typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
-              finalColor = state > colorLimit ? colorAbove : colorBelow;
-            }
+          let finalColor = entityConf.color || 'var(--primary-color)';
+          if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
+            const colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
+            const colorBelow =
+              typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
+            const colorAbove =
+              typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
+            finalColor = state > colorLimit ? colorAbove : colorBelow;
+          }
 
-            return {
-              config: entityConf,
-              entity: this._getEntityState(entityConf),
-              entity_id: getEntityId(entityConf),
-              state,
-              unit_of_measurement,
-              color: finalColor,
-              children: entityConf.children,
-              connections: { parents: [] },
-              top: 0,
-              size: 0,
-            };
-          });
-        if (!boxes.length) {
           return {
-            boxes,
-            total,
-            spacerH: 0,
-            statePerPixelY: 0,
-          };
-        }
-        // leave room for margin
-        const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
-        // calc sizes to determine statePerPixelY ratio and find the best one
-        const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
-        return {
-          boxes: this._sortBoxes(calcResults.boxes, section.sort_by, section.sort_dir),
-          total,
-          statePerPixelY: calcResults.statePerPixelY,
-        };
-      })
-      .filter(s => s.boxes.length > 0)
-      .map(section => {
-        // calc sizes again with the best statePerPixelY
-        let totalSize = 0;
-        let { boxes } = section;
-        if (section.statePerPixelY !== this.statePerPixelY) {
-          boxes = boxes.map(box => {
-            const size = Math.max(this.config.min_box_height, Math.floor(box.state / this.statePerPixelY));
-            totalSize += size;
-            return {
-              ...box,
-              size,
-            };
-          });
-        } else {
-          totalSize = boxes.reduce((sum, b) => sum + b.size, 0);
-        }
-        // calc vertical margin size
-        const extraSpace = this.config.height - totalSize;
-        const spacerH = boxes.length > 1 ? extraSpace / (boxes.length - 1) : this.config.height;
-        let offset = 0;
-        // calc y positions. needed for connectors
-        boxes = boxes.map(box => {
-          const top = offset;
-          offset += box.size + spacerH;
-          return {
-            ...box,
-            top,
+            config: entityConf,
+            entity: this._getEntityState(entityConf),
+            entity_id: getEntityId(entityConf),
+            state,
+            unit_of_measurement,
+            color: finalColor,
+            children: entityConf.children,
+            connections: { parents: [] },
+            top: 0,
+            size: 0,
           };
         });
+      if (!boxes.length) {
+        return;
+      }
+      // leave room for margin
+      const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
+      // calc sizes to determine statePerPixelY ratio and find the best one
+      const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
+      const sectionState = {
+        boxes: this._sortBoxes(calcResults.boxes, section.sort_by, section.sort_dir),
+        total,
+        statePerPixelY: calcResults.statePerPixelY,
+      };
+
+      // calc sizes again with the best statePerPixelY
+      let totalSize = 0;
+      let sizedBoxes = sectionState.boxes;
+      if (sectionState.statePerPixelY !== this.statePerPixelY) {
+        sizedBoxes = sizedBoxes.map(box => {
+          const size = Math.max(this.config.min_box_height, Math.floor(box.state / this.statePerPixelY));
+          totalSize += size;
+          return {
+            ...box,
+            size,
+          };
+        });
+      } else {
+        totalSize = sizedBoxes.reduce((sum, b) => sum + b.size, 0);
+      }
+      // calc vertical margin size
+      const extraSpace = this.config.height - totalSize;
+      const spacerH = sizedBoxes.length > 1 ? extraSpace / (sizedBoxes.length - 1) : this.config.height;
+      let offset = 0;
+      // calc y positions. needed for connectors
+      sizedBoxes = sizedBoxes.map(box => {
+        const top = offset;
+        offset += box.size + spacerH;
         return {
-          ...section,
-          boxes,
-          spacerH,
+          ...box,
+          top,
         };
       });
+      return {
+        ...section,
+        boxes: sizedBoxes,
+        spacerH,
+      };
+    });
   }
 
   private _sortBoxes(boxes: Box[], sort?: string, dir = 'desc') {
