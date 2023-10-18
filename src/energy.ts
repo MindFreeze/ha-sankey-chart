@@ -27,16 +27,27 @@ export interface Statistics {
 }
 
 export interface StatisticValue {
-  statistic_id: string;
-  start: string;
-  end: string;
-  last_reset: string | null;
-  max: number | null;
-  mean: number | null;
-  min: number | null;
-  sum: number | null;
-  state: number | null;
+  start: number;
+  end: number;
+  change?: number | null;
+  last_reset?: number | null;
+  max?: number | null;
+  mean?: number | null;
+  min?: number | null;
+  sum?: number | null;
+  state?: number | null;
 }
+
+const statisticTypes = [
+  "change",
+  "last_reset",
+  "max",
+  "mean",
+  "min",
+  "state",
+  "sum",
+] as const;
+export type StatisticsTypes = (typeof statisticTypes)[number][];
 
 export interface EnergySource {
   type: string;
@@ -94,6 +105,7 @@ const fetchStatistics = (
   statistic_ids?: string[],
   period: "5minute" | "hour" | "day" | "week" | "month" = "hour",
   // units?: StatisticsUnitConfiguration
+  types?: StatisticsTypes
 ) =>
   hass.callWS<Statistics>({
     type: "recorder/statistics_during_period",
@@ -102,23 +114,30 @@ const fetchStatistics = (
     statistic_ids,
     period,
     // units,
+    types,
   });
 
 const calculateStatisticSumGrowth = (
   values: StatisticValue[]
 ): number | null => {
-  if (!values || values.length < 2) {
+  let growth: number | null = null;
+
+  if (!values) {
     return null;
   }
-  const endSum = values[values.length - 1].sum;
-  if (endSum === null) {
-    return null;
+
+  for (const value of values) {
+    if (value.change === null || value.change === undefined) {
+      continue;
+    }
+    if (growth === null) {
+      growth = value.change;
+    } else {
+      growth += value.change;
+    }
   }
-  const startSum = values[0].sum;
-  if (startSum === null) {
-    return endSum;
-  }
-  return endSum - startSum;
+
+  return growth;
 };
 
 export async function getStatistics(hass: HomeAssistant, energyData: EnergyData, devices: string[]): Promise<Record<string, number>> {
@@ -126,33 +145,18 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
     energyData.end || new Date(),
     energyData.start
   );
-  const startMinHour = addHours(energyData.start, -1);
   const period = dayDifference > 35 ? "month" : dayDifference > 2 ? "day" : "hour";
-
-
 
   const data = await fetchStatistics(
     hass,
-    startMinHour,
+    energyData.start,
     energyData.end,
     devices,
     period,
-    // units
+    // units,
+    ["change"]
   );
   
-  Object.values(data).forEach((stat) => {
-    // if the start of the first value is after the requested period, we have the first data point, and should add a zero point
-    if (stat.length && new Date(stat[0].start) > startMinHour) {
-      stat.unshift({
-        ...stat[0],
-        start: startMinHour.toISOString(),
-        end: startMinHour.toISOString(),
-        sum: 0,
-        state: 0,
-      });
-    }
-  });
-
   return devices.reduce((states, id) => ({
     ...states,
     [id]: calculateStatisticSumGrowth(data[id]),
