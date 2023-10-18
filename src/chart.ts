@@ -514,7 +514,7 @@ export class Chart extends LitElement {
                 @dblclick=${() => this._handleBoxDoubleTap(box)}
                 @mouseenter=${() => this._handleMouseEnter(box)}
                 @mouseleave=${this._handleMouseLeave}
-                title=${name}
+                title=${formattedState + box.unit_of_measurement + ' ' + name}
                 class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
               >
                 ${show_icons && isNotPassthrough ? html`<ha-icon .icon=${icon}></ha-icon>` : null}
