@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.0...v1.17.1) (2023-10-20)
+
+
+### Bug Fixes
+
+* **#144:** fix section scaling issue ([c8db7fb](https://github.com/MindFreeze/ha-sankey-chart/commit/c8db7fb3f5e310f7e4146c2cde5fd00c33c15607))
+
 ## [1.17.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.16.1...v1.17.0) (2023-10-20)
 
 
