@@ -277,7 +277,7 @@ export class Chart extends LitElement {
       const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
       // calc sizes to determine statePerPixelY ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
-      const parentBoxes = this.sections[this.sections.length - 1]?.boxes || [];
+      const parentBoxes = section.sort_group_by_parent ? this.sections[this.sections.length - 1]?.boxes || [] : [];
       const sectionState = {
         boxes: this._sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
         total,

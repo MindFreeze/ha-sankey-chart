@@ -85,6 +85,7 @@ export interface SectionConfig {
   entities: EntityConfigOrStr[];
   sort_by?: 'state';
   sort_dir?: 'asc' | 'desc';
+  sort_group_by_parent?: boolean;
   min_width?: string;
 }
 
@@ -114,6 +115,7 @@ export interface Section {
   entities: EntityConfigInternal[];
   sort_by?: 'state';
   sort_dir?: 'asc' | 'desc';
+  sort_group_by_parent?: boolean;
   min_width?: string;
 }
 
