@@ -227,7 +227,7 @@ export class Chart extends LitElement {
   private _calcBoxes() {
     this.statePerPixelY = 0;
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
-    this.sections = [];
+    const sectionsStates: SectionState[] = [];
     filteredConfig.sections.forEach(section => {
       let total = 0;
       const boxes: Box[] = section.entities
@@ -277,13 +277,16 @@ export class Chart extends LitElement {
       const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
       // calc sizes to determine statePerPixelY ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
-      const parentBoxes = section.sort_group_by_parent ? this.sections[this.sections.length - 1]?.boxes || [] : [];
-      const sectionState = {
+      const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
+      sectionsStates.push({
         boxes: this._sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
         total,
         statePerPixelY: calcResults.statePerPixelY,
-      };
+        spacerH: 0,
+      });
+    });
 
+    this.sections = sectionsStates.map(sectionState => {
       // calc sizes again with the best statePerPixelY
       let totalSize = 0;
       let sizedBoxes = sectionState.boxes;
@@ -312,11 +315,11 @@ export class Chart extends LitElement {
           top,
         };
       });
-      this.sections.push({
+      return {
         ...sectionState,
         boxes: sizedBoxes,
         spacerH,
-      });
+      };
     });
   }
 
