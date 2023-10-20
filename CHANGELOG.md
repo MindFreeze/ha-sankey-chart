@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.17.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.16.1...v1.17.0) (2023-10-20)
+
+
+### Features
+
+* **#125:** add entity state to mouseover title ([2c943c0](https://github.com/MindFreeze/ha-sankey-chart/commit/2c943c0cae6a8536860b89cc2c8bda516b615d39))
+
+
+### Bug Fixes
+
+* **#143:** add `sort_group_by_parent` option so default sorting behavior is reverted ([fce9bdd](https://github.com/MindFreeze/ha-sankey-chart/commit/fce9bdd07b6666a9f62d15ad92b4b65901f16548))
+
 ## [1.16.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.16.0...v1.16.1) (2023-10-18)
 
 
