@@ -520,7 +520,9 @@ export class Chart extends LitElement {
                 title=${formattedState + box.unit_of_measurement + ' ' + name}
                 class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
               >
-                ${show_icons && isNotPassthrough ? html`<ha-icon .icon=${icon}></ha-icon>` : null}
+                ${show_icons && isNotPassthrough
+                  ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
+                  : null}
               </div>
               <div class="label" style=${styleMap(labelStyle)}>
                 ${show_states && isNotPassthrough
