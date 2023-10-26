@@ -1,19 +1,19 @@
-import { LitElement, html, svg, TemplateResult, SVGTemplateResult, PropertyValues, CSSResultGroup } from 'lit';
+import { LitElement, html, TemplateResult, PropertyValues, CSSResultGroup } from 'lit';
 import { styleMap } from 'lit/directives/style-map';
 import { classMap } from 'lit/directives/class-map';
 import { until } from 'lit/directives/until.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
-import { HomeAssistant, stateIcon } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
+import { HomeAssistant } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
-import { MIN_LABEL_HEIGHT } from './const';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, getChildConnections, getEntityId, normalizeStateValue, renderError } from './utils';
+import { getEntityId, normalizeStateValue, renderError, sortBoxes } from './utils';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
+import './section';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -279,10 +279,11 @@ export class Chart extends LitElement {
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
       sectionsStates.push({
-        boxes: this._sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
+        boxes: sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
         total,
         statePerPixelY: calcResults.statePerPixelY,
         spacerH: 0,
+        config: section,
       });
     });
 
@@ -321,23 +322,6 @@ export class Chart extends LitElement {
         spacerH,
       };
     });
-  }
-
-  private _sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
-    if (sort === 'state') {
-      const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
-        const parentIndexA = parentBoxes.findIndex(p => p.children.includes(a.entity_id));
-        const parentIndexB = parentBoxes.findIndex(p => p.children.includes(b.entity_id));
-        return parentIndexA < parentIndexB ? -1 : parentIndexA > parentIndexB ? 1 : realSort(a, b);
-      };
-
-      if (dir === 'desc') {
-        boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0)));
-      } else {
-        boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state < b.state ? -1 : a.state > b.state ? 1 : 0)));
-      }
-    }
-    return boxes;
   }
 
   private _calcBoxHeights(
@@ -460,143 +444,6 @@ export class Chart extends LitElement {
     return styles;
   }
 
-  protected renderSection(index: number): TemplateResult {
-    const { show_names, show_icons, show_states, show_units } = this.config;
-    const section = this.sections[index];
-    const { boxes, spacerH } = section;
-    const hasChildren = index < this.sections.length - 1 && boxes.some(b => b.children.length > 0);
-    const { min_width: minWidth } = this.config.sections[index];
-
-    return html`
-      <div class="section" style=${styleMap({ minWidth })}>
-        ${hasChildren
-          ? html`<div class="connectors">
-              <svg viewBox="0 0 100 ${this.config.height}" preserveAspectRatio="none">
-                ${this.renderBranchConnectors(index)}
-              </svg>
-            </div>`
-          : null}
-        ${boxes.map((box, i) => {
-          const { entity, extraSpacers } = box;
-          const formattedState = formatState(box.state, this.config.round);
-          const isNotPassthrough = box.config.type !== 'passthrough';
-          const name = box.config.name || entity.attributes.friendly_name || '';
-          const icon = box.config.icon || stateIcon(entity as HassEntity);
-          const maxLabelH = box.size + spacerH - 1;
-
-          // reduce label size if it doesn't fit
-          const labelStyle: Record<string, string> = { lineHeight: MIN_LABEL_HEIGHT + 'px' };
-          const nameStyle: Record<string, string> = {};
-          if (maxLabelH < MIN_LABEL_HEIGHT) {
-            const fontSize = maxLabelH / MIN_LABEL_HEIGHT;
-            // labelStyle.maxHeight = maxLabelH + 'px';
-            labelStyle.fontSize = `${fontSize}em`;
-            labelStyle.lineHeight = `${fontSize}em`;
-          }
-          const numLines = name.split('\n').filter(v => v).length;
-          if (numLines > 1) {
-            nameStyle.whiteSpace = 'pre';
-            if (labelStyle.fontSize) {
-              nameStyle.fontSize = `${1 / numLines + 0.1}rem`;
-              nameStyle.lineHeight = `${1 / numLines + 0.1}rem`;
-            } else if (maxLabelH < MIN_LABEL_HEIGHT * numLines) {
-              nameStyle.fontSize = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
-              nameStyle.lineHeight = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
-            }
-          }
-
-          return html`
-            ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerH + 'px' })}></div>` : null}
-            ${extraSpacers
-              ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>`
-              : null}
-            <div class=${'box type-' + box.config.type!} style=${styleMap({ height: box.size + 'px' })}>
-              <div
-                style=${styleMap({ backgroundColor: box.color })}
-                @click=${() => this._handleBoxTap(box)}
-                @dblclick=${() => this._handleBoxDoubleTap(box)}
-                @mouseenter=${() => this._handleMouseEnter(box)}
-                @mouseleave=${this._handleMouseLeave}
-                title=${formattedState + box.unit_of_measurement + ' ' + name}
-                class=${this.highlightedEntities.includes(box.config) ? 'hl' : ''}
-              >
-                ${show_icons && isNotPassthrough
-                  ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
-                  : null}
-              </div>
-              <div class="label" style=${styleMap(labelStyle)}>
-                ${show_states && isNotPassthrough
-                  ? html`<span class="state">${formattedState}</span>${show_units
-                        ? html`<span class="unit">${box.unit_of_measurement}</span>`
-                        : null}`
-                  : null}
-                ${show_names && isNotPassthrough
-                  ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
-                  : null}
-              </div>
-            </div>
-            ${extraSpacers
-              ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>`
-              : null}
-          `;
-        })}
-      </div>
-    `;
-  }
-
-  protected renderBranchConnectors(index: number): SVGTemplateResult[] {
-    const section = this.sections[index];
-    const { boxes } = section;
-    return boxes
-      .filter(b => b.children.length > 0)
-      .map(b => {
-        const children = this.sections[index + 1].boxes.filter(child => b.children.includes(child.entity_id));
-        const connections = getChildConnections(b, children, this.connectionsByParent.get(b.config)).filter((c, i) => {
-          if (c.state > 0) {
-            children[i].connections.parents.push(c);
-            if (children[i].config.type === 'passthrough') {
-              // @FIXME not sure if this is needed anymore after v1.0.0
-              const sumState =
-                this.connectionsByChild.get(children[i].config)?.reduce((sum, conn) => sum + conn.state, 0) || 0;
-              if (sumState !== children[i].state) {
-                // virtual entity that must only pass state to the next section
-                children[i].state = sumState;
-                // this could reduce the size of the box moving lower boxes up
-                // so we have to add spacers and adjust some positions
-                const newSize = Math.floor(sumState / this.statePerPixelY);
-                children[i].extraSpacers = (children[i].size - newSize) / 2;
-                c.endY += children[i].extraSpacers!;
-                children[i].top += children[i].extraSpacers!;
-                children[i].size = newSize;
-              }
-            }
-            return true;
-          }
-          return false;
-        });
-        return svg`
-        <defs>
-          ${connections.map(
-            (c, i) => svg`
-            <linearGradient id="gradient${b.entity_id + i}">
-              <stop offset="0%" stop-color="${c.startColor}"></stop>
-              <stop offset="100%" stop-color="${c.endColor}"></stop>
-            </linearGradient>
-          `,
-          )}
-        </defs>
-        ${connections.map(
-          (c, i) => svg`
-          <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY + c.endSize} C50,${
-            c.endY + c.endSize
-          } 50,${c.startY + c.startSize} 0,${c.startY + c.startSize} Z"
-            fill="url(#gradient${b.entity_id + i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
-        `,
-        )}
-      `;
-      });
-  }
-
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
     try {
@@ -625,7 +472,21 @@ export class Chart extends LitElement {
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
           <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
-            ${this.sections.map((s, i) => this.renderSection(i))}
+            ${this.sections.map(
+              (s, i) => html` <sankey-chart-section
+                .config=${this.config}
+                .section=${s}
+                .nextSection=${this.sections[i + 1]}
+                .highlightedEntities=${this.highlightedEntities}
+                .statePerPixelY=${this.statePerPixelY}
+                .connectionsByParent=${this.connectionsByParent}
+                .connectionsByChild=${this.connectionsByChild}
+                .onTap=${this._handleBoxTap.bind(this)}
+                .onDoubleTap=${this._handleBoxDoubleTap.bind(this)}
+                .onMouseEnter=${this._handleMouseEnter.bind(this)}
+                .onMouseLeave=${this._handleMouseLeave.bind(this)}
+              ></sankey-chart-section>`,
+            )}
           </div>
         </ha-card>
       `;

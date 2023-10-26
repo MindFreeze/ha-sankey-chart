@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HomeAssistant } from "custom-card-helpers";
 import { Collection } from "home-assistant-js-websocket";
-import { addHours, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 export const ENERGY_SOURCE_TYPES = ['grid', 'solar', 'battery'];
 

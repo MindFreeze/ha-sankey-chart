@@ -163,6 +163,7 @@ export interface SectionState {
   total: number;
   spacerH: number;
   statePerPixelY: number;
+  config: Section;
 }
 
 export interface ConnectionState {

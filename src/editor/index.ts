@@ -5,7 +5,7 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { EntityConfig, SankeyChartConfig, SectionConfig } from '../types';
+import { SankeyChartConfig, SectionConfig } from '../types';
 import { localize } from '../localize/localize';
 import { getEntityId, normalizeConfig } from '../utils';
 import './entity';
@@ -132,7 +132,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     this._entityConfig = { sectionIndex, entityIndex, entity: sections[sectionIndex].entities[entityIndex] };
   }
 
-  private _handleEntityConfig = (entityConf: EntityConfig): void => {
+  private _handleEntityConfig = (entityConf: EntityConfigOrStr): void => {
     this._editEntity({
       detail: { value: entityConf },
       target: { section: this._entityConfig?.sectionIndex, index: this._entityConfig?.entityIndex },

@@ -183,6 +183,23 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
   };
 }
 
+export function sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
+  if (sort === 'state') {
+    const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
+      const parentIndexA = parentBoxes.findIndex(p => p.children.includes(a.entity_id));
+      const parentIndexB = parentBoxes.findIndex(p => p.children.includes(b.entity_id));
+      return parentIndexA < parentIndexB ? -1 : parentIndexA > parentIndexB ? 1 : realSort(a, b);
+    };
+
+    if (dir === 'desc') {
+      boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state > b.state ? -1 : a.state < b.state ? 1 : 0)));
+    } else {
+      boxes.sort((a, b) => sortByParent(a, b, (a, b) => (a.state < b.state ? -1 : a.state > b.state ? 1 : 0)));
+    }
+  }
+  return boxes;
+}
+
 // private _showWarning(warning: string): TemplateResult {
 //   return html`
 //     <hui-warning>${warning}</hui-warning>

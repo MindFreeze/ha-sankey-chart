@@ -9,7 +9,6 @@ import { localize } from './localize/localize';
 import { normalizeConfig, renderError } from './utils';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
-import { Chart } from './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
   EnergyCollection,
@@ -54,8 +53,6 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
 
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistantReal;
-
-  @query('ha-chart-base') private _chart?: Chart;
 
   @state() private config!: Config;
   @state() private states: HassEntities = {};
