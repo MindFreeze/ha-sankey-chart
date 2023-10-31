@@ -27,6 +27,25 @@ export interface EntityRegistryEntry {
   translation_key?: string;
 }
 
+export interface DeviceRegistryEntry {
+  id: string;
+  config_entries: string[];
+  connections: Array<[string, string]>;
+  identifiers: Array<[string, string]>;
+  manufacturer: string | null;
+  model: string | null;
+  name: string | null;
+  sw_version: string | null;
+  hw_version: string | null;
+  serial_number: string | null;
+  via_device_id: string | null;
+  area_id: string | null;
+  name_by_user: string | null;
+  entry_type: 'service' | null;
+  disabled_by: 'user' | 'integration' | 'config_entry' | null;
+  configuration_url: string | null;
+}
+
 export interface ExtEntityRegistryEntry extends EntityRegistryEntry {
   capabilities: Record<string, unknown>;
   original_icon?: string;
@@ -43,14 +62,31 @@ export const getExtendedEntityRegistryEntry = (
     entity_id: entityId,
   });
 
+let devicesCache: DeviceRegistryEntry[] = [];
+export const fetchDeviceRegistry = async (hass: HomeAssistant): Promise<DeviceRegistryEntry[]> => {
+  if (devicesCache.length) {
+    return Promise.resolve(devicesCache);
+  }
+  return (devicesCache = await hass.callWS({
+    type: 'config/device_registry/list',
+  }));
+}
+
 export async function getEntityArea(hass: HomeAssistant, entityId: string) {
   try {
     const extended = await getExtendedEntityRegistryEntry(hass, entityId);
-    return extended.area_id;
+    if (extended.area_id) {
+      return extended.area_id;
+    }
+    const devices = await fetchDeviceRegistry(hass);
+    const device = devices.find(d => d.id === extended.device_id);
+    if (device && device.area_id) {
+      return device.area_id;
+    }
   } catch (e) {
     console.error(e);
-    return null;
   }
+  return null;
 }
 
 export async function getEntitiesByArea(hass: HomeAssistantReal, entityIds: string[]) {
