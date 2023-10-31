@@ -13,7 +13,7 @@ import { getEntityId, normalizeStateValue, renderError, sortBoxes } from './util
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
-import './section';
+import { renderSection } from './section';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -473,19 +473,19 @@ export class Chart extends LitElement {
         <ha-card label="Sankey Chart" .header=${this.config.title}>
           <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
             ${this.sections.map(
-              (s, i) => html` <sankey-chart-section
-                .config=${this.config}
-                .section=${s}
-                .nextSection=${this.sections[i + 1]}
-                .highlightedEntities=${this.highlightedEntities}
-                .statePerPixelY=${this.statePerPixelY}
-                .connectionsByParent=${this.connectionsByParent}
-                .connectionsByChild=${this.connectionsByChild}
-                .onTap=${this._handleBoxTap.bind(this)}
-                .onDoubleTap=${this._handleBoxDoubleTap.bind(this)}
-                .onMouseEnter=${this._handleMouseEnter.bind(this)}
-                .onMouseLeave=${this._handleMouseLeave.bind(this)}
-              ></sankey-chart-section>`,
+              (s, i) => renderSection({
+                config: this.config,
+                section: s,
+                nextSection: this.sections[i + 1],
+                highlightedEntities: this.highlightedEntities,
+                statePerPixelY: this.statePerPixelY,
+                connectionsByParent: this.connectionsByParent,
+                connectionsByChild: this.connectionsByChild,
+                onTap: this._handleBoxTap.bind(this),
+                onDoubleTap: this._handleBoxDoubleTap.bind(this),
+                onMouseEnter: this._handleMouseEnter.bind(this),
+                onMouseLeave: this._handleMouseLeave.bind(this),
+              })
             )}
           </div>
         </ha-card>
