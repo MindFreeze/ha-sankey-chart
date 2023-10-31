@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.17.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.1...v1.17.2) (2023-10-31)
+
+
+### Bug Fixes
+
+* **#121:** fix for hidden error msg ([0f5a03f](https://github.com/MindFreeze/ha-sankey-chart/commit/0f5a03ff60f8a22744b3e311c381a71269f4f2e9))
+* **#124:** reduce icon size to fit in the box ([4899c6c](https://github.com/MindFreeze/ha-sankey-chart/commit/4899c6c1ebe6456207ac803cbd0e9f878dcfb21a))
+* **#147:** fallback to device area when entity area_id is empty ([f04557a](https://github.com/MindFreeze/ha-sankey-chart/commit/f04557a63f0ae731ffdae8676a5068772ff5dca9))
+
 ## [1.17.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.0...v1.17.1) (2023-10-20)
 
 
