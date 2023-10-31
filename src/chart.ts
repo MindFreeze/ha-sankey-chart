@@ -33,6 +33,7 @@ export class Chart extends LitElement {
   @state() private highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
   @state() public zoomEntity?: EntityConfigInternal;
+  @state() public error?: Error;
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -86,7 +87,8 @@ export class Chart extends LitElement {
           ent.children.forEach(childId => {
             const child = this.config.sections[sectionIndex + 1]?.entities.find(e => e.entity_id === childId);
             if (!child) {
-              throw new Error(localize('common.missing_child') + ' ' + childId);
+              this.error = new Error(localize('common.missing_child') + ' ' + childId);
+              throw this.error;
             }
             const connection: ConnectionState = {
               parent: ent,
@@ -447,6 +449,9 @@ export class Chart extends LitElement {
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
     try {
+      if (this.error) {
+        throw this.error;
+      }
       this.entityStates.clear();
       const containerClasses = classMap({
         container: true,
