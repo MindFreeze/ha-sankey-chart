@@ -55,7 +55,7 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
 ];
 
 @customElement('sankey-chart-entity-editor')
-export class SankeyChartEntityEditor extends LitElement {
+class SankeyChartEntityEditor extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public entity!: EntityConfigOrStr;
   @property({ attribute: false }) public onClose!: () => void;
@@ -69,7 +69,14 @@ export class SankeyChartEntityEditor extends LitElement {
     return localize('editor.fields.' + schema.name);
   };
 
-  private _editChild(ev) {
+  private _editChild(
+    ev: CustomEvent & {
+      target: {
+        value: string;
+        index: number;
+      };
+    },
+  ) {
     const {
       detail: { value },
       target,
@@ -104,7 +111,7 @@ export class SankeyChartEntityEditor extends LitElement {
     return html`
       <div class="header">
         <ha-icon-button .label=${this.hass!.localize('ui.common.back')} @click=${this.onClose}>
-          <ha-icon .icon=${'mdi:arrow-left'} />
+          <ha-icon .icon=${'mdi:arrow-left'}></ha-icon>
         </ha-icon-button>
         <h2>${localize('editor.entity_editor')}</h2>
       </div>
@@ -164,3 +171,5 @@ export class SankeyChartEntityEditor extends LitElement {
     `;
   }
 }
+
+export default SankeyChartEntityEditor;

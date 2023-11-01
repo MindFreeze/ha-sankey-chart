@@ -16,6 +16,7 @@
     "add_entity": "+ Add entity",
     "entity_editor": "Entity editor",
     "decimals": "decimals",
+    "section_options": "Options",
     "fields": {
       "autoconfig": "Autoconfig",
       "print_yaml": "Print auto generated config yaml",
@@ -43,13 +44,26 @@
       "color_on_state": "Change color based on state",
       "color_limit": "State limit for color change",
       "color_above": "Color above limit",
-      "color_below": "Color below limit"
+      "color_below": "Color below limit",
+      "section": {
+        "min_width": "Min width",
+        "sort_by": "Sort by",
+        "sort_dir": "Sort direction",
+        "sort_group_by_parent": "Group by parent"
+      }
     },
     "entity_types": {
       "entity": "Entity",
       "remaining_parent_state": "Remaining parent state",
       "remaining_child_state": "Remaining child state",
       "passthrough": "Passthrough"
+    },
+    "sort_by": {
+      "state": "State"
+    },
+    "sort_dir": {
+      "desc": "Descending",
+      "asc": "Ascending"
     }
   }
 }

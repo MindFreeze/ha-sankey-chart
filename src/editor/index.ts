@@ -7,7 +7,8 @@ import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
 import { SankeyChartConfig, SectionConfig } from '../types';
 import { localize } from '../localize/localize';
-import { getEntityId, normalizeConfig } from '../utils';
+import { normalizeConfig } from '../utils';
+import './section';
 import './entity';
 import { EntityConfigOrStr } from '../types';
 import { UNIT_PREFIXES } from '../const';
@@ -132,12 +133,20 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     this._entityConfig = { sectionIndex, entityIndex, entity: sections[sectionIndex].entities[entityIndex] };
   }
 
-  private _handleEntityConfig = (entityConf: EntityConfigOrStr): void => {
+  private _handleEntityChange = (entityConf: EntityConfigOrStr): void => {
     this._editEntity({
       detail: { value: entityConf },
       target: { section: this._entityConfig?.sectionIndex, index: this._entityConfig?.entityIndex },
     });
     this._entityConfig = { ...this._entityConfig!, entity: entityConf };
+  };
+
+  private _handleSectionChange = (index: number, sectionConf: SectionConfig): void => {
+    this._config = {
+      ...this._config!,
+      sections: this._config?.sections?.map((section, i) => (i === index ? sectionConf : section)),
+    };
+    this._updateConfig();
   };
 
   private _updateConfig(): void {
@@ -209,11 +218,11 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         <sankey-chart-entity-editor
           .hass=${this.hass}
           .entity=${this._entityConfig.entity}
-          .onChange=${this._handleEntityConfig}
+          .onChange=${this._handleEntityChange}
           .onClose=${() => {
             this._entityConfig = undefined;
           }}
-        />
+        ></sankey-chart-entity-editor>
       `;
     }
 
@@ -268,46 +277,20 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     return html`
       <div class="sections">
         <h3>${localize('editor.sections')}</h3>
-        ${sections.map(
+        ${repeat(
+          sections,
+          (s, i) => i,
           (section, sectionIndex) =>
             html`
-              <ha-card .header=${localize('editor.section') + ` ${sectionIndex + 1}`} class="section">
-                <div class="entities">
-                  ${repeat(
-                    section.entities,
-                    entityConf => sectionIndex + getEntityId(entityConf),
-                    (entityConf, i) => html`
-                      <div class="entity">
-                        <div class="handle">
-                          <ha-icon .icon=${'mdi:drag'} />
-                        </div>
-                        <ha-entity-picker
-                          allow-custom-entity
-                          .hass=${this.hass}
-                          .value=${getEntityId(entityConf)}
-                          .section=${sectionIndex}
-                          .index=${i}
-                          @value-changed=${this._editEntity}
-                        ></ha-entity-picker>
-                        <ha-icon-button
-                          .label=${this.hass!.localize('ui.components.entity.entity-picker.edit')}
-                          class="edit-icon"
-                          @click=${() => this._configEntity(sectionIndex, i)}
-                        >
-                          <ha-icon .icon=${'mdi:pencil'} />
-                        </ha-icon-button>
-                      </div>
-                    `,
-                  )}
-                </div>
-                <ha-entity-picker
-                  allow-custom-entity
-                  class="add-entity"
-                  .hass=${this.hass}
-                  .section=${sectionIndex}
-                  @value-changed=${this._addEntity}
-                ></ha-entity-picker>
-              </ha-card>
+              <sankey-chart-section-editor
+                .hass=${this.hass}
+                .section=${section}
+                .index=${sectionIndex}
+                .onConfigEntity=${this._configEntity.bind(this, sectionIndex)}
+                .onChange=${this._handleSectionChange.bind(this, sectionIndex)}
+                .onChangeEntity=${this._editEntity.bind(this)}
+                .onAddEntity=${this._addEntity.bind(this)}
+              ></sankey-chart-section-editor>
             `,
         )}
         <ha-actions>
@@ -342,46 +325,8 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         flex-direction: column;
         margin-bottom: 20px;
       }
-      .section {
-        margin-bottom: 16px;
-        padding: 0 10px 10px;
-      }
       ha-formfield {
-        padding-bottom: 8px;
-      }
-      .add-entity {
-        display: block;
-        margin-left: 31px;
-        margin-right: 36px;
-        margin-inline-start: 31px;
-        margin-inline-end: 36px;
-        direction: var(--direction);
-      }
-      .entity {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-
-      .entity .handle {
-        visibility: hidden;
-        padding-right: 8px;
-        cursor: move;
-        padding-inline-end: 8px;
-        padding-inline-start: initial;
-        direction: var(--direction);
-      }
-      .entity .handle > * {
-        pointer-events: none;
-      }
-
-      .entity ha-entity-picker {
-        flex-grow: 1;
-      }
-
-      .edit-icon {
-        --mdc-icon-button-size: 36px;
-        /* color: var(--secondary-text-color); */
+          padding-bottom: 8px;
       }
     `;
   }
