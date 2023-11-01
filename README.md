@@ -54,7 +54,7 @@ This card is intended to display connections between entities with numeric state
 | entity_id         | string  | **Required** |                     | Entity id of the sensor
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
 | type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
-| children          | list    | **Optional** |                     | List of entity ids describing child entities (branches). Only entities in subsequent sections will be connected. *The last section must not contain `children:`*
+| children          | list    | **Optional** |                     | List of entity ids (strings or [childred objects](#children-object)) describing child entities (branches). Only entities in subsequent sections will be connected. *The last section must not contain `children:`*
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
 | unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
@@ -66,6 +66,13 @@ This card is intended to display connections between entities with numeric state
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
 | tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
+
+### Children object
+
+| Name                 | Type    | Requirement  | Default             | Description                                 |
+| -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| entity_id            | string  | **Required** |                     | Entity id of the child box
+| connection_entity_id | string  | **Required** |                     | Entity id of the sensor to that determines how much of the parent flows into the child
 
 ### Entity types
 

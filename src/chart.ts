@@ -29,7 +29,7 @@ export class Chart extends LitElement {
   @state() private connectionsByParent: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private connectionsByChild: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private statePerPixelY = 0;
-  @state() private entityStates: Map<EntityConfigInternal, NormalizedState> = new Map();
+  @state() private entityStates: Map<EntityConfigInternal | string, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
   @state() public zoomEntity?: EntityConfigInternal;
@@ -84,10 +84,10 @@ export class Chart extends LitElement {
           if (ent.type === 'entity') {
             this.entityIds.push(ent.entity_id);
           }
-          ent.children.forEach(childId => {
-            const child = this.config.sections[sectionIndex + 1]?.entities.find(e => e.entity_id === childId);
+          ent.children.forEach(childConf => {
+            const child = this.config.sections[sectionIndex + 1]?.entities.find(e => e.entity_id === getEntityId(childConf));
             if (!child) {
-              this.error = new Error(localize('common.missing_child') + ' ' + childId);
+              this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
               throw this.error;
             }
             const connection: ConnectionState = {
@@ -168,7 +168,13 @@ export class Chart extends LitElement {
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
-      connection.state = Math.min(parentState, childState);
+      const connConfig = parent.children.find(c => getEntityId(c) === child.entity_id);
+      if (typeof connConfig === 'object' && connConfig.connection_entity_id) {
+        const connectionState = this._getMemoizedState(connConfig.connection_entity_id).state ?? 0;
+        connection.state = Math.min(parentState, childState, connectionState);
+      } else {
+        connection.state = Math.min(parentState, childState);
+      }
       accountedOut.set(parent, connection.prevParentState + connection.state);
       accountedIn.set(child, connection.prevChildState + connection.state);
     }
@@ -178,8 +184,9 @@ export class Chart extends LitElement {
     }
   }
 
-  private _getMemoizedState(entityConf: EntityConfigInternal) {
-    if (!this.entityStates.has(entityConf)) {
+  private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
+    if (!this.entityStates.has(entityConfOrStr)) {
+      const entityConf = typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr; 
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
@@ -221,9 +228,9 @@ export class Chart extends LitElement {
         // don't cache infinity
         return normalized;
       }
-      this.entityStates.set(entityConf, normalized);
+      this.entityStates.set(entityConfOrStr, normalized);
     }
-    return this.entityStates.get(entityConf)!;
+    return this.entityStates.get(entityConfOrStr)!;
   }
 
   private _calcBoxes() {
@@ -430,7 +437,7 @@ export class Chart extends LitElement {
       throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
     }
 
-    if (typeof entityConf === 'object' && entityConf.attribute) {
+    if (entityConf.attribute) {
       entity = { ...entity, state: entity.attributes[entityConf.attribute] } as HassEntity;
       if (entityConf.unit_of_measurement) {
         entity = {

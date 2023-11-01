@@ -2,7 +2,7 @@ import { html, svg, SVGTemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
-import { formatState, getChildConnections } from './utils';
+import { formatState, getChildConnections, getEntityId } from './utils';
 import { stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { MIN_LABEL_HEIGHT } from './const';
@@ -18,7 +18,7 @@ export function renderBranchConnectors(props: {
   return boxes
     .filter(b => b.children.length > 0)
     .map(b => {
-      const children = props.nextSection!.boxes.filter(child => b.children.includes(child.entity_id));
+      const children = props.nextSection!.boxes.filter(child => b.children.some(c => getEntityId(c) === child.entity_id));
       const connections = getChildConnections(b, children, props.connectionsByParent.get(b.config)).filter((c, i) => {
         if (c.state > 0) {
           children[i].connections.parents.push(c);

@@ -3,6 +3,7 @@ import { html, TemplateResult } from 'lit';
 import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from './const';
 import {
   Box,
+  ChildConfigOrStr,
   Config,
   Connection,
   ConnectionState,
@@ -49,7 +50,7 @@ export function normalizeStateValue(
   };
 }
 
-export function getEntityId(entity: EntityConfigOrStr): string {
+export function getEntityId(entity: EntityConfigOrStr | ChildConfigOrStr): string {
   return typeof entity === 'string' ? entity : entity.entity_id;
 }
 
@@ -113,7 +114,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
       if (entityConf.children && entityConf.children.length) {
         entityConf.children.forEach(child => {
           for (let i = sectionIndex + 1; i < sections.length; i++) {
-            const childConf = sections[i].entities.find(entity => getEntityId(entity) === child);
+            const childConf = sections[i].entities.find(entity => getEntityId(entity) === getEntityId(child));
             if (childConf) {
               if (i > sectionIndex + 1) {
                 for (let j = sectionIndex + 1; j < i; j++) {
@@ -139,7 +140,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
           let lastChildIndex = 0;
           const nextSectionEntities = sections[sectionIndex + 1].entities;
           while (children.length && lastChildIndex < nextSectionEntities.length) {
-            children = children.filter(c => c !== nextSectionEntities[lastChildIndex].entity_id);
+            children = children.filter(c => getEntityId(c) !== nextSectionEntities[lastChildIndex].entity_id);
             lastChildIndex++;
           }
           const newChildId = 'remaining' + Date.now() + Math.random();
@@ -185,9 +186,10 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
 
 export function sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
   if (sort === 'state') {
+    const parentChildren = parentBoxes.map(p => p.children.map(getEntityId));
     const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
-      const parentIndexA = parentBoxes.findIndex(p => p.children.includes(a.entity_id));
-      const parentIndexB = parentBoxes.findIndex(p => p.children.includes(b.entity_id));
+      const parentIndexA = parentChildren.findIndex(children => children.includes(a.entity_id));
+      const parentIndexB = parentChildren.findIndex(children => children.includes(b.entity_id));
       return parentIndexA < parentIndexB ? -1 : parentIndexA > parentIndexB ? 1 : realSort(a, b);
     };
 

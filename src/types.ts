@@ -26,7 +26,7 @@ export interface EntityConfig {
   substract_entities?: string[];
   attribute?: string;
   type?: BoxType;
-  children?: string[];
+  children?: ChildConfigOrStr[];
   unit_of_measurement?: string; // for attribute
   color?: string;
   name?: string;
@@ -48,12 +48,19 @@ export interface EntityConfig {
 }
 
 export type EntityConfigInternal = EntityConfig & {
-  children: string[];
+  children: ChildConfigOrStr[];
   accountedState?: number;
   foundChildren?: string[];
 };
 
 export type EntityConfigOrStr = string | EntityConfig;
+
+export type ChildConfig = {
+  entity_id: string;
+  connection_entity_id: string;
+};
+
+export type ChildConfigOrStr = string | ChildConfig;
 
 export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig | ZoomActionConfig;
 
@@ -148,7 +155,7 @@ export interface Box {
   entity_id: string;
   state: number;
   unit_of_measurement?: string;
-  children: string[];
+  children: ChildConfigOrStr[];
   color: string;
   size: number;
   top: number;
