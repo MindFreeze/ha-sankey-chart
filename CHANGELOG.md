@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.18.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.2...v1.18.0) (2023-11-02)
+
+
+### Features
+
+* **#77:** change section options in visual editor ([35637de](https://github.com/MindFreeze/ha-sankey-chart/commit/35637dede1191f8ec3c307fc5e127d0bc85133d8))
+* **#8:** Specify connection_entity_id (for size of connector) ([9eec05b](https://github.com/MindFreeze/ha-sankey-chart/commit/9eec05b1a93e8473c278239f33a44959db97a5d2))
+
+
+### Bug Fixes
+
+* **#111:** fix remaining state with add/subtract entities ([a5fd928](https://github.com/MindFreeze/ha-sankey-chart/commit/a5fd928685320e0ff1849872a34e85058a2cee96))
+
 ## [1.17.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.1...v1.17.2) (2023-10-31)
 
 
