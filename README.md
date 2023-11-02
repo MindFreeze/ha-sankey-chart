@@ -1,6 +1,6 @@
 # Sankey Chart Card
 
-A Home Assistant lovelace card to display a sankey chart. For example for power consumption.
+A Home Assistant lovelace card to display a sankey chart. For example for energy/power/water consumption.
 
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE.md)
