@@ -85,7 +85,9 @@ export class Chart extends LitElement {
             this.entityIds.push(ent.entity_id);
           }
           ent.children.forEach(childConf => {
-            const child = this.config.sections[sectionIndex + 1]?.entities.find(e => e.entity_id === getEntityId(childConf));
+            const child = this.config.sections[sectionIndex + 1]?.entities.find(
+              e => e.entity_id === getEntityId(childConf),
+            );
             if (!child) {
               this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
               throw this.error;
@@ -126,8 +128,9 @@ export class Chart extends LitElement {
     connection: ConnectionState,
     accountedIn: Map<EntityConfigInternal, number>,
     accountedOut: Map<EntityConfigInternal, number>,
+    force?: boolean,
   ) {
-    if (connection.ready) {
+    if (connection.ready && !force) {
       return;
     }
     const { parent, child } = connection;
@@ -179,6 +182,19 @@ export class Chart extends LitElement {
       accountedIn.set(child, connection.prevChildState + connection.state);
     }
     connection.ready = true;
+    if (
+      (child.type === 'remaining_parent_state' &&
+        (child.add_entities?.length || child.subtract_entities?.length) &&
+        childState === Infinity) ||
+      (parent.type === 'remaining_child_state' &&
+        (parent.add_entities?.length || parent.subtract_entities?.length) &&
+        parentState === Infinity)
+    ) {
+      // #111 remaining state with add/subtract entities
+      accountedOut.set(parent, connection.prevParentState);
+      accountedIn.set(child, connection.prevChildState);
+      this._calcConnection(connection, accountedIn, accountedOut, true);
+    }
     if (child.type === 'passthrough') {
       this.entityStates.delete(child);
     }
@@ -186,7 +202,8 @@ export class Chart extends LitElement {
 
   private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
     if (!this.entityStates.has(entityConfOrStr)) {
-      const entityConf = typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr; 
+      const entityConf =
+        typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
@@ -243,12 +260,6 @@ export class Chart extends LitElement {
         .filter(entityConf => {
           const { min_state } = this.config;
           // remove empty entity boxes
-          if (entityConf.type === 'remaining_parent_state') {
-            return this.connectionsByChild.get(entityConf)?.some(c => c.state && c.state >= min_state);
-          }
-          if (entityConf.type === 'remaining_child_state') {
-            return this.connectionsByParent.get(entityConf)?.some(c => c.state && c.state >= min_state);
-          }
           const { state } = this._getMemoizedState(entityConf);
           return state && state >= min_state;
         })
@@ -484,8 +495,8 @@ export class Chart extends LitElement {
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
           <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
-            ${this.sections.map(
-              (s, i) => renderSection({
+            ${this.sections.map((s, i) =>
+              renderSection({
                 config: this.config,
                 section: s,
                 nextSection: this.sections[i + 1],
@@ -497,7 +508,7 @@ export class Chart extends LitElement {
                 onDoubleTap: this._handleBoxDoubleTap.bind(this),
                 onMouseEnter: this._handleMouseEnter.bind(this),
                 onMouseLeave: this._handleMouseLeave.bind(this),
-              })
+              }),
             )}
           </div>
         </ha-card>
