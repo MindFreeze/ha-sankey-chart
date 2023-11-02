@@ -21,7 +21,7 @@ jobs:
         run: |
           cd /home/runner/work/ha-sankey-chart/ha-sankey-chart
           npm ci
-          npm run build
+          npm run rollup
 
       # Upload build file to the releas as an asset.
       - name: Upload zip to release
