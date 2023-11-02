@@ -177,7 +177,8 @@ This card supports automatic configuration generation based on the HA energy das
         - entity_id: sensor.floor1
           children:
             - sensor.living_room
-            - sensor.washer
+            - entity_id: sensor.washer
+              connection_entity_id: sensor.washer_energy_net
         - entity_id: sensor.floor2
     - entities:
         - entity_id: sensor.ev_charger
