@@ -497,6 +497,7 @@ export class Chart extends LitElement {
           <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
             ${this.sections.map((s, i) =>
               renderSection({
+                locale: this.hass.locale,
                 config: this.config,
                 section: s,
                 nextSection: this.sections[i + 1],

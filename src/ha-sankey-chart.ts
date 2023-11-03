@@ -41,7 +41,7 @@ console.info(
 const ENERGY_DATA_TIMEOUT = 10000;
 
 @customElement('sankey-chart')
-export class SankeyChart extends SubscribeMixin(LitElement) {
+class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     // await import('./editor');
     return document.createElement('sankey-chart-editor');
@@ -315,3 +315,5 @@ export class SankeyChart extends SubscribeMixin(LitElement) {
     `;
   }
 }
+
+export default SankeyChart;

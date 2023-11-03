@@ -3,7 +3,7 @@ import { html, svg, SVGTemplateResult } from 'lit';
 import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
 import { formatState, getChildConnections, getEntityId } from './utils';
-import { stateIcon } from 'custom-card-helpers';
+import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { MIN_LABEL_HEIGHT } from './const';
 
@@ -66,6 +66,7 @@ export function renderBranchConnectors(props: {
 }
 
 export function renderSection(props: {
+  locale: FrontendLocaleData,
   config: Config,
   section: SectionState,
   nextSection?: SectionState,
@@ -97,7 +98,7 @@ export function renderSection(props: {
         : null}
       ${boxes.map((box, i) => {
         const { entity, extraSpacers } = box;
-        const formattedState = formatState(box.state, props.config.round);
+        const formattedState = formatState(box.state, props.config.round, props.locale);
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);

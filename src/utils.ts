@@ -1,4 +1,4 @@
-import { createThing, HomeAssistant, LovelaceCard, LovelaceCardConfig } from 'custom-card-helpers';
+import { createThing, formatNumber, FrontendLocaleData, HomeAssistant, LovelaceCard, LovelaceCardConfig } from 'custom-card-helpers';
 import { html, TemplateResult } from 'lit';
 import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from './const';
 import {
@@ -17,7 +17,7 @@ export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
-export function formatState(state: number, round: number): string {
+export function formatState(state: number, round: number, locale: FrontendLocaleData): string {
   let rounded: string;
   let decimals = round;
   do {
@@ -25,8 +25,7 @@ export function formatState(state: number, round: number): string {
     rounded = state.toFixed(decimals++);
   } while (/^[0\.]*$/.test(rounded) && decimals < 100);
 
-  const formattedState = parseFloat(rounded).toLocaleString();
-  return formattedState;
+  return formatNumber(parseFloat(rounded), locale);
 }
 
 export function normalizeStateValue(

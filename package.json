@@ -17,7 +17,7 @@
   "dependencies": {
     "custom-card-helpers": "^1.9.0",
     "date-fns": "^2.29.3",
-    "home-assistant-js-websocket": "^8.0.1",
+    "home-assistant-js-websocket": "^9.1.0",
     "lit": "^2.0.0-rc.2"
   },
   "devDependencies": {
