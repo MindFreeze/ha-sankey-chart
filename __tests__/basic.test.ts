@@ -1,7 +1,7 @@
 // import '../dist/ha-sankey-chart';
 import { HomeAssistant } from 'custom-card-helpers';
 import '../src/ha-sankey-chart';
-import { SankeyChart } from '../src/ha-sankey-chart';
+import SankeyChart from '../src/ha-sankey-chart';
 import { SankeyChartConfig } from '../src/types';
 
 const hass = {
