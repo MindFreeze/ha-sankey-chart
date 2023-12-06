@@ -30,6 +30,7 @@
       "min_box_height": "Min box height",
       "min_box_distance": "Min box distance",
       "min_state": "Min state",
+      "static_scale": "Static scale",
       "round": "Round",
       "throttle": "Throttle",
       "unit_prefix": "Unit prefix",

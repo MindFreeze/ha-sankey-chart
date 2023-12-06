@@ -36,6 +36,7 @@ This card is intended to display connections between entities with numeric state
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 | min_state         | number  | **Optional** | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
 | throttle          | number  | **Optional** |                     | Minimum time in ms between updates/rerenders
+| static_scale      | number  | **Optional** |                     | State value corresponding to the maximum height size of the card. For example, if this is set to 1000, then a box with state 500 will take up half of its section. If some section exceeds the value of `static_scale`, the card will dynamically rescale overriding this option. See (#153)
 
 ### Sections object
 

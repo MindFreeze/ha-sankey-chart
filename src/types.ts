@@ -116,6 +116,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   min_box_distance?: number;
   throttle?: number;
   min_state?: number;
+  static_scale?: number;
 }
 
 export interface Section {

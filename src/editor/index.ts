@@ -184,6 +184,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         name: '',
         schema: [
           { name: 'min_state', selector: { number: { mode: 'box' } } },
+          { name: 'static_scale', selector: { number: { mode: 'box' } } },
           { name: 'round', selector: { number: { mode: 'box', unit_of_measurement: localize('editor.decimals') } } },
           { name: 'throttle', selector: { number: { mode: 'box', unit_of_measurement: 'ms' } } },
           {

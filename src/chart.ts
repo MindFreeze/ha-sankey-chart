@@ -252,6 +252,14 @@ export class Chart extends LitElement {
 
   private _calcBoxes() {
     this.statePerPixelY = 0;
+    if (this.config.static_scale) {
+      // use static scale to set a minimum statePerPixelY
+      this._calcBoxHeights(
+        [{ state: this.config.static_scale, size: 0 } as Box],
+        this.config.height,
+        this.config.static_scale,
+      );
+    }
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
     const sectionsStates: SectionState[] = [];
     filteredConfig.sections.forEach(section => {
