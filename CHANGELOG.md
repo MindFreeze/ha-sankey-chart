@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.19.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.18.0...v1.19.0) (2023-12-06)
+
+
+### Features
+
+* **#153:** `static_scale` option to disable dynamic scaling ([b932f1f](https://github.com/MindFreeze/ha-sankey-chart/commit/b932f1ff3714675851c4154d16e88a86a1a023c9))
+
+
+### Bug Fixes
+
+* **#116:** use number format from HA ([a0d24c8](https://github.com/MindFreeze/ha-sankey-chart/commit/a0d24c85839ef9cb662e1deec376ba5af85642d6))
+* **#96:** incorrect connection colors ([d14f83a](https://github.com/MindFreeze/ha-sankey-chart/commit/d14f83abda5a1da9be80511ecebd3e8e69750d1c))
+* update sk translations ([37e3cc0](https://github.com/MindFreeze/ha-sankey-chart/commit/37e3cc0cdd5a9dde2b5dff773789f86ae38791ed))
+
 ## [1.18.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.2...v1.18.0) (2023-11-02)
 
 
