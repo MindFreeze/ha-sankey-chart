@@ -10,6 +10,7 @@ import { MIN_LABEL_HEIGHT } from './const';
 export function renderBranchConnectors(props: {
   section: SectionState,
   nextSection?: SectionState,
+  sectionIndex: number,
   statePerPixelY: number,
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
@@ -17,7 +18,7 @@ export function renderBranchConnectors(props: {
   const { boxes } = props.section;
   return boxes
     .filter(b => b.children.length > 0)
-    .map(b => {
+    .map((b, boxIndex) => {
       const children = props.nextSection!.boxes.filter(child => b.children.some(c => getEntityId(c) === child.entity_id));
       const connections = getChildConnections(b, children, props.connectionsByParent.get(b.config)).filter((c, i) => {
         if (c.state > 0) {
@@ -46,7 +47,7 @@ export function renderBranchConnectors(props: {
         <defs>
           ${connections.map(
             (c, i) => svg`
-            <linearGradient id="gradient${b.entity_id + i}">
+            <linearGradient id="gradient${props.sectionIndex}.${boxIndex}.${i}">
               <stop offset="0%" stop-color="${c.startColor}"></stop>
               <stop offset="100%" stop-color="${c.endColor}"></stop>
             </linearGradient>
@@ -58,7 +59,7 @@ export function renderBranchConnectors(props: {
           <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY + c.endSize} C50,${
             c.endY + c.endSize
           } 50,${c.startY + c.startSize} 0,${c.startY + c.startSize} Z"
-            fill="url(#gradient${b.entity_id + i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
+            fill="url(#gradient${props.sectionIndex}.${boxIndex}.${i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
         `,
         )}
       `;
@@ -70,6 +71,7 @@ export function renderSection(props: {
   config: Config,
   section: SectionState,
   nextSection?: SectionState,
+  sectionIndex: number,
   highlightedEntities: EntityConfigInternal[],
   statePerPixelY: number,
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,

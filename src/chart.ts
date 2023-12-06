@@ -501,6 +501,7 @@ export class Chart extends LitElement {
                 config: this.config,
                 section: s,
                 nextSection: this.sections[i + 1],
+                sectionIndex: i,
                 highlightedEntities: this.highlightedEntities,
                 statePerPixelY: this.statePerPixelY,
                 connectionsByParent: this.connectionsByParent,
