@@ -28,10 +28,12 @@ export class Chart extends LitElement {
   @state() private connections: ConnectionState[] = [];
   @state() private connectionsByParent: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private connectionsByChild: Map<EntityConfigInternal, ConnectionState[]> = new Map();
-  @state() private statePerPixelY = 0;
+  @state() private statePerPixel = 0;
   @state() private entityStates: Map<EntityConfigInternal | string, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
+  @state() private vertical = false;
+  @state() private width?: number;
   @state() public zoomEntity?: EntityConfigInternal;
   @state() public error?: Error;
 
@@ -251,9 +253,10 @@ export class Chart extends LitElement {
   }
 
   private _calcBoxes() {
-    this.statePerPixelY = 0;
+    this.statePerPixel = 0;
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
     const sectionsStates: SectionState[] = [];
+    const sectionSize = this.vertical ? this.width! : this.config.height;
     filteredConfig.sections.forEach(section => {
       let total = 0;
       const boxes: Box[] = section.entities
@@ -294,26 +297,26 @@ export class Chart extends LitElement {
         return;
       }
       // leave room for margin
-      const availableHeight = this.config.height - (boxes.length - 1) * this.config.min_box_distance;
-      // calc sizes to determine statePerPixelY ratio and find the best one
+      const availableHeight = sectionSize - (boxes.length - 1) * this.config.min_box_distance;
+      // calc sizes to determine statePerPixel ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
       sectionsStates.push({
         boxes: sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
         total,
-        statePerPixelY: calcResults.statePerPixelY,
-        spacerH: 0,
+        statePerPixel: calcResults.statePerPixel,
+        spacerSize: 0,
         config: section,
       });
     });
 
     this.sections = sectionsStates.map(sectionState => {
-      // calc sizes again with the best statePerPixelY
+      // calc sizes again with the best statePerPixel
       let totalSize = 0;
       let sizedBoxes = sectionState.boxes;
-      if (sectionState.statePerPixelY !== this.statePerPixelY) {
+      if (sectionState.statePerPixel !== this.statePerPixel) {
         sizedBoxes = sizedBoxes.map(box => {
-          const size = Math.max(this.config.min_box_height, Math.floor(box.state / this.statePerPixelY));
+          const size = Math.max(this.config.min_box_size, Math.floor(box.state / this.statePerPixel));
           totalSize += size;
           return {
             ...box,
@@ -323,14 +326,14 @@ export class Chart extends LitElement {
       } else {
         totalSize = sizedBoxes.reduce((sum, b) => sum + b.size, 0);
       }
-      // calc vertical margin size
-      const extraSpace = this.config.height - totalSize;
-      const spacerH = sizedBoxes.length > 1 ? extraSpace / (sizedBoxes.length - 1) : this.config.height;
+      // calc margin betwee boxes
+      const extraSpace = sectionSize - totalSize;
+      const spacerSize = sizedBoxes.length > 1 ? extraSpace / (sizedBoxes.length - 1) : sectionSize;
       let offset = 0;
       // calc y positions. needed for connectors
       sizedBoxes = sizedBoxes.map(box => {
         const top = offset;
-        offset += box.size + spacerH;
+        offset += box.size + spacerSize;
         return {
           ...box,
           top,
@@ -339,7 +342,7 @@ export class Chart extends LitElement {
       return {
         ...sectionState,
         boxes: sizedBoxes,
-        spacerH,
+        spacerSize,
       };
     });
   }
@@ -348,20 +351,20 @@ export class Chart extends LitElement {
     boxes: Box[],
     availableHeight: number,
     totalState: number,
-  ): { boxes: Box[]; statePerPixelY: number } {
-    const statePerPixelY = totalState / availableHeight;
-    if (statePerPixelY > this.statePerPixelY) {
-      this.statePerPixelY = statePerPixelY;
+  ): { boxes: Box[]; statePerPixel: number } {
+    const statePerPixel = totalState / availableHeight;
+    if (statePerPixel > this.statePerPixel) {
+      this.statePerPixel = statePerPixel;
     }
     let deficitHeight = 0;
     const result = boxes.map(box => {
-      if (box.size === this.config.min_box_height) {
+      if (box.size === this.config.min_box_size) {
         return box;
       }
-      let size = Math.floor(box.state / this.statePerPixelY);
-      if (size < this.config.min_box_height) {
-        deficitHeight += this.config.min_box_height - size;
-        size = this.config.min_box_height;
+      let size = Math.floor(box.state / this.statePerPixel);
+      if (size < this.config.min_box_size) {
+        deficitHeight += this.config.min_box_size - size;
+        size = this.config.min_box_size;
       }
       return {
         ...box,
@@ -371,7 +374,7 @@ export class Chart extends LitElement {
     if (deficitHeight > 0) {
       return this._calcBoxHeights(result, availableHeight - deficitHeight, totalState);
     }
-    return { boxes: result, statePerPixelY: this.statePerPixelY };
+    return { boxes: result, statePerPixel: this.statePerPixel };
   }
 
   private highlightPath(entityConf: EntityConfigInternal, direction: 'parents' | 'children') {
@@ -502,7 +505,7 @@ export class Chart extends LitElement {
                 section: s,
                 nextSection: this.sections[i + 1],
                 highlightedEntities: this.highlightedEntities,
-                statePerPixelY: this.statePerPixelY,
+                statePerPixel: this.statePerPixel,
                 connectionsByParent: this.connectionsByParent,
                 connectionsByChild: this.connectionsByChild,
                 onTap: this._handleBoxTap.bind(this),

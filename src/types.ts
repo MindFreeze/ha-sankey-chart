@@ -9,6 +9,30 @@ import {
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import { UNIT_PREFIXES } from './const';
 
+export interface SankeyChartConfig extends LovelaceCardConfig {
+  type: string;
+  autoconfig?: {
+    print_yaml?: boolean;
+  };
+  title?: string;
+  sections?: SectionConfig[];
+  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
+  round?: number;
+  height?: number;
+  wide?: boolean;
+  show_icons?: boolean;
+  show_names?: boolean;
+  show_states?: boolean;
+  show_units?: boolean;
+  energy_date_selection?: boolean;
+  min_box_height?: number;
+  min_box_size?: number;
+  min_box_distance?: number;
+  min_state?: number;
+  throttle?: number;
+  vertical?: boolean;
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     'sankey-chart-editor': LovelaceCardEditor;
@@ -96,28 +120,6 @@ export interface SectionConfig {
   min_width?: string;
 }
 
-export interface SankeyChartConfig extends LovelaceCardConfig {
-  type: string;
-  autoconfig?: {
-    print_yaml?: boolean;
-  };
-  title?: string;
-  sections?: SectionConfig[];
-  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
-  round?: number;
-  height?: number;
-  wide?: boolean;
-  show_icons?: boolean;
-  show_names?: boolean;
-  show_states?: boolean;
-  show_units?: boolean;
-  energy_date_selection?: boolean;
-  min_box_height?: number;
-  min_box_distance?: number;
-  throttle?: number;
-  min_state?: number;
-}
-
 export interface Section {
   entities: EntityConfigInternal[];
   sort_by?: 'state';
@@ -130,7 +132,7 @@ export interface Config extends SankeyChartConfig {
   unit_prefix: '' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;
-  min_box_height: number;
+  min_box_size: number;
   min_box_distance: number;
   min_state: number;
   sections: Section[];
@@ -168,8 +170,8 @@ export interface Box {
 export interface SectionState {
   boxes: Box[];
   total: number;
-  spacerH: number;
-  statePerPixelY: number;
+  spacerSize: number;
+  statePerPixel: number;
   config: Section;
 }
 

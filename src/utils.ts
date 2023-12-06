@@ -173,7 +173,8 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
     height: 200,
     unit_prefix: '',
     round: 0,
-    min_box_height: 3,
+    // handle legacy min_box_height
+    min_box_size: config.min_box_height ?? 3,
     min_box_distance: 5,
     show_states: true,
     show_units: true,

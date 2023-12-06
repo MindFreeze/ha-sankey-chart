@@ -27,7 +27,7 @@
       "energy_date_selection": "Sync with energy_date_selection component",
       "height": "Height",
       "wide": "Wide",
-      "min_box_height": "Min box height",
+      "min_box_size": "Min box size",
       "min_box_distance": "Min box distance",
       "min_state": "Min state",
       "round": "Round",

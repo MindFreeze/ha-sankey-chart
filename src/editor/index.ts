@@ -175,7 +175,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         schema: [
           { name: 'wide', selector: { boolean: {} } },
           { name: 'height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
-          { name: 'min_box_height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+          { name: 'min_box_size', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
           { name: 'min_box_distance', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
         ],
       },

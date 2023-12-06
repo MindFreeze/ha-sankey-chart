@@ -10,7 +10,7 @@ import { MIN_LABEL_HEIGHT } from './const';
 export function renderBranchConnectors(props: {
   section: SectionState,
   nextSection?: SectionState,
-  statePerPixelY: number,
+  statePerPixel: number,
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
 }): SVGTemplateResult[] {
@@ -31,7 +31,7 @@ export function renderBranchConnectors(props: {
               children[i].state = sumState;
               // props could reduce the size of the box moving lower boxes up
               // so we have to add spacers and adjust some positions
-              const newSize = Math.floor(sumState / props.statePerPixelY);
+              const newSize = Math.floor(sumState / props.statePerPixel);
               children[i].extraSpacers = (children[i].size - newSize) / 2;
               c.endY += children[i].extraSpacers!;
               children[i].top += children[i].extraSpacers!;
@@ -71,7 +71,7 @@ export function renderSection(props: {
   section: SectionState,
   nextSection?: SectionState,
   highlightedEntities: EntityConfigInternal[],
-  statePerPixelY: number,
+  statePerPixel: number,
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
   onTap: (config: Box) => void,
@@ -82,7 +82,7 @@ export function renderSection(props: {
   const { show_names, show_icons, show_states, show_units } = props.config;
   const {
     boxes,
-    spacerH,
+    spacerSize,
     config: { min_width: minWidth },
   } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
@@ -102,7 +102,7 @@ export function renderSection(props: {
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
-        const maxLabelH = box.size + spacerH - 1;
+        const maxLabelH = box.size + spacerSize - 1;
 
         // reduce label size if it doesn't fit
         const labelStyle: Record<string, string> = { lineHeight: MIN_LABEL_HEIGHT + 'px' };
@@ -126,7 +126,7 @@ export function renderSection(props: {
         }
 
         return html`
-          ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerH + 'px' })}></div>` : null}
+          ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerSize + 'px' })}></div>` : null}
           ${extraSpacers
             ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>`
             : null}

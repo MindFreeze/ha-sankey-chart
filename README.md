@@ -32,10 +32,11 @@ This card is intended to display connections between entities with numeric state
 | show_names        | boolean | **Optional** | false               | Display entity names
 | show_states       | boolean | **Optional** | true                | Display entity states
 | show_units        | boolean | **Optional** | true                | Display unit of measurement
-| min_box_height    | number  | **Optional** | 3                   | Minimum size of an entity box
+| min_box_size      | number  | **Optional** | 3                   | Minimum size of an entity box
 | min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
 | min_state         | number  | **Optional** | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
 | throttle          | number  | **Optional** |                     | Minimum time in ms between updates/rerenders
+| vertical          | boolean | **Optional** |                     | Render the state flowing vertically instead of horizontally
 
 ### Sections object
 
