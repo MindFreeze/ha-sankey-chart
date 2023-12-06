@@ -30,6 +30,7 @@
       "min_box_height": "Min. výška boxu",
       "min_box_distance": "Minimálna vzdialenosť boxu",
       "min_state": "Min stav",
+      "static_scale": "Statická mierka",
       "round": "Zaokrúhliť",
       "throttle": "Plyn",
       "unit_prefix": "Predpona jednotky",
