@@ -218,6 +218,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 
 **A:** Tap the same (currently top level) entity again to reset the zoom level.
 
+**Q: My (template) sensor doesn't work with energy_date_selection!?**
+
+**A:** Sensors should have a proper `state_class` in order for statistics to work. Most commonly `state_class: total`. See <https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics>
+
 ## Development
 
 1. `npm i`
