@@ -8,18 +8,20 @@ import { HassEntity } from 'home-assistant-js-websocket';
 import { MIN_LABEL_HEIGHT } from './const';
 
 export function renderBranchConnectors(props: {
-  section: SectionState,
-  nextSection?: SectionState,
-  sectionIndex: number,
-  statePerPixelY: number,
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
+  section: SectionState;
+  nextSection?: SectionState;
+  sectionIndex: number;
+  statePerPixelY: number;
+  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
+  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
 }): SVGTemplateResult[] {
   const { boxes } = props.section;
   return boxes
     .filter(b => b.children.length > 0)
     .map((b, boxIndex) => {
-      const children = props.nextSection!.boxes.filter(child => b.children.some(c => getEntityId(c) === child.entity_id));
+      const children = props.nextSection!.boxes.filter(child =>
+        b.children.some(c => getEntityId(c) === child.entity_id),
+      );
       const connections = getChildConnections(b, children, props.connectionsByParent.get(b.config)).filter((c, i) => {
         if (c.state > 0) {
           children[i].connections.parents.push(c);
@@ -67,19 +69,19 @@ export function renderBranchConnectors(props: {
 }
 
 export function renderSection(props: {
-  locale: FrontendLocaleData,
-  config: Config,
-  section: SectionState,
-  nextSection?: SectionState,
-  sectionIndex: number,
-  highlightedEntities: EntityConfigInternal[],
-  statePerPixelY: number,
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
-  onTap: (config: Box) => void,
-  onDoubleTap: (config: Box) => void,
-  onMouseEnter: (config: Box) => void,
-  onMouseLeave: () => void,
+  locale: FrontendLocaleData;
+  config: Config;
+  section: SectionState;
+  nextSection?: SectionState;
+  sectionIndex: number;
+  highlightedEntities: EntityConfigInternal[];
+  statePerPixelY: number;
+  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
+  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
+  onTap: (config: Box) => void;
+  onDoubleTap: (config: Box) => void;
+  onMouseEnter: (config: Box) => void;
+  onMouseLeave: () => void;
 }) {
   const { show_names, show_icons, show_states, show_units } = props.config;
   const {
@@ -126,6 +128,7 @@ export function renderSection(props: {
             nameStyle.lineHeight = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
           }
         }
+        const shouldShowLabel = isNotPassthrough && (show_names || show_states);
 
         return html`
           ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerH + 'px' })}></div>` : null}
@@ -146,16 +149,18 @@ export function renderSection(props: {
                 ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
                 : null}
             </div>
-            <div class="label" style=${styleMap(labelStyle)}>
-              ${show_states && isNotPassthrough
-                ? html`<span class="state">${formattedState}</span>${show_units
-                      ? html`<span class="unit">${box.unit_of_measurement}</span>`
-                      : null}`
-                : null}
-              ${show_names && isNotPassthrough
-                ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
-                : null}
-            </div>
+            ${shouldShowLabel
+              ? html`<div class="label" style=${styleMap(labelStyle)}>
+                  ${show_states && isNotPassthrough
+                    ? html`<span class="state">${formattedState}</span>${show_units
+                          ? html`<span class="unit">${box.unit_of_measurement}</span>`
+                          : null}`
+                    : null}
+                  ${show_names && isNotPassthrough
+                    ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
+                    : null}
+                </div>`
+              : null}
           </div>
           ${extraSpacers
             ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>`
