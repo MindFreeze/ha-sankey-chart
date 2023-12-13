@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.0...v1.19.1) (2023-12-13)
+
+
+### Bug Fixes
+
+* don't render label box when empty ([c7bd54d](https://github.com/MindFreeze/ha-sankey-chart/commit/c7bd54dea0f68166cda8b8d1eaa1c324b1047d42))
+
 ## [1.19.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.18.0...v1.19.0) (2023-12-06)
 
 
