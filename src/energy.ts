@@ -249,6 +249,26 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
             console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
         }
       }
+      else if (conversions.convert_units_to == 'MJ') {
+        switch (hass.states[id].attributes.unit_of_measurement) {
+          case 'MJ':
+            scale = 1;
+            break;
+          case "kWh":
+            scale = 3.6;
+            break;
+          case "ft³":
+          case "ft3":
+            scale = 1.0551;
+            break;
+          case "m³":
+          case "m3":
+              scale = 1.0551 * 35.31;
+              break;
+          default:
+            console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
+        }
+      }
       else {
         console.warn("Can't convert to", conversions.convert_units_to);
       }

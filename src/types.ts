@@ -96,7 +96,7 @@ export interface SectionConfig {
   min_width?: string;
 }
 
-export type CONVERSION_UNITS = 'gCO2';
+export type CONVERSION_UNITS = 'MJ' | 'gCO2';
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
