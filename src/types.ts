@@ -96,6 +96,8 @@ export interface SectionConfig {
   min_width?: string;
 }
 
+export type CONVERSION_UNITS = 'gCO2';
+
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
@@ -103,6 +105,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   };
   title?: string;
   sections?: SectionConfig[];
+  convert_units_to: '' | CONVERSION_UNITS;
+  co2_intensity_entity?: string;
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
   round?: number;
   height?: number;

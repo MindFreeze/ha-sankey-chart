@@ -11,6 +11,7 @@ import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
+  Conversions,
   EnergyCollection,
   ENERGY_SOURCE_TYPES,
   getEnergyDataCollection,
@@ -111,7 +112,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           if (this.entityIds.length) {
-            const stats = await getStatistics(this.hass, data, this.entityIds);
+            const conversions: Conversions = {
+              convert_units_to: this.config.convert_units_to || '',
+              co2_intensity_entity: this.config.co2_intensity_entity || 'sensor.co2_signal_co2_intensity',
+            };
+            const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
             const states: HassEntities = {};
             Object.keys(stats).forEach(id => {
               if (this.hass.states[id]) {

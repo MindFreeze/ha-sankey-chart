@@ -205,7 +205,7 @@ export class Chart extends LitElement {
       const entityConf =
         typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
-      const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
+      const unit_of_measurement = this._getUnitOfMeasurement(entityConf.unit_of_measurement || entity.attributes.unit_of_measurement);
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
 
       if (entityConf.type === 'passthrough') {
@@ -419,6 +419,15 @@ export class Chart extends LitElement {
     });
   }
 
+  private _getUnitOfMeasurement(reported_unit_of_measurement: string): string {
+    // If converting from kWh to gCO2, attributes.unit_of_measurement remains kWh even though the number is gCO2, so we
+    // override the unit to gCO2, unless normalizeStateValue() has already converted it to kgCO2.
+    if (this.config.convert_units_to && !reported_unit_of_measurement.endsWith(this.config.convert_units_to)) {
+      return this.config.convert_units_to;
+    }
+    return reported_unit_of_measurement;
+  }
+
   private _getEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
       const connections = this.connectionsByChild.get(entityConf);
@@ -431,7 +440,7 @@ export class Chart extends LitElement {
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
-        parentEntity.attributes.unit_of_measurement,
+        this._getUnitOfMeasurement(parentEntity.attributes.unit_of_measurement),
       );
       return { ...parentEntity, state, attributes: { ...parentEntity.attributes, unit_of_measurement } };
     }
@@ -446,7 +455,7 @@ export class Chart extends LitElement {
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
-        childEntity.attributes.unit_of_measurement,
+        this._getUnitOfMeasurement(childEntity.attributes.unit_of_measurement),
       );
       return { ...childEntity, state, attributes: { ...childEntity.attributes, unit_of_measurement } };
     }
