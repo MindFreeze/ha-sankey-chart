@@ -41,6 +41,8 @@ export interface StatisticValue {
 export interface Conversions {
   convert_units_to: string;
   co2_intensity_entity: string;
+  gas_price?: number | null;
+  electricity_price?: number | null;
 }
 
 const statisticTypes = [
@@ -267,6 +269,26 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
               break;
           default:
             console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
+        }
+      }
+      else if (conversions.convert_units_to == 'monetary') {
+        switch (hass.states[id].attributes.unit_of_measurement) {
+          case "kWh":
+            scale = conversions.electricity_price ? conversions.electricity_price : 0;
+            break;
+          case "ft³":
+          case "ft3":
+          case "CCF":
+          case "ccf":
+          case "m³":
+          case "m3":
+            scale = conversions.gas_price ? conversions.gas_price : 0;
+            break;
+          default:
+            if (hass.states[id].attributes.device_class == 'monetary')
+              scale = 1;
+            else
+              console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
         }
       }
       else {

@@ -34,7 +34,7 @@ export function normalizeStateValue(
   unit_of_measurement?: string,
 ): { state: number; unit_of_measurement?: string } {
   const validState = Math.max(0, state);
-  if (!unit_of_measurement) {
+  if (!unit_of_measurement || unit_of_measurement == 'monetary') {
     return { state: validState, unit_of_measurement };
   }
   const prefix = Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0) || '';
