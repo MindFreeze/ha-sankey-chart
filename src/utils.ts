@@ -17,7 +17,7 @@ export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
-export function formatState(state: number, round: number, locale: FrontendLocaleData): string {
+export function formatState(state: number, round: number, locale: FrontendLocaleData, monetary_unit?: string): string {
   let rounded: string;
   let decimals = round;
   do {
@@ -25,7 +25,15 @@ export function formatState(state: number, round: number, locale: FrontendLocale
     rounded = state.toFixed(decimals++);
   } while (/^[0\.]*$/.test(rounded) && decimals < 100);
 
-  return formatNumber(parseFloat(rounded), locale);
+  if (!monetary_unit) {
+    return formatNumber(parseFloat(rounded), locale);
+  } else {
+    return formatNumber(parseFloat(rounded), locale, {
+      style: "currency",
+      currency: monetary_unit,
+      minimumFractionDigits: round,
+    });
+  }
 }
 
 export function normalizeStateValue(

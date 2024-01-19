@@ -83,7 +83,7 @@ export function renderSection(props: {
   onMouseEnter: (config: Box) => void;
   onMouseLeave: () => void;
 }) {
-  const { show_names, show_icons, show_states, show_units } = props.config;
+  const { show_names, show_icons, show_states, show_units, convert_units_to } = props.config;
   const {
     boxes,
     spacerH,
@@ -102,7 +102,7 @@ export function renderSection(props: {
         : null}
       ${boxes.map((box, i) => {
         const { entity, extraSpacers } = box;
-        const formattedState = formatState(box.state, props.config.round, props.locale);
+        const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
@@ -152,7 +152,7 @@ export function renderSection(props: {
             ${shouldShowLabel
               ? html`<div class="label" style=${styleMap(labelStyle)}>
                   ${show_states && isNotPassthrough
-                    ? html`<span class="state">${formattedState}</span>${show_units
+                    ? html`<span class="state">${formattedState}</span>${(show_units && convert_units_to != 'monetary')
                           ? html`&nbsp;<span class="unit">${box.unit_of_measurement}</span>`
                           : null}`
                     : null}
