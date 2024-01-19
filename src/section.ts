@@ -142,7 +142,7 @@ export function renderSection(props: {
               @dblclick=${() => props.onDoubleTap(box)}
               @mouseenter=${() => props.onMouseEnter(box)}
               @mouseleave=${props.onMouseLeave}
-              title=${formattedState + box.unit_of_measurement + ' ' + name}
+              title=${formattedState + ' ' + box.unit_of_measurement + ' ' + name}
               class=${props.highlightedEntities.includes(box.config) ? 'hl' : ''}
             >
               ${show_icons && isNotPassthrough
@@ -153,7 +153,7 @@ export function renderSection(props: {
               ? html`<div class="label" style=${styleMap(labelStyle)}>
                   ${show_states && isNotPassthrough
                     ? html`<span class="state">${formattedState}</span>${show_units
-                          ? html`<span class="unit">${box.unit_of_measurement}</span>`
+                          ? html`&nbsp;<span class="unit">${box.unit_of_measurement}</span>`
                           : null}`
                     : null}
                   ${show_names && isNotPassthrough
