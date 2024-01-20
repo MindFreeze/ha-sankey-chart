@@ -105,7 +105,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   };
   title?: string;
   sections?: SectionConfig[];
-  convert_units_to: '' | CONVERSION_UNITS;
+  convert_units_to?: '' | CONVERSION_UNITS;
   co2_intensity_entity?: string;
   monetary_unit?: string;
   electricity_price?: number;

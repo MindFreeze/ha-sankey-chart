@@ -179,7 +179,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
   );
   const period = dayDifference > 35 ? "month" : dayDifference > 2 ? "day" : "hour";
 
-  var time_invariant_devices: string[] = [];
+  let time_invariant_devices: string[] = [];
   const time_variant_data = {};
   if (conversions.convert_units_to == 'gCO2' || conversions.convert_units_to == "gCO2eq") {
     for (const id of devices) {
@@ -204,7 +204,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
     time_invariant_devices = devices;
   }
 
-  var time_invariant_data = {};
+  let time_invariant_data = {};
   if (time_invariant_devices.length > 0) {
     time_invariant_data = await fetchStatistics(
       hass,
@@ -220,7 +220,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
   const result = {};
 
   for (const id in time_variant_data) {
-    scale = 100;  // API assumes co2_statistic_id is fossil fuel percentage [0-100], so it divides by 100, which we must undo
+    const scale = 100;  // API assumes co2_statistic_id is fossil fuel percentage [0-100], so it divides by 100, which we must undo
     result[id] = sumOverTime(await time_variant_data[id]) * scale;
   }
 
@@ -228,7 +228,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
     result[id] = calculateStatisticSumGrowth(time_invariant_data[id])
   
     if (conversions.convert_units_to && result[id]) {
-      var scale = 1.0;
+      let scale = 1.0;
       if (conversions.convert_units_to == 'gCO2' || conversions.convert_units_to == "gCO2eq") {
         switch (hass.states[id].attributes.unit_of_measurement) {
           case 'gCO2':
