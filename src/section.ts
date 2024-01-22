@@ -152,7 +152,7 @@ export function renderSection(props: {
             ${shouldShowLabel
               ? html`<div class="label" style=${styleMap(labelStyle)}>
                   ${show_states && isNotPassthrough
-                    ? html`<span class="state">${formattedState}</span>${(show_units && convert_units_to != 'monetary')
+                    ? html`<span class="state">${formattedState}</span>${show_units
                           ? html`<span class="unit">${box.unit_of_measurement}</span>`
                           : null}`
                     : null}

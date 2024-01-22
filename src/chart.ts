@@ -420,11 +420,17 @@ export class Chart extends LitElement {
   }
 
   private _getUnitOfMeasurement(reported_unit_of_measurement: string): string {
+    // If converting to money, don't actually display the word "monetary"
+    if (this.config.convert_units_to == 'monetary') {
+      return '';
+    }
+
     // If converting from kWh to gCO2, attributes.unit_of_measurement remains kWh even though the number is gCO2, so we
     // override the unit to gCO2, unless normalizeStateValue() has already converted it to kgCO2.
     if (this.config.convert_units_to && !reported_unit_of_measurement.endsWith(this.config.convert_units_to)) {
       return this.config.convert_units_to;
     }
+
     return reported_unit_of_measurement;
   }
 
