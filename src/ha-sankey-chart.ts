@@ -115,6 +115,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             const conversions: Conversions = {
               convert_units_to: this.config.convert_units_to || '',
               co2_intensity_entity: this.config.co2_intensity_entity || 'sensor.co2_signal_co2_intensity',
+              gas_co2_intensity: this.config.gas_co2_intensity || (55.0 /*tailpipe*/ + 11.6 /*supply chain, US average*/),
               electricity_price: this.config.electricity_price,
               gas_price: this.config.gas_price,
             };

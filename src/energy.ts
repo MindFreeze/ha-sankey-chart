@@ -41,6 +41,7 @@ export interface StatisticValue {
 export interface Conversions {
   convert_units_to: string;
   co2_intensity_entity: string;
+  gas_co2_intensity: number;
   gas_price?: number | null;
   electricity_price?: number | null;
 }
@@ -237,15 +238,15 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
             break;
           case "ft³":
           case "ft3":
-            scale = 55.0; // gCO2 per ft³ natural gas (EIA 2022)
+            scale = conversions.gas_co2_intensity;
             break;
           case "CCF":
           case "ccf":
-            scale = 55.0 * 100;
+            scale = conversions.gas_co2_intensity * 100;
             break;
           case "m³":
           case "m3":
-            scale = 55.0 * 35.31;
+            scale = conversions.gas_co2_intensity * 35.31;
             break;
           default:
             console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
