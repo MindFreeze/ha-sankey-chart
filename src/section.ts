@@ -83,7 +83,7 @@ export function renderSection(props: {
   onMouseEnter: (config: Box) => void;
   onMouseLeave: () => void;
 }) {
-  const { show_names, show_icons, show_states, show_units, convert_units_to } = props.config;
+  const { show_names, show_icons, show_states, show_units } = props.config;
   const {
     boxes,
     spacerH,
