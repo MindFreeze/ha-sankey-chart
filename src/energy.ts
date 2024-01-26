@@ -3,6 +3,7 @@
 import { HomeAssistant } from "custom-card-helpers";
 import { Collection } from "home-assistant-js-websocket";
 import { differenceInDays } from 'date-fns';
+import { FT3_PER_M3 } from './const';
 
 export const ENERGY_SOURCE_TYPES = ['grid', 'solar', 'battery'];
 
@@ -246,7 +247,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
             break;
           case "m³":
           case "m3":
-            scale = conversions.gas_co2_intensity * 35.31;
+            scale = conversions.gas_co2_intensity * FT3_PER_M3;
             break;
           default:
             console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);
@@ -266,7 +267,7 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
             break;
           case "m³":
           case "m3":
-              scale = 1.0551 * 35.31;
+              scale = 1.0551 * FT3_PER_M3;
               break;
           default:
             console.warn("Can't convert from", hass.states[id].attributes.unit_of_measurement, "to", conversions.convert_units_to);

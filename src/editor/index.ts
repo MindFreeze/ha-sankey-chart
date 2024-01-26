@@ -210,7 +210,8 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       return html``;
     }
 
-    const config = normalizeConfig(this._config || ({} as SankeyChartConfig));
+    const isMetric = this.hass.config.unit_system.length == "km";
+    const config = normalizeConfig(this._config || ({} as SankeyChartConfig), isMetric);
     const { autoconfig } = config;
     const sections: SectionConfig[] = config.sections || [];
 

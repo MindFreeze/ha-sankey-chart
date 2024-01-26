@@ -135,12 +135,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   }
 
   // https://lit.dev/docs/components/properties/#accessors-custom
-  public setConfig(config: SankeyChartConfig): void {
+  public setConfig(config: SankeyChartConfig, isMetric: boolean): void {
     if (typeof config !== 'object') {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    this.setNormalizedConfig(normalizeConfig(config));
+    this.setNormalizedConfig(normalizeConfig(config, isMetric));
     this.resetSubscriptions();
   }
 

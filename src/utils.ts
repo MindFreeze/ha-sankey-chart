@@ -1,6 +1,6 @@
 import { createThing, formatNumber, FrontendLocaleData, HomeAssistant, LovelaceCard, LovelaceCardConfig } from 'custom-card-helpers';
 import { html, TemplateResult } from 'lit';
-import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from './const';
+import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES, FT3_PER_M3 } from './const';
 import {
   Box,
   ChildConfigOrStr,
@@ -93,7 +93,7 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
   });
 }
 
-export function normalizeConfig(conf: SankeyChartConfig): Config {
+export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Config {
   let config = { sections: [], ...cloneObj(conf) };
 
   const { autoconfig } = conf;
@@ -185,7 +185,7 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
     round: 0,
     convert_units_to: '',
     co2_intensity_entity: 'sensor.co2_signal_co2_intensity',
-    gas_co2_intensity: default_co2_per_ft3,
+    gas_co2_intensity: isMetric ? default_co2_per_ft3 * FT3_PER_M3 : default_co2_per_ft3,
     min_box_height: 3,
     min_box_distance: 5,
     show_states: true,
