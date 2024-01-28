@@ -11,6 +11,7 @@ import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
+  Conversions,
   EnergyCollection,
   ENERGY_SOURCE_TYPES,
   getEnergyDataCollection,
@@ -111,7 +112,14 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           if (this.entityIds.length) {
-            const stats = await getStatistics(this.hass, data, this.entityIds);
+            const conversions: Conversions = {
+              convert_units_to: this.config.convert_units_to!,
+              co2_intensity_entity: this.config.co2_intensity_entity!,
+              gas_co2_intensity: this.config.gas_co2_intensity!,
+              electricity_price: this.config.electricity_price,
+              gas_price: this.config.gas_price,
+            };
+            const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
             const states: HassEntities = {};
             Object.keys(stats).forEach(id => {
               if (this.hass.states[id]) {
@@ -127,12 +135,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   }
 
   // https://lit.dev/docs/components/properties/#accessors-custom
-  public setConfig(config: SankeyChartConfig): void {
+  public setConfig(config: SankeyChartConfig, isMetric: boolean): void {
     if (typeof config !== 'object') {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    this.setNormalizedConfig(normalizeConfig(config));
+    this.setNormalizedConfig(normalizeConfig(config, isMetric));
     this.resetSubscriptions();
   }
 

@@ -59,7 +59,7 @@ describe('SankeyChart', () => {
         { entities: ['ent2', 'ent3'] },
       ],
     };
-    sankeyChart.setConfig(config);
+    sankeyChart.setConfig(config, true);
     document.body.appendChild(sankeyChart);
     await sankeyChart.updateComplete;
 

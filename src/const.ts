@@ -13,3 +13,5 @@ export const MIN_LABEL_HEIGHT = 15;
 export const DEFAULT_ENTITY_CONF: Omit<EntityConfig, 'entity_id'> = {
   type: 'entity',
 };
+
+export const FT3_PER_M3 = 35.31;

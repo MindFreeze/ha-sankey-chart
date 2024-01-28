@@ -1,6 +1,6 @@
 import { createThing, formatNumber, FrontendLocaleData, HomeAssistant, LovelaceCard, LovelaceCardConfig } from 'custom-card-helpers';
 import { html, TemplateResult } from 'lit';
-import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES } from './const';
+import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES, FT3_PER_M3 } from './const';
 import {
   Box,
   ChildConfigOrStr,
@@ -17,7 +17,7 @@ export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
-export function formatState(state: number, round: number, locale: FrontendLocaleData): string {
+export function formatState(state: number, round: number, locale: FrontendLocaleData, monetary_unit?: string): string {
   let rounded: string;
   let decimals = round;
   do {
@@ -25,7 +25,15 @@ export function formatState(state: number, round: number, locale: FrontendLocale
     rounded = state.toFixed(decimals++);
   } while (/^[0\.]*$/.test(rounded) && decimals < 100);
 
-  return formatNumber(parseFloat(rounded), locale);
+  if (!monetary_unit) {
+    return formatNumber(parseFloat(rounded), locale);
+  } else {
+    return formatNumber(parseFloat(rounded), locale, {
+      style: "currency",
+      currency: monetary_unit,
+      minimumFractionDigits: round,
+    });
+  }
 }
 
 export function normalizeStateValue(
@@ -34,7 +42,7 @@ export function normalizeStateValue(
   unit_of_measurement?: string,
 ): { state: number; unit_of_measurement?: string } {
   const validState = Math.max(0, state);
-  if (!unit_of_measurement) {
+  if (!unit_of_measurement || unit_of_measurement == 'monetary') {
     return { state: validState, unit_of_measurement };
   }
   const prefix = Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0) || '';
@@ -85,7 +93,7 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
   });
 }
 
-export function normalizeConfig(conf: SankeyChartConfig): Config {
+export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Config {
   let config = { sections: [], ...cloneObj(conf) };
 
   const { autoconfig } = conf;
@@ -169,10 +177,15 @@ export function normalizeConfig(conf: SankeyChartConfig): Config {
     });
   });
 
+  const default_co2_per_ft3 = 55.0  // gCO2e/ft3 tailpipe
+                            + 11.6; // gCO2e/ft3 supply chain, US average
   return {
     height: 200,
     unit_prefix: '',
     round: 0,
+    convert_units_to: '',
+    co2_intensity_entity: 'sensor.co2_signal_co2_intensity',
+    gas_co2_intensity: isMetric ? default_co2_per_ft3 * FT3_PER_M3 : default_co2_per_ft3,
     min_box_height: 3,
     min_box_distance: 5,
     show_states: true,

@@ -102,7 +102,7 @@ export function renderSection(props: {
         : null}
       ${boxes.map((box, i) => {
         const { entity, extraSpacers } = box;
-        const formattedState = formatState(box.state, props.config.round, props.locale);
+        const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);

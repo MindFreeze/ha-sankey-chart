@@ -96,6 +96,8 @@ export interface SectionConfig {
   min_width?: string;
 }
 
+export type CONVERSION_UNITS = 'MJ' | 'gCO2' | 'monetary';
+
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
@@ -103,6 +105,12 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   };
   title?: string;
   sections?: SectionConfig[];
+  convert_units_to?: '' | CONVERSION_UNITS;
+  co2_intensity_entity?: string;
+  gas_co2_intensity?: number;
+  monetary_unit?: string;
+  electricity_price?: number;
+  gas_price?: number;
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
   round?: number;
   height?: number;
