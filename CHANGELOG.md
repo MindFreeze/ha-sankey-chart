@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.1...v1.20.0) (2024-01-28)
+
+
+### Features
+
+* **#158:** Convert units to CO2 or $ ([#159](https://github.com/MindFreeze/ha-sankey-chart/issues/159)) ([668f3d6](https://github.com/MindFreeze/ha-sankey-chart/commit/668f3d624d1f7d80c8ebd10538ae73ffa6700914))
+
 ## [1.19.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.0...v1.19.1) (2023-12-13)
 
 
