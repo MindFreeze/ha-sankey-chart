@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.0...v1.20.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* **#163:** quick fix for missing energy sources ([9e0c9cd](https://github.com/MindFreeze/ha-sankey-chart/commit/9e0c9cd06bf2153563230f7ebb1238a17df49026))
+
 ## [1.20.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.1...v1.20.0) (2024-01-28)
 
 
