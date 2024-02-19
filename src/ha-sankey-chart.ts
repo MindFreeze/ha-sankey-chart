@@ -211,7 +211,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
     const orderedDeviceIds = areas.reduce((all: string[], a) => [...all, ...a.entities], []);
 
-    const sections: Section[] = [
+    const sections = [
       {
         entities: sources.map(source => {
           const subtract = source.stat_energy_to
@@ -231,7 +231,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         entities: [
           {
             entity_id: 'total',
-            type: 'remaining_parent_state',
+            type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
             name: 'Total Consumption',
             children: [...areas.map(a => a.area.area_id), 'unknown'],
           },
@@ -262,7 +262,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           children: [],
         })),
       },
-    ];
+    ].filter(s => s.entities.length > 0) as Section[];
 
     const grid = sources.find(s => s.type === 'grid');
     if (grid && grid?.flow_to?.length) {
