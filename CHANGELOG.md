@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.21.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.1...v1.21.0) (2024-03-01)
+
+
+### Features
+
+* **#157:** global sort_by, sort_dir options ([f09811c](https://github.com/MindFreeze/ha-sankey-chart/commit/f09811c0cab2ae0c61f112c3acef4db0d1d82faa))
+
+
+### Bug Fixes
+
+* **#161:** allow fractions in min_state & color_limit ([a86e7a4](https://github.com/MindFreeze/ha-sankey-chart/commit/a86e7a4f6d4c6f6db6734d3e74f9a92f7150c27a))
+
 ## [1.20.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.0...v1.20.1) (2024-02-19)
 
 
