@@ -125,6 +125,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   throttle?: number;
   min_state?: number;
   static_scale?: number;
+  sort_by?: 'state';
+  sort_dir?: 'asc' | 'desc';
 }
 
 export interface Section {

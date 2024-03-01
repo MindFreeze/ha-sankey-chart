@@ -306,8 +306,10 @@ export class Chart extends LitElement {
       // calc sizes to determine statePerPixelY ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
+      const sortBy = section.sort_by || this.config.sort_by;
+      const sortDir = section.sort_dir || this.config.sort_dir;
       sectionsStates.push({
-        boxes: sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
+        boxes: sortBoxes(parentBoxes, calcResults.boxes, sortBy, sortDir),
         total,
         statePerPixelY: calcResults.statePerPixelY,
         spacerH: 0,
