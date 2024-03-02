@@ -46,6 +46,8 @@
       "color_limit": "State limit for color change",
       "color_above": "Color above limit",
       "color_below": "Color below limit",
+      "sort_by": "Sort by",
+      "sort_dir": "Sort direction",
       "section": {
         "min_width": "Min width",
         "sort_by": "Sort by",

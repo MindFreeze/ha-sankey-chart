@@ -186,7 +186,6 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
           { name: 'min_state', selector: { number: { mode: 'box', min: 0., step: 'any' } } },
           { name: 'static_scale', selector: { number: { mode: 'box' } } },
           { name: 'round', selector: { number: { mode: 'box', unit_of_measurement: localize('editor.decimals') } } },
-          { name: 'throttle', selector: { number: { mode: 'box', unit_of_measurement: 'ms' } } },
           {
             name: 'unit_prefix',
             selector: {
@@ -196,6 +195,29 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
               },
             },
           },
+          {
+            name: 'sort_by',
+            selector: {
+              select: {
+                mode: 'dropdown',
+                options: [{ value: '' }, { value: 'state', label: localize('editor.sort_by.state') }],
+              },
+            },
+          },
+          {
+            name: 'sort_dir',
+            selector: {
+              select: {
+                mode: 'dropdown',
+                options: [
+                  { value: '' },
+                  { value: 'desc', label: localize('editor.sort_dir.desc') },
+                  { value: 'asc', label: localize('editor.sort_dir.asc') },
+                ],
+              },
+            },
+          },
+          { name: 'throttle', selector: { number: { mode: 'box', unit_of_measurement: 'ms' } } },
         ],
       },
     ];
