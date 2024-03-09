@@ -46,6 +46,8 @@
       "color_limit": "Štátny limit pre zmenu farby",
       "color_above": "Farba nad limitom",
       "color_below": "Farba pod limitom",
+      "sort_by": "Triediť podľa",
+      "sort_dir": "Smer triedenia",
       "section": {
         "min_width": "Min. šírka",
         "sort_by": "Triediť podľa",
