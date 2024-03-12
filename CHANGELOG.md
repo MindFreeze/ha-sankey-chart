@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.21.0...v1.21.1) (2024-03-09)
+
+
+### Bug Fixes
+
+* **#157:** add global sort options to UI editor ([439b965](https://github.com/MindFreeze/ha-sankey-chart/commit/439b965ddf3746b7b88037ad9feba601a2110af6))
+
 ## [1.21.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.1...v1.21.0) (2024-03-01)
 
 
