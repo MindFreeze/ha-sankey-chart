@@ -282,7 +282,12 @@ export class Chart extends LitElement {
               typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
             const colorAbove =
               typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
-            finalColor = state > colorLimit ? colorAbove : colorBelow;
+            if ( state > colorLimit ) {
+              finalColor = colorAbove;
+            }
+            if ( state < colorLimit ) {
+              finalColor = colorBelow;
+            }
           }
 
           return {
