@@ -284,8 +284,7 @@ export class Chart extends LitElement {
               typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
             if ( state > colorLimit ) {
               finalColor = colorAbove;
-            }
-            if ( state < colorLimit ) {
+            } else if ( state < colorLimit ) {
               finalColor = colorBelow;
             }
           }
