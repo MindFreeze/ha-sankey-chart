@@ -261,6 +261,9 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
           case "kWh":
             scale = 3.6;
             break;
+          case "Wh":
+            scale = 3600;
+            break;
           case "ft³":
           case "ft3":
             scale = 1.0551;
@@ -277,6 +280,9 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
         switch (hass.states[id].attributes.unit_of_measurement) {
           case "kWh":
             scale = conversions.electricity_price ? conversions.electricity_price : 0;
+            break;
+          case "Wh":
+            scale = conversions.electricity_price ? conversions.electricity_price * 1000 : 0;
             break;
           case "ft³":
           case "ft3":
