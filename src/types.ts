@@ -90,7 +90,7 @@ export interface CallServiceActionConfig extends BaseActionConfig {
 
 export interface SectionConfig {
   entities: EntityConfigOrStr[];
-  sort_by?: 'state';
+  sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
   min_width?: string;
@@ -125,13 +125,13 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   throttle?: number;
   min_state?: number;
   static_scale?: number;
-  sort_by?: 'state';
+  sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
 }
 
 export interface Section {
   entities: EntityConfigInternal[];
-  sort_by?: 'state';
+  sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
   min_width?: string;

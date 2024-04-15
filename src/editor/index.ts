@@ -200,7 +200,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
             selector: {
               select: {
                 mode: 'dropdown',
-                options: [{ value: '' }, { value: 'state', label: localize('editor.sort_by.state') }],
+                options: [{ value: 'none', label: localize('editor.sort_by.none') }, { value: 'state', label: localize('editor.sort_by.state') }],
               },
             },
           },

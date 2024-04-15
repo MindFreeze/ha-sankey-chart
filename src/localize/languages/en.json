@@ -62,6 +62,7 @@
       "passthrough": "Passthrough"
     },
     "sort_by": {
+      "none": "None",
       "state": "State"
     },
     "sort_dir": {
