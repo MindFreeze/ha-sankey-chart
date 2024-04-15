@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.1...v2.0.2) (2024-04-15)
+
+
+### Bug Fixes
+
+* **#175:** passthrough  with remaining parent/child state ([fc111a9](https://github.com/MindFreeze/ha-sankey-chart/commit/fc111a99b20a7876946eccbac6a3ef63a6054ff8))
+
 ## [2.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.0...v2.0.1) (2024-04-15)
 
 
