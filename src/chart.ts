@@ -135,38 +135,41 @@ export class Chart extends LitElement {
       return;
     }
     const { parent, child } = connection;
-    [parent, child].forEach(ent => {
-      if (ent.type === 'remaining_child_state') {
-        this.connectionsByParent.get(ent)!.forEach(c => {
-          if (!c.ready) {
-            if (c.calculating) {
-              throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
-            }
-            c.calculating = true;
-            this.connectionsByChild.get(c.child)?.forEach(conn => {
-              if (conn.parent !== parent) {
-                this._calcConnection(conn, accountedIn, accountedOut);
+
+    if (!connection.calculating) {
+      [parent, child].forEach(ent => {
+        if (ent.type === 'remaining_child_state') {
+          this.connectionsByParent.get(ent)!.forEach(c => {
+            if (!c.ready) {
+              if (c.calculating) {
+                throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
-            });
-          }
-        });
-      }
-      if (ent.type === 'remaining_parent_state') {
-        this.connectionsByChild.get(ent)?.forEach(c => {
-          if (!c.ready) {
-            if (c.calculating) {
-              throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
+              c.calculating = true;
+              this.connectionsByChild.get(c.child)?.forEach(conn => {
+                if (conn.parent !== parent) {
+                  this._calcConnection(conn, accountedIn, accountedOut);
+                }
+              });
             }
-            c.calculating = true;
-            this.connectionsByParent.get(c.parent)?.forEach(conn => {
-              if (conn.child !== child) {
-                this._calcConnection(conn, accountedIn, accountedOut);
+          });
+        }
+        if (ent.type === 'remaining_parent_state') {
+          this.connectionsByChild.get(ent)?.forEach(c => {
+            if (!c.ready) {
+              if (c.calculating) {
+                throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
-            });
-          }
-        });
-      }
-    });
+              c.calculating = true;
+              this.connectionsByParent.get(c.parent)?.forEach(conn => {
+                if (conn.child !== child) {
+                  this._calcConnection(conn, accountedIn, accountedOut);
+                }
+              });
+            }
+          });
+        }
+      });
+    }
 
     const parentStateNormalized = this._getMemoizedState(parent);
     const parentStateFull = parentStateNormalized.state ?? 0;
