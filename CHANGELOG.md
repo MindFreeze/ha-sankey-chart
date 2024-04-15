@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.21.1...v2.0.0) (2024-04-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* Fix state base coloring by allowing three-state display: state value below limit, state value equals limit and state value above limit. This changes the previous behaviour when the state matches `color_limit` exactly
+
+### Bug Fixes
+
+* **#157:** add 'none' option for `sort_by` to overwrite the global `sort_by` ([67c8d14](https://github.com/MindFreeze/ha-sankey-chart/commit/67c8d1462770848fcb3684cd9fe67b1492ccd7fc))
+* **#171:** improve error handling for circular refs ([6b009d2](https://github.com/MindFreeze/ha-sankey-chart/commit/6b009d2e4bb24fa4a9661f5e2faa3e8fd3fc37be))
+* handle Wh when converting to energy price ([42ad2fa](https://github.com/MindFreeze/ha-sankey-chart/commit/42ad2faeef555035f07216aacf019e8c24f96309))
+* state base coloring ([#172](https://github.com/MindFreeze/ha-sankey-chart/issues/172)) ([dab85be](https://github.com/MindFreeze/ha-sankey-chart/commit/dab85be08e99527a2542c12e6e7555cc0ae1480a))
+
 ## [1.21.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.21.0...v1.21.1) (2024-03-09)
 
 
