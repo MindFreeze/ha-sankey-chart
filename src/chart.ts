@@ -137,11 +137,12 @@ export class Chart extends LitElement {
     const { parent, child } = connection;
 
     if (!connection.calculating) {
+      connection.calculating = true;
       [parent, child].forEach(ent => {
         if (ent.type === 'remaining_child_state') {
           this.connectionsByParent.get(ent)!.forEach(c => {
             if (!c.ready) {
-              if (c.calculating) {
+              if (c.calculating && c !== connection) {
                 throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
               c.calculating = true;
@@ -156,7 +157,7 @@ export class Chart extends LitElement {
         if (ent.type === 'remaining_parent_state') {
           this.connectionsByChild.get(ent)?.forEach(c => {
             if (!c.ready) {
-              if (c.calculating) {
+              if (c.calculating && c !== connection) {
                 throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
               c.calculating = true;
@@ -195,6 +196,7 @@ export class Chart extends LitElement {
     }
     connection.ready = true;
     if (
+      !force &&
       (child.type === 'remaining_parent_state' &&
         (child.add_entities?.length || child.subtract_entities?.length) &&
         childState === Infinity) ||
@@ -458,9 +460,8 @@ export class Chart extends LitElement {
       if (!connections) {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
-      const { parent } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const parentEntity = this._getEntityState(parent);
+      const parentEntity = this._getEntityState(this._findRelatedRealEntity(connections, 'parents'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
@@ -473,9 +474,8 @@ export class Chart extends LitElement {
       if (!connections) {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
-      const { child } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const childEntity = this._getEntityState(child);
+      const childEntity = this._getEntityState(this._findRelatedRealEntity(connections, 'children'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
@@ -483,9 +483,17 @@ export class Chart extends LitElement {
       );
       return { ...childEntity, state, attributes: { ...childEntity.attributes, unit_of_measurement } };
     }
-
+    
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
+      if (entityConf.type === 'passthrough') {
+        console.log('entityConf', entityConf);
+        const connections = this.connectionsByParent.get(entityConf);
+        if (!connections) {
+          throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+        }
+        return this._getEntityState(connections[0].child);
+      }
       throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
     }
 
@@ -499,6 +507,20 @@ export class Chart extends LitElement {
       }
     }
     return entity;
+  }
+
+  private _findRelatedRealEntity(connections: ConnectionState[], direction: 'parents' | 'children') {
+      // find the first parent/child that is not type: passthrough
+      // a deep search on the first connection must be enough
+      const candidate = direction === 'parents' ? connections[0].parent : connections[0].child;
+      if (candidate.type !== 'passthrough') {
+        return candidate;
+      }
+      const deeperConnections = direction === 'parents' ? this.connectionsByChild.get(candidate) : this.connectionsByParent.get(candidate);
+      if (!deeperConnections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(candidate));
+      }
+      return this._findRelatedRealEntity(deeperConnections, direction);
   }
 
   static get styles(): CSSResultGroup {
