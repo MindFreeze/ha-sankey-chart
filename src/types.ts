@@ -191,6 +191,7 @@ export interface ConnectionState {
   prevParentState: number;
   prevChildState: number;
   ready: boolean;
+  calculating?: boolean;
   highlighted?: boolean;
 }
 
