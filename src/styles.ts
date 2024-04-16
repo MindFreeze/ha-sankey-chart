@@ -77,11 +77,14 @@ export default css`
         position: absolute;
         top: 0;
         left: 15px;
-        right: -0.1px;
+        right: 0;
         height: 100%;
+        overflow: hidden;
     }
     .connectors svg {
-        width: 100%;
+        position: absolute;
+        left: -1px;
+        width: 101%;
         height: 100%;
     }
 `;
