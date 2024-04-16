@@ -145,7 +145,6 @@ export class Chart extends LitElement {
               if (c.calculating && c !== connection) {
                 throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
-              c.calculating = true;
               this.connectionsByChild.get(c.child)?.forEach(conn => {
                 if (conn.parent !== parent) {
                   this._calcConnection(conn, accountedIn, accountedOut);
@@ -160,7 +159,6 @@ export class Chart extends LitElement {
               if (c.calculating && c !== connection) {
                 throw new Error('Circular reference detected in/near ' + JSON.stringify(ent));
               }
-              c.calculating = true;
               this.connectionsByParent.get(c.parent)?.forEach(conn => {
                 if (conn.child !== child) {
                   this._calcConnection(conn, accountedIn, accountedOut);
@@ -491,7 +489,6 @@ export class Chart extends LitElement {
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
       if (entityConf.type === 'passthrough') {
-        console.log('entityConf', entityConf);
         const connections = this.connectionsByParent.get(entityConf);
         if (!connections) {
           throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
