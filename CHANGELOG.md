@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.2...v2.0.3) (2024-04-16)
+
+
+### Bug Fixes
+
+* **#171:** connection calculation fix ([43f9ee4](https://github.com/MindFreeze/ha-sankey-chart/commit/43f9ee411b14df81ffa87bab1109eb74f334250c))
+* **#178:** wrong passthrough color limit ([a5b6402](https://github.com/MindFreeze/ha-sankey-chart/commit/a5b64021df2266986b6b6b0062280cf075ac6bec))
+* improved gaps at the ends of connections ([648d7f3](https://github.com/MindFreeze/ha-sankey-chart/commit/648d7f349a9e5fd1f0e03d7206bbd0e1d4200d00))
+
 ## [2.0.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.1...v2.0.2) (2024-04-15)
 
 
