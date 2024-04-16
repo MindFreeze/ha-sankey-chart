@@ -290,15 +290,19 @@ export class Chart extends LitElement {
           total += state;
 
           let finalColor = entityConf.color || 'var(--primary-color)';
-          if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
-            const colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
-            const colorBelow =
-              typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
-            const colorAbove =
-              typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
-            if ( state > colorLimit ) {
+          if (entityConf.color_on_state) {
+            let state4color = state;
+            if (entityConf.type === 'passthrough') {
+              // passthrough color is based on the child state
+              const childState = this._getMemoizedState(this._findRelatedRealEntity(entityConf, 'children'));
+              state4color = childState.state;
+            }
+            const colorLimit = entityConf.color_limit ?? 1;
+            const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
+            const colorAbove = entityConf.color_above ?? 'var(--paper-item-icon-color)';
+            if ( state4color > colorLimit ) {
               finalColor = colorAbove;
-            } else if ( state < colorLimit ) {
+            } else if ( state4color < colorLimit ) {
               finalColor = colorBelow;
             }
           }
@@ -461,7 +465,7 @@ export class Chart extends LitElement {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const parentEntity = this._getEntityState(this._findRelatedRealEntity(connections, 'parents'));
+      const parentEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'parents'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
@@ -475,7 +479,7 @@ export class Chart extends LitElement {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const childEntity = this._getEntityState(this._findRelatedRealEntity(connections, 'children'));
+      const childEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'children'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
@@ -509,18 +513,18 @@ export class Chart extends LitElement {
     return entity;
   }
 
-  private _findRelatedRealEntity(connections: ConnectionState[], direction: 'parents' | 'children') {
-      // find the first parent/child that is not type: passthrough
+  // find the first parent/child that is not type: passthrough
+  private _findRelatedRealEntity(entityConf: EntityConfigInternal, direction: 'parents' | 'children') {
+      const connections = direction === 'parents' ? this.connectionsByChild.get(entityConf) : this.connectionsByParent.get(entityConf);
+      if (!connections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
       // a deep search on the first connection must be enough
       const candidate = direction === 'parents' ? connections[0].parent : connections[0].child;
       if (candidate.type !== 'passthrough') {
         return candidate;
       }
-      const deeperConnections = direction === 'parents' ? this.connectionsByChild.get(candidate) : this.connectionsByParent.get(candidate);
-      if (!deeperConnections) {
-        throw new Error('Invalid entity config ' + JSON.stringify(candidate));
-      }
-      return this._findRelatedRealEntity(deeperConnections, direction);
+      return this._findRelatedRealEntity(candidate, direction);
   }
 
   static get styles(): CSSResultGroup {
