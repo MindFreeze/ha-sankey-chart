@@ -14,6 +14,7 @@ export function renderBranchConnectors(props: {
   statePerPixelY: number;
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
+  allConnections: ConnectionState[];
 }): SVGTemplateResult[] {
   const { boxes } = props.section;
   return boxes
@@ -22,28 +23,8 @@ export function renderBranchConnectors(props: {
       const children = props.nextSection!.boxes.filter(child =>
         b.children.some(c => getEntityId(c) === child.entity_id),
       );
-      const connections = getChildConnections(b, children, props.connectionsByParent.get(b.config)).filter((c, i) => {
-        if (c.state > 0) {
-          children[i].connections.parents.push(c);
-          if (children[i].config.type === 'passthrough') {
-            // @FIXME not sure if props is needed anymore after v1.0.0
-            const sumState =
-              props.connectionsByChild.get(children[i].config)?.reduce((sum, conn) => sum + conn.state, 0) || 0;
-            if (sumState !== children[i].state) {
-              // virtual entity that must only pass state to the next section
-              children[i].state = sumState;
-              // props could reduce the size of the box moving lower boxes up
-              // so we have to add spacers and adjust some positions
-              const newSize = Math.floor(sumState / props.statePerPixelY);
-              children[i].extraSpacers = (children[i].size - newSize) / 2;
-              c.endY += children[i].extraSpacers!;
-              children[i].top += children[i].extraSpacers!;
-              children[i].size = newSize;
-            }
-          }
-          return true;
-        }
-        return false;
+      const connections = getChildConnections(b, children, props.allConnections, props.connectionsByParent).filter(c => {
+        return c.state > 0;
       });
       return svg`
         <defs>
@@ -78,6 +59,7 @@ export function renderSection(props: {
   statePerPixelY: number;
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
+  allConnections: ConnectionState[];
   onTap: (config: Box) => void;
   onDoubleTap: (config: Box) => void;
   onMouseEnter: (config: Box) => void;

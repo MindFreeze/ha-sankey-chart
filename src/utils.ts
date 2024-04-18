@@ -7,6 +7,7 @@ import {
   Config,
   Connection,
   ConnectionState,
+  EntityConfigInternal,
   EntityConfigOrStr,
   SankeyChartConfig,
   Section,
@@ -61,15 +62,21 @@ export function getEntityId(entity: EntityConfigOrStr | ChildConfigOrStr): strin
   return typeof entity === 'string' ? entity : entity.entity_id;
 }
 
-export function getChildConnections(parent: Box, children: Box[], connections?: ConnectionState[]): Connection[] {
+export function getChildConnections(parent: Box, children: Box[], allConnections: ConnectionState[], connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>): Connection[] {
   // @NOTE don't take prevParentState from connection because it is different
   let prevParentState = 0;
+  let state = 0;
+  const childConnections = connectionsByParent.get(parent.config);
   return children.map(child => {
-    const connection = connections?.find(c => c.child.entity_id === child.entity_id);
-    if (!connection) {
-      throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
+    let connections = childConnections?.filter(c => c.child.entity_id === child.entity_id);
+    if (!connections?.length) {
+      connections = allConnections
+        .filter(c => c.passthroughs.includes(child) || c.passthroughs.includes(parent.config));
+      if (!connections.length) {
+        throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
+      }
     }
-    const { state, prevChildState } = connection;
+    state = connections.reduce((sum, c) => sum + c.state, 0);
     if (state <= 0) {
       // only continue if this connection will be rendered
       return { state } as Connection;
@@ -77,8 +84,10 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
     const startY = (prevParentState / parent.state) * parent.size + parent.top;
     prevParentState += state;
     const startSize = Math.max((state / parent.state) * parent.size, 0);
-    const endY = (prevChildState / child.state) * child.size + child.top;
+    const endY = (child.connectedParentState / child.state) * child.size + child.top;
     const endSize = Math.max((state / child.state) * child.size, 0);
+
+    child.connectedParentState += state;
 
     return {
       startY,
@@ -88,7 +97,7 @@ export function getChildConnections(parent: Box, children: Box[], connections?: 
       endSize,
       endColor: child.color,
       state,
-      highlighted: connection.highlighted,
+      highlighted: connections.some(c => c.highlighted),
     };
   });
 }

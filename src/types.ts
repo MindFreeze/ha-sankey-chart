@@ -174,6 +174,7 @@ export interface Box {
   connections: {
     parents: Connection[];
   };
+  connectedParentState: number;
 }
 
 export interface SectionState {
@@ -193,6 +194,7 @@ export interface ConnectionState {
   ready: boolean;
   calculating?: boolean;
   highlighted?: boolean;
+  passthroughs: EntityConfigInternal[];
 }
 
 export interface NormalizedState {
