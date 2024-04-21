@@ -46,7 +46,7 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
     ? [
         {
           name: 'color_limit',
-          selector: { number: { mode: 'box', unit_of_measurement: entityConf.unit_of_measurement } },
+          selector: { number: { mode: 'box', unit_of_measurement: entityConf.unit_of_measurement, min: 0., step: 'any' } },
         },
         { name: 'color_above', selector: { text: {} } },
         { name: 'color_below', selector: { text: {} } },

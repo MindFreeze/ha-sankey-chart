@@ -1,5 +1,104 @@
 # Changelog
 
+## [2.0.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.3...v2.0.4) (2024-04-18)
+
+
+### Bug Fixes
+
+* **#180:** passthrough and remaining_child_state ([c5832ec](https://github.com/MindFreeze/ha-sankey-chart/commit/c5832ec4534a000319c923cfdcca617ed26d963a))
+* **#180:** refactor passthrough logic to support more complex configs ([e539913](https://github.com/MindFreeze/ha-sankey-chart/commit/e539913576a66ef336c338b52ad0e829bd55447f))
+
+## [2.0.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.2...v2.0.3) (2024-04-16)
+
+
+### Bug Fixes
+
+* **#171:** connection calculation fix ([43f9ee4](https://github.com/MindFreeze/ha-sankey-chart/commit/43f9ee411b14df81ffa87bab1109eb74f334250c))
+* **#178:** wrong passthrough color limit ([a5b6402](https://github.com/MindFreeze/ha-sankey-chart/commit/a5b64021df2266986b6b6b0062280cf075ac6bec))
+* improved gaps at the ends of connections ([648d7f3](https://github.com/MindFreeze/ha-sankey-chart/commit/648d7f349a9e5fd1f0e03d7206bbd0e1d4200d00))
+
+## [2.0.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.1...v2.0.2) (2024-04-15)
+
+
+### Bug Fixes
+
+* **#175:** passthrough  with remaining parent/child state ([fc111a9](https://github.com/MindFreeze/ha-sankey-chart/commit/fc111a99b20a7876946eccbac6a3ef63a6054ff8))
+
+## [2.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.0...v2.0.1) (2024-04-15)
+
+
+### Bug Fixes
+
+* **#171:** fix circular ref detection ([d262568](https://github.com/MindFreeze/ha-sankey-chart/commit/d2625687860af56d03b8cccc26fdbc63762d4adc))
+
+## [2.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.21.1...v2.0.0) (2024-04-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* Fix state base coloring by allowing three-state display: state value below limit, state value equals limit and state value above limit. This changes the previous behaviour when the state matches `color_limit` exactly
+
+### Bug Fixes
+
+* **#157:** add 'none' option for `sort_by` to overwrite the global `sort_by` ([67c8d14](https://github.com/MindFreeze/ha-sankey-chart/commit/67c8d1462770848fcb3684cd9fe67b1492ccd7fc))
+* **#171:** improve error handling for circular refs ([6b009d2](https://github.com/MindFreeze/ha-sankey-chart/commit/6b009d2e4bb24fa4a9661f5e2faa3e8fd3fc37be))
+* handle Wh when converting to energy price ([42ad2fa](https://github.com/MindFreeze/ha-sankey-chart/commit/42ad2faeef555035f07216aacf019e8c24f96309))
+* state base coloring ([#172](https://github.com/MindFreeze/ha-sankey-chart/issues/172)) ([dab85be](https://github.com/MindFreeze/ha-sankey-chart/commit/dab85be08e99527a2542c12e6e7555cc0ae1480a))
+
+## [1.21.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.21.0...v1.21.1) (2024-03-09)
+
+
+### Bug Fixes
+
+* **#157:** add global sort options to UI editor ([439b965](https://github.com/MindFreeze/ha-sankey-chart/commit/439b965ddf3746b7b88037ad9feba601a2110af6))
+
+## [1.21.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.1...v1.21.0) (2024-03-01)
+
+
+### Features
+
+* **#157:** global sort_by, sort_dir options ([f09811c](https://github.com/MindFreeze/ha-sankey-chart/commit/f09811c0cab2ae0c61f112c3acef4db0d1d82faa))
+
+
+### Bug Fixes
+
+* **#161:** allow fractions in min_state & color_limit ([a86e7a4](https://github.com/MindFreeze/ha-sankey-chart/commit/a86e7a4f6d4c6f6db6734d3e74f9a92f7150c27a))
+
+## [1.20.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.20.0...v1.20.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* **#163:** quick fix for missing energy sources ([9e0c9cd](https://github.com/MindFreeze/ha-sankey-chart/commit/9e0c9cd06bf2153563230f7ebb1238a17df49026))
+
+## [1.20.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.1...v1.20.0) (2024-01-28)
+
+
+### Features
+
+* **#158:** Convert units to CO2 or $ ([#159](https://github.com/MindFreeze/ha-sankey-chart/issues/159)) ([668f3d6](https://github.com/MindFreeze/ha-sankey-chart/commit/668f3d624d1f7d80c8ebd10538ae73ffa6700914))
+
+## [1.19.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.19.0...v1.19.1) (2023-12-13)
+
+
+### Bug Fixes
+
+* don't render label box when empty ([c7bd54d](https://github.com/MindFreeze/ha-sankey-chart/commit/c7bd54dea0f68166cda8b8d1eaa1c324b1047d42))
+
+## [1.19.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.18.0...v1.19.0) (2023-12-06)
+
+
+### Features
+
+* **#153:** `static_scale` option to disable dynamic scaling ([b932f1f](https://github.com/MindFreeze/ha-sankey-chart/commit/b932f1ff3714675851c4154d16e88a86a1a023c9))
+
+
+### Bug Fixes
+
+* **#116:** use number format from HA ([a0d24c8](https://github.com/MindFreeze/ha-sankey-chart/commit/a0d24c85839ef9cb662e1deec376ba5af85642d6))
+* **#96:** incorrect connection colors ([d14f83a](https://github.com/MindFreeze/ha-sankey-chart/commit/d14f83abda5a1da9be80511ecebd3e8e69750d1c))
+* update sk translations ([37e3cc0](https://github.com/MindFreeze/ha-sankey-chart/commit/37e3cc0cdd5a9dde2b5dff773789f86ae38791ed))
+
 ## [1.18.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v1.17.2...v1.18.0) (2023-11-02)
 
 

@@ -9,6 +9,8 @@ import {
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import { UNIT_PREFIXES } from './const';
 
+export type CONVERSION_UNITS = 'MJ' | 'gCO2' | 'monetary';
+
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
@@ -16,10 +18,17 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   };
   title?: string;
   sections?: SectionConfig[];
+  convert_units_to?: '' | CONVERSION_UNITS;
+  co2_intensity_entity?: string;
+  gas_co2_intensity?: number;
+  monetary_unit?: string;
+  electricity_price?: number;
+  gas_price?: number;
   unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
   round?: number;
   height?: number;
   wide?: boolean;
+  vertical?: boolean;
   show_icons?: boolean;
   show_names?: boolean;
   show_states?: boolean;
@@ -28,9 +37,11 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   min_box_height?: number;
   min_box_size?: number;
   min_box_distance?: number;
-  min_state?: number;
   throttle?: number;
-  vertical?: boolean;
+  min_state?: number;
+  static_scale?: number;
+  sort_by?: 'none' | 'state';
+  sort_dir?: 'asc' | 'desc';
 }
 
 declare global {
@@ -114,7 +125,7 @@ export interface CallServiceActionConfig extends BaseActionConfig {
 
 export interface SectionConfig {
   entities: EntityConfigOrStr[];
-  sort_by?: 'state';
+  sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
   min_width?: string;
@@ -122,7 +133,7 @@ export interface SectionConfig {
 
 export interface Section {
   entities: EntityConfigInternal[];
-  sort_by?: 'state';
+  sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
   min_width?: string;
@@ -165,6 +176,7 @@ export interface Box {
   connections: {
     parents: Connection[];
   };
+  connectedParentState: number;
 }
 
 export interface SectionState {
@@ -182,7 +194,9 @@ export interface ConnectionState {
   prevParentState: number;
   prevChildState: number;
   ready: boolean;
+  calculating?: boolean;
   highlighted?: boolean;
+  passthroughs: EntityConfigInternal[];
 }
 
 export interface NormalizedState {

@@ -37,14 +37,23 @@ This card is intended to display connections between entities with numeric state
 | min_state         | number  | **Optional** | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
 | throttle          | number  | **Optional** |                     | Minimum time in ms between updates/rerenders
 | vertical          | boolean | **Optional** |                     | Render the state flowing vertically instead of horizontally
+| static_scale      | number  | **Optional** |                     | State value corresponding to the maximum height size of the card. For example, if this is set to 1000, then a box with state 500 will take up half of its section. If some section exceeds the value of `static_scale`, the card will dynamically rescale overriding this option. See (#153)
+| convert_units_to  | string  | **Optional** |                     | If entities are electricity (kWh) or gas (ft³) usage, convert them to energy (MJ), cost (monetary) or carbon (gCO2). For cost, you must also specify `electricity_price` and/or `gas_price`, as well as the `monetary_unit` of the price(s). For gCO2, all kWh values will be multiplied by the varying grid CO2 intensity, as with the Energy Dashboard.
+| co2_intensity_entity |string | **Optional** | sensor.co2_signal_co2_intensity | Entity providing carbon intensity of electricity (gCO2eq/kWh). If you have solar or storage, you may wish to create a template sensor to convert grid CO2 intensity to consumption CO2 intensity.
+| gas_co2_intensity | number  | **Optional** | 66.6 g/ft³ or 2352 g/m³ | Carbon intensity of gas, e.g. in gCO2eq/ft³. Default value depends on locale; units must match those of gas entities.
+| electricity_price | number  | **Optional** |                     | Unit price of electricity, e.g. in USD/kWh. Automatic conversion does not support varying electricity prices like the Energy Dashboard does.
+| gas_price         | number  | **Optional** |                     | Unit price of gas, e.g. in USD/ft³.
+| monetary_unit     | string  | **Optional** |                     | Currency of the gas or electricity price, e.g. 'USD'
+| sort_by           | string  | **Optional** |                     | Sort the entities. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
+| sort_dir          | string  | **Optional** | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
 
 ### Sections object
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
-| sort_by           | string  | **Optional** |                     | Sort the entities in this section. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
-| sort_dir          | string  | **Optional** | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
+| sort_by           | string  | **Optional** |                     | Sort the entities in this section. Overrides the top level option
+| sort_dir          | string  | **Optional** | desc                | Sorting direction for this section. Overrides the top level option
 | sort_group_by_parent | boolean | **Optional** | false            | Group entities by parent before sorting. See #135
 | min_width         | string  | **Optional** |                     | Minimum section width. Any CSS value is OK. Examples: 75px, 50%, 1em
 
@@ -87,7 +96,7 @@ This card is intended to display connections between entities with numeric state
     - sensor.child_sensor #Note that the child sensor has itself as a single child
 ```
 
-- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Example:
+- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Example:
 
 ```yaml
 - entity_id: whatever # as long as it is unique
@@ -217,6 +226,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 **Q: How do I zoom back out after using the zoom action?**
 
 **A:** Tap the same (currently top level) entity again to reset the zoom level.
+
+**Q: My (template) sensor doesn't work with energy_date_selection!?**
+
+**A:** Sensors should have a proper `state_class` in order for statistics to work. Most commonly `state_class: total`. See <https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics>
 
 ## Development
 

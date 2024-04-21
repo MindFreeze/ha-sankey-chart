@@ -8,45 +8,29 @@ import { HassEntity } from 'home-assistant-js-websocket';
 import { MIN_LABEL_HEIGHT } from './const';
 
 export function renderBranchConnectors(props: {
-  section: SectionState,
-  nextSection?: SectionState,
-  statePerPixel: number,
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
+  section: SectionState;
+  nextSection?: SectionState;
+  sectionIndex: number;
+  statePerPixel: number;
+  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
+  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
+  allConnections: ConnectionState[];
 }): SVGTemplateResult[] {
   const { boxes } = props.section;
   return boxes
     .filter(b => b.children.length > 0)
-    .map(b => {
-      const children = props.nextSection!.boxes.filter(child => b.children.some(c => getEntityId(c) === child.entity_id));
-      const connections = getChildConnections(b, children, props.connectionsByParent.get(b.config)).filter((c, i) => {
-        if (c.state > 0) {
-          children[i].connections.parents.push(c);
-          if (children[i].config.type === 'passthrough') {
-            // @FIXME not sure if props is needed anymore after v1.0.0
-            const sumState =
-              props.connectionsByChild.get(children[i].config)?.reduce((sum, conn) => sum + conn.state, 0) || 0;
-            if (sumState !== children[i].state) {
-              // virtual entity that must only pass state to the next section
-              children[i].state = sumState;
-              // props could reduce the size of the box moving lower boxes up
-              // so we have to add spacers and adjust some positions
-              const newSize = Math.floor(sumState / props.statePerPixel);
-              children[i].extraSpacers = (children[i].size - newSize) / 2;
-              c.endY += children[i].extraSpacers!;
-              children[i].top += children[i].extraSpacers!;
-              children[i].size = newSize;
-            }
-          }
-          return true;
-        }
-        return false;
+    .map((b, boxIndex) => {
+      const children = props.nextSection!.boxes.filter(child =>
+        b.children.some(c => getEntityId(c) === child.entity_id),
+      );
+      const connections = getChildConnections(b, children, props.allConnections, props.connectionsByParent).filter(c => {
+        return c.state > 0;
       });
       return svg`
         <defs>
           ${connections.map(
             (c, i) => svg`
-            <linearGradient id="gradient${b.entity_id + i}">
+            <linearGradient id="gradient${props.sectionIndex}.${boxIndex}.${i}">
               <stop offset="0%" stop-color="${c.startColor}"></stop>
               <stop offset="100%" stop-color="${c.endColor}"></stop>
             </linearGradient>
@@ -58,7 +42,7 @@ export function renderBranchConnectors(props: {
           <path d="M0,${c.startY} C50,${c.startY} 50,${c.endY} 100,${c.endY} L100,${c.endY + c.endSize} C50,${
             c.endY + c.endSize
           } 50,${c.startY + c.startSize} 0,${c.startY + c.startSize} Z"
-            fill="url(#gradient${b.entity_id + i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
+            fill="url(#gradient${props.sectionIndex}.${boxIndex}.${i})" fill-opacity="${c.highlighted ? 0.85 : 0.4}" />
         `,
         )}
       `;
@@ -66,18 +50,20 @@ export function renderBranchConnectors(props: {
 }
 
 export function renderSection(props: {
-  locale: FrontendLocaleData,
-  config: Config,
-  section: SectionState,
-  nextSection?: SectionState,
-  highlightedEntities: EntityConfigInternal[],
-  statePerPixel: number,
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>,
-  onTap: (config: Box) => void,
-  onDoubleTap: (config: Box) => void,
-  onMouseEnter: (config: Box) => void,
-  onMouseLeave: () => void,
+  locale: FrontendLocaleData;
+  config: Config;
+  section: SectionState;
+  nextSection?: SectionState;
+  sectionIndex: number;
+  highlightedEntities: EntityConfigInternal[];
+  statePerPixel: number;
+  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
+  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
+  allConnections: ConnectionState[];
+  onTap: (config: Box) => void;
+  onDoubleTap: (config: Box) => void;
+  onMouseEnter: (config: Box) => void;
+  onMouseLeave: () => void;
 }) {
   const { show_names, show_icons, show_states, show_units } = props.config;
   const {
@@ -98,7 +84,7 @@ export function renderSection(props: {
         : null}
       ${boxes.map((box, i) => {
         const { entity, extraSpacers } = box;
-        const formattedState = formatState(box.state, props.config.round, props.locale);
+        const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
@@ -124,6 +110,7 @@ export function renderSection(props: {
             nameStyle.lineHeight = `${(maxLabelH / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
           }
         }
+        const shouldShowLabel = isNotPassthrough && (show_names || show_states);
 
         return html`
           ${i > 0 ? html`<div class="spacerv" style=${styleMap({ height: spacerSize + 'px' })}></div>` : null}
@@ -144,16 +131,18 @@ export function renderSection(props: {
                 ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
                 : null}
             </div>
-            <div class="label" style=${styleMap(labelStyle)}>
-              ${show_states && isNotPassthrough
-                ? html`<span class="state">${formattedState}</span>${show_units
-                      ? html`<span class="unit">${box.unit_of_measurement}</span>`
-                      : null}`
-                : null}
-              ${show_names && isNotPassthrough
-                ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
-                : null}
-            </div>
+            ${shouldShowLabel
+              ? html`<div class="label" style=${styleMap(labelStyle)}>
+                  ${show_states && isNotPassthrough
+                    ? html`<span class="state">${formattedState}</span>${show_units
+                          ? html`<span class="unit">${box.unit_of_measurement}</span>`
+                          : null}`
+                    : null}
+                  ${show_names && isNotPassthrough
+                    ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
+                    : null}
+                </div>`
+              : null}
           </div>
           ${extraSpacers
             ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>`

@@ -16,6 +16,7 @@
     "add_entity": "+ Pridať entitu",
     "entity_editor": "Editor entity",
     "decimals": "desatinné miesta",
+    "section_options": "Možnosti",
     "fields": {
       "autoconfig": "Autokonfig",
       "print_yaml": "Vytlačte automaticky generovanú konfiguráciu yaml",
@@ -29,6 +30,7 @@
       "min_box_size": "Min. výška boxu",
       "min_box_distance": "Minimálna vzdialenosť boxu",
       "min_state": "Min stav",
+      "static_scale": "Statická mierka",
       "round": "Zaokrúhliť",
       "throttle": "Plyn",
       "unit_prefix": "Predpona jednotky",
@@ -43,13 +45,28 @@
       "color_on_state": "Zmeňte farbu podľa stavu",
       "color_limit": "Štátny limit pre zmenu farby",
       "color_above": "Farba nad limitom",
-      "color_below": "Farba pod limitom"
+      "color_below": "Farba pod limitom",
+      "sort_by": "Triediť podľa",
+      "sort_dir": "Smer triedenia",
+      "section": {
+        "min_width": "Min. šírka",
+        "sort_by": "Triediť podľa",
+        "sort_dir": "Smer zoradenia",
+        "sort_group_by_parent": "Skupina podľa rodiča"
+      }
     },
     "entity_types": {
       "entity": "Entita",
       "remaining_parent_state": "Zostávajúci rodičovský stav",
       "remaining_child_state": "Zostávajúci podriadený stav",
       "passthrough": "Prejsť cez"
+    },
+    "sort_by": {
+      "state": "Stav"
+    },
+    "sort_dir": {
+      "desc": "Zostupne",
+      "asc": "Vzostupne"
     }
   }
 }

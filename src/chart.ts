@@ -85,22 +85,34 @@ export class Chart extends LitElement {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
             this.entityIds.push(ent.entity_id);
+          } else if (ent.type === 'passthrough') {
+            return;
           }
           ent.children.forEach(childConf => {
-            const child = this.config.sections[sectionIndex + 1]?.entities.find(
-              e => e.entity_id === getEntityId(childConf),
-            );
-            if (!child) {
-              this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
-              throw this.error;
+            const passthroughs: EntityConfigInternal[] = [];
+            const childId = getEntityId(childConf);
+            let child: EntityConfigInternal | undefined = ent;
+            for (let i = 1; i < this.config.sections.length; i++) {
+              child = this.config.sections[sectionIndex + i]?.entities.find(
+                e => e.entity_id === childId,
+              );
+              if (!child) {
+                this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
+                throw this.error;
+              }
+              if (child.type !== 'passthrough') {
+                break;
+              }
+              passthroughs.push(child);
             }
             const connection: ConnectionState = {
               parent: ent,
-              child,
+              child: child,
               state: 0,
               prevParentState: 0,
               prevChildState: 0,
               ready: false,
+              passthroughs,
             };
             this.connections.push(connection);
             if (!this.connectionsByParent.has(ent)) {
@@ -122,6 +134,7 @@ export class Chart extends LitElement {
     const accountedOut = new Map<EntityConfigInternal, number>();
     this.connections.forEach(c => {
       c.ready = false;
+      c.calculating = false;
     });
     this.connections.forEach(c => this._calcConnection(c, accountedIn, accountedOut));
   }
@@ -136,30 +149,33 @@ export class Chart extends LitElement {
       return;
     }
     const { parent, child } = connection;
-    [parent, child].forEach(ent => {
-      if (ent.type === 'remaining_child_state') {
-        this.connectionsByParent.get(ent)!.forEach(c => {
-          if (!c.ready) {
-            this.connectionsByChild.get(c.child)?.forEach(conn => {
-              if (conn.parent !== parent) {
-                this._calcConnection(conn, accountedIn, accountedOut);
-              }
-            });
-          }
-        });
-      }
-      if (ent.type === 'remaining_parent_state') {
-        this.connectionsByChild.get(ent)?.forEach(c => {
-          if (!c.ready) {
-            this.connectionsByParent.get(c.parent)?.forEach(conn => {
-              if (conn.child !== child) {
-                this._calcConnection(conn, accountedIn, accountedOut);
-              }
-            });
-          }
-        });
-      }
-    });
+
+    if (!connection.calculating) {
+      connection.calculating = true;
+      [parent, child].forEach(ent => {
+        if (ent.type === 'remaining_child_state') {
+          this.connectionsByParent.get(ent)!.forEach(c => {
+            if (!c.ready) {
+              this.connectionsByChild.get(c.child)?.forEach(conn => {
+                if (conn !== connection && !conn.calculating) {
+                  this._calcConnection(conn, accountedIn, accountedOut);
+                }
+              });
+            }
+          });
+        } else if (ent.type === 'remaining_parent_state') {
+          this.connectionsByChild.get(ent)!.forEach(c => {
+            if (!c.ready) {
+              this.connectionsByParent.get(c.parent)?.forEach(conn => {
+                if (conn !== connection && !conn.calculating) {
+                  this._calcConnection(conn, accountedIn, accountedOut);
+                }
+              });
+            }
+          });
+        }
+      });
+    }
 
     const parentStateNormalized = this._getMemoizedState(parent);
     const parentStateFull = parentStateNormalized.state ?? 0;
@@ -185,6 +201,7 @@ export class Chart extends LitElement {
     }
     connection.ready = true;
     if (
+      !force &&
       (child.type === 'remaining_parent_state' &&
         (child.add_entities?.length || child.subtract_entities?.length) &&
         childState === Infinity) ||
@@ -197,9 +214,6 @@ export class Chart extends LitElement {
       accountedIn.set(child, connection.prevChildState);
       this._calcConnection(connection, accountedIn, accountedOut, true);
     }
-    if (child.type === 'passthrough') {
-      this.entityStates.delete(child);
-    }
   }
 
   private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
@@ -207,18 +221,11 @@ export class Chart extends LitElement {
       const entityConf =
         typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
-      const unit_of_measurement = entityConf.unit_of_measurement || entity.attributes.unit_of_measurement;
+      const unit_of_measurement = this._getUnitOfMeasurement(entityConf.unit_of_measurement || entity.attributes.unit_of_measurement);
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
 
       if (entityConf.type === 'passthrough') {
-        const connections = this.connectionsByChild.get(entityConf);
-        if (!connections) {
-          throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
-        }
-        const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-        if (state !== Infinity) {
-          normalized.state = state;
-        }
+        normalized.state = this.connections.filter(c => c.passthroughs.includes(entityConf)).reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       }
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
@@ -254,6 +261,14 @@ export class Chart extends LitElement {
 
   private _calcBoxes() {
     this.statePerPixel = 0;
+    if (this.config.static_scale) {
+      // use static scale to set a minimum statePerPixel
+      this._calcBoxHeights(
+        [{ state: this.config.static_scale, size: 0 } as Box],
+        this.config.height,
+        this.config.static_scale,
+      );
+    }
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
     const sectionsStates: SectionState[] = [];
     const sectionSize = this.vertical ? this.width! : this.config.height;
@@ -271,13 +286,21 @@ export class Chart extends LitElement {
           total += state;
 
           let finalColor = entityConf.color || 'var(--primary-color)';
-          if (typeof entityConf.color_on_state != 'undefined' && entityConf.color_on_state) {
-            const colorLimit = typeof entityConf.color_limit === 'undefined' ? 1 : entityConf.color_limit;
-            const colorBelow =
-              typeof entityConf.color_below === 'undefined' ? 'var(--primary-color)' : entityConf.color_below;
-            const colorAbove =
-              typeof entityConf.color_above === 'undefined' ? 'var(--paper-item-icon-color)' : entityConf.color_above;
-            finalColor = state > colorLimit ? colorAbove : colorBelow;
+          if (entityConf.color_on_state) {
+            let state4color = state;
+            if (entityConf.type === 'passthrough') {
+              // passthrough color is based on the child state
+              const childState = this._getMemoizedState(this._findRelatedRealEntity(entityConf, 'children'));
+              state4color = childState.state;
+            }
+            const colorLimit = entityConf.color_limit ?? 1;
+            const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
+            const colorAbove = entityConf.color_above ?? 'var(--paper-item-icon-color)';
+            if ( state4color > colorLimit ) {
+              finalColor = colorAbove;
+            } else if ( state4color < colorLimit ) {
+              finalColor = colorBelow;
+            }
           }
 
           return {
@@ -291,6 +314,7 @@ export class Chart extends LitElement {
             connections: { parents: [] },
             top: 0,
             size: 0,
+            connectedParentState: 0,
           };
         });
       if (!boxes.length) {
@@ -301,8 +325,10 @@ export class Chart extends LitElement {
       // calc sizes to determine statePerPixel ratio and find the best one
       const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
       const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
+      const sortBy = section.sort_by || this.config.sort_by;
+      const sortDir = section.sort_dir || this.config.sort_dir;
       sectionsStates.push({
-        boxes: sortBoxes(parentBoxes, calcResults.boxes, section.sort_by, section.sort_dir),
+        boxes: sortBoxes(parentBoxes, calcResults.boxes, sortBy, sortDir),
         total,
         statePerPixel: calcResults.statePerPixel,
         spacerSize: 0,
@@ -377,17 +403,34 @@ export class Chart extends LitElement {
     return { boxes: result, statePerPixel: this.statePerPixel };
   }
 
-  private highlightPath(entityConf: EntityConfigInternal, direction: 'parents' | 'children') {
+  private highlightPath(entityConf: EntityConfigInternal, direction?: 'parents' | 'children') {
     this.highlightedEntities.push(entityConf);
-    if (direction === 'children') {
-      this.connectionsByParent.get(entityConf)?.forEach(c => {
-        c.highlighted = true;
-        this.highlightPath(c.child, 'children');
+    if (!direction || direction === 'children') {
+      this.connections.forEach(c => {
+        if (c.passthroughs.includes(entityConf) || c.parent === entityConf) {
+          if (!c.highlighted) {
+            c.passthroughs.forEach(p => this.highlightedEntities.push(p));
+            c.highlighted = true;
+          }
+          if (!this.highlightedEntities.includes(c.child)) {
+            this.highlightedEntities.push(c.child);
+            this.highlightPath(c.child, 'children');
+          }
+        }
       });
-    } else {
-      this.connectionsByChild.get(entityConf)?.forEach(c => {
-        c.highlighted = true;
-        this.highlightPath(c.parent, 'parents');
+    }
+    if (!direction || direction === 'parents') {
+      this.connections.forEach(c => {
+        if (c.passthroughs.includes(entityConf) || c.child === entityConf) {
+          if (!c.highlighted) {
+            c.passthroughs.forEach(p => this.highlightedEntities.push(p));
+            c.highlighted = true;
+          }
+          if (!this.highlightedEntities.includes(c.parent)) {
+            this.highlightedEntities.push(c.parent);
+            this.highlightPath(c.parent, 'parents');
+          }
+        }
       });
     }
   }
@@ -401,8 +444,7 @@ export class Chart extends LitElement {
   }
 
   private _handleMouseEnter(box: Box): void {
-    this.highlightPath(box.config, 'children');
-    this.highlightPath(box.config, 'parents');
+    this.highlightPath(box.config);
     // trigger rerender
     this.highlightedEntities = [...this.highlightedEntities];
   }
@@ -414,19 +456,33 @@ export class Chart extends LitElement {
     });
   }
 
+  private _getUnitOfMeasurement(reported_unit_of_measurement: string): string {
+    // If converting to money, don't actually display the word "monetary"
+    if (this.config.convert_units_to == 'monetary') {
+      return '';
+    }
+
+    // If converting from kWh to gCO2, attributes.unit_of_measurement remains kWh even though the number is gCO2, so we
+    // override the unit to gCO2, unless normalizeStateValue() has already converted it to kgCO2.
+    if (this.config.convert_units_to && !reported_unit_of_measurement.endsWith(this.config.convert_units_to)) {
+      return this.config.convert_units_to;
+    }
+
+    return reported_unit_of_measurement;
+  }
+
   private _getEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
       const connections = this.connectionsByChild.get(entityConf);
       if (!connections) {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
-      const { parent } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const parentEntity = this._getEntityState(parent);
+      const parentEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'parents'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
-        parentEntity.attributes.unit_of_measurement,
+        this._getUnitOfMeasurement(parentEntity.attributes.unit_of_measurement),
       );
       return { ...parentEntity, state, attributes: { ...parentEntity.attributes, unit_of_measurement } };
     }
@@ -435,17 +491,23 @@ export class Chart extends LitElement {
       if (!connections) {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
-      const { child } = connections[0];
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
-      const childEntity = this._getEntityState(child);
+      const childEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'children'));
       const { unit_of_measurement } = normalizeStateValue(
         this.config.unit_prefix,
         0,
-        childEntity.attributes.unit_of_measurement,
+        this._getUnitOfMeasurement(childEntity.attributes.unit_of_measurement),
       );
       return { ...childEntity, state, attributes: { ...childEntity.attributes, unit_of_measurement } };
     }
-
+    if (entityConf.type === 'passthrough') {
+      const realConnection = this.connections.find(c => c.passthroughs.includes(entityConf));
+      if (!realConnection) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
+      return this._getEntityState(realConnection.child);
+    }
+    
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
       throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
@@ -461,6 +523,24 @@ export class Chart extends LitElement {
       }
     }
     return entity;
+  }
+
+  // find the first parent/child that is type: entity
+  private _findRelatedRealEntity(entityConf: EntityConfigInternal, direction: 'parents' | 'children') {
+    let connection: ConnectionState | undefined;
+    if (entityConf.type === 'passthrough') {
+      connection = this.connections.find(c => c.passthroughs.includes(entityConf));
+    } else {
+      const connections = direction === 'parents' ? this.connectionsByChild.get(entityConf) : this.connectionsByParent.get(entityConf);
+      if (!connections) {
+        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+      }
+      connection = connections[0];
+    }
+    if (connection) {
+      return direction === 'parents' ? connection.parent : connection.child;
+    }
+    return entityConf;
   }
 
   static get styles(): CSSResultGroup {
@@ -504,10 +584,12 @@ export class Chart extends LitElement {
                 config: this.config,
                 section: s,
                 nextSection: this.sections[i + 1],
+                sectionIndex: i,
                 highlightedEntities: this.highlightedEntities,
                 statePerPixel: this.statePerPixel,
                 connectionsByParent: this.connectionsByParent,
                 connectionsByChild: this.connectionsByChild,
+                allConnections: this.connections,
                 onTap: this._handleBoxTap.bind(this),
                 onDoubleTap: this._handleBoxDoubleTap.bind(this),
                 onMouseEnter: this._handleMouseEnter.bind(this),

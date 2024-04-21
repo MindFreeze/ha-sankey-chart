@@ -11,6 +11,7 @@ import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
+  Conversions,
   EnergyCollection,
   ENERGY_SOURCE_TYPES,
   getEnergyDataCollection,
@@ -111,7 +112,14 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           if (this.entityIds.length) {
-            const stats = await getStatistics(this.hass, data, this.entityIds);
+            const conversions: Conversions = {
+              convert_units_to: this.config.convert_units_to!,
+              co2_intensity_entity: this.config.co2_intensity_entity!,
+              gas_co2_intensity: this.config.gas_co2_intensity!,
+              electricity_price: this.config.electricity_price,
+              gas_price: this.config.gas_price,
+            };
+            const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
             const states: HassEntities = {};
             Object.keys(stats).forEach(id => {
               if (this.hass.states[id]) {
@@ -127,12 +135,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   }
 
   // https://lit.dev/docs/components/properties/#accessors-custom
-  public setConfig(config: SankeyChartConfig): void {
+  public setConfig(config: SankeyChartConfig, isMetric: boolean): void {
     if (typeof config !== 'object') {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    this.setNormalizedConfig(normalizeConfig(config));
+    this.setNormalizedConfig(normalizeConfig(config, isMetric));
     this.resetSubscriptions();
   }
 
@@ -203,7 +211,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
     const orderedDeviceIds = areas.reduce((all: string[], a) => [...all, ...a.entities], []);
 
-    const sections: Section[] = [
+    const sections = [
       {
         entities: sources.map(source => {
           const subtract = source.stat_energy_to
@@ -223,7 +231,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         entities: [
           {
             entity_id: 'total',
-            type: 'remaining_parent_state',
+            type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
             name: 'Total Consumption',
             children: [...areas.map(a => a.area.area_id), 'unknown'],
           },
@@ -254,7 +262,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           children: [],
         })),
       },
-    ];
+    ].filter(s => s.entities.length > 0) as Section[];
 
     const grid = sources.find(s => s.type === 'grid');
     if (grid && grid?.flow_to?.length) {

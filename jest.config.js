@@ -1,7 +1,7 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'jest-environment-jsdom',
-    setupFiles: [],
+    setupFiles: ['<rootDir>/__tests__/setupTests.ts'],
     // roots: [
     //     '<rootDir>',
     //     '<rootDir>/node_modules',
@@ -15,4 +15,5 @@ module.exports = {
     },
     transform: {"^.+\\.(js|ts)x?$": 'ts-jest'},
     transformIgnorePatterns: ['node_modules/(?!lit-element|lit-html|lit|@lit/)'],
+    testMatch: ['**/*.test.ts'],
 };
