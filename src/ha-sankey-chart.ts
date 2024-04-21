@@ -299,10 +299,6 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     this.setNormalizedConfig({ ...this.config, sections });
   }
 
-  public getCardSize(): number {
-    return 4;
-  }
-
   // https://lit.dev/docs/components/rendering/
   protected render(): TemplateResult | void {
     if (this.error) {
@@ -316,6 +312,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         .states=${this.config.energy_date_selection ? this.states : this.hass.states}
         .config=${this.config}
         .forceUpdateTs=${this.forceUpdateTs}
+        .width=${this.clientWidth}
       ></sankey-chart-base>
       ${print_yaml && this.config.sections.length
         ? html`${until(renderError('', { ...this.config, autoconfig: undefined }, this.hass))}`

@@ -33,7 +33,7 @@ export class Chart extends LitElement {
   @state() private highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
   @state() private vertical = false;
-  @state() private width?: number;
+  @state() private width = 0; // passed from parent
   @state() public zoomEntity?: EntityConfigInternal;
   @state() public error?: Error;
 
@@ -46,7 +46,8 @@ export class Chart extends LitElement {
       changedProps.has('config') ||
       changedProps.has('forceUpdateTs') ||
       changedProps.has('highlightedEntities') ||
-      changedProps.has('zoomEntity')
+      changedProps.has('zoomEntity') ||
+      changedProps.has('width')
     ) {
       return true;
     }
@@ -77,6 +78,8 @@ export class Chart extends LitElement {
 
   public willUpdate(changedProps: PropertyValues): void {
     if (!this.entityIds.length || changedProps.has('config')) {
+      // @TODO update dynamically based on config changes and width
+      this.vertical = this.config.vertical ?? false;
       this.entityIds = [];
       this.connections = [];
       this.connectionsByParent.clear();
@@ -93,9 +96,7 @@ export class Chart extends LitElement {
             const childId = getEntityId(childConf);
             let child: EntityConfigInternal | undefined = ent;
             for (let i = 1; i < this.config.sections.length; i++) {
-              child = this.config.sections[sectionIndex + i]?.entities.find(
-                e => e.entity_id === childId,
-              );
+              child = this.config.sections[sectionIndex + i]?.entities.find(e => e.entity_id === childId);
               if (!child) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
                 throw this.error;
@@ -201,8 +202,8 @@ export class Chart extends LitElement {
     }
     connection.ready = true;
     if (
-      !force &&
-      (child.type === 'remaining_parent_state' &&
+      (!force &&
+        child.type === 'remaining_parent_state' &&
         (child.add_entities?.length || child.subtract_entities?.length) &&
         childState === Infinity) ||
       (parent.type === 'remaining_child_state' &&
@@ -221,11 +222,15 @@ export class Chart extends LitElement {
       const entityConf =
         typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
-      const unit_of_measurement = this._getUnitOfMeasurement(entityConf.unit_of_measurement || entity.attributes.unit_of_measurement);
+      const unit_of_measurement = this._getUnitOfMeasurement(
+        entityConf.unit_of_measurement || entity.attributes.unit_of_measurement,
+      );
       const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
 
       if (entityConf.type === 'passthrough') {
-        normalized.state = this.connections.filter(c => c.passthroughs.includes(entityConf)).reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
+        normalized.state = this.connections
+          .filter(c => c.passthroughs.includes(entityConf))
+          .reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       }
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
@@ -271,7 +276,8 @@ export class Chart extends LitElement {
     }
     const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
     const sectionsStates: SectionState[] = [];
-    const sectionSize = this.vertical ? this.width! : this.config.height;
+    // 32 is the padding of the card
+    const sectionSize = this.vertical ? this.width - 32 : this.config.height;
     filteredConfig.sections.forEach(section => {
       let total = 0;
       const boxes: Box[] = section.entities
@@ -296,9 +302,9 @@ export class Chart extends LitElement {
             const colorLimit = entityConf.color_limit ?? 1;
             const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
             const colorAbove = entityConf.color_above ?? 'var(--paper-item-icon-color)';
-            if ( state4color > colorLimit ) {
+            if (state4color > colorLimit) {
               finalColor = colorAbove;
-            } else if ( state4color < colorLimit ) {
+            } else if (state4color < colorLimit) {
               finalColor = colorBelow;
             }
           }
@@ -333,6 +339,7 @@ export class Chart extends LitElement {
         statePerPixel: calcResults.statePerPixel,
         spacerSize: 0,
         config: section,
+        size: sectionSize,
       });
     });
 
@@ -507,7 +514,7 @@ export class Chart extends LitElement {
       }
       return this._getEntityState(realConnection.child);
     }
-    
+
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
       throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
@@ -531,7 +538,8 @@ export class Chart extends LitElement {
     if (entityConf.type === 'passthrough') {
       connection = this.connections.find(c => c.passthroughs.includes(entityConf));
     } else {
-      const connections = direction === 'parents' ? this.connectionsByChild.get(entityConf) : this.connectionsByParent.get(entityConf);
+      const connections =
+        direction === 'parents' ? this.connectionsByChild.get(entityConf) : this.connectionsByParent.get(entityConf);
       if (!connections) {
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
@@ -558,12 +566,15 @@ export class Chart extends LitElement {
         container: true,
         wide: !!this.config.wide,
         'with-header': !!this.config.title,
+        vertical: this.vertical,
       });
+
+      const height = this.vertical ? 'auto' : this.config.height + 'px';
 
       if (!Object.keys(this.states).length) {
         return html`
           <ha-card label="Sankey Chart" .header=${this.config.title}>
-            <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
+            <div class=${containerClasses} style=${styleMap({ height: height })}>
               ${localize('common.loading')}
             </div>
           </ha-card>
@@ -577,7 +588,7 @@ export class Chart extends LitElement {
 
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
-          <div class=${containerClasses} style=${styleMap({ height: this.config.height + 'px' })}>
+          <div class=${containerClasses} style=${styleMap({ height: height })}>
             ${this.sections.map((s, i) =>
               renderSection({
                 locale: this.hass.locale,
@@ -593,6 +604,7 @@ export class Chart extends LitElement {
                 onDoubleTap: this._handleBoxDoubleTap.bind(this),
                 onMouseEnter: this._handleMouseEnter.bind(this),
                 onMouseLeave: this._handleMouseLeave.bind(this),
+                vertical: this.vertical,
               }),
             )}
           </div>

@@ -7,9 +7,7 @@ import {
   LovelaceCardEditor,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
-import { UNIT_PREFIXES } from './const';
-
-export type CONVERSION_UNITS = 'MJ' | 'gCO2' | 'monetary';
+import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
@@ -185,6 +183,7 @@ export interface SectionState {
   spacerSize: number;
   statePerPixel: number;
   config: Section;
+  size: number;
 }
 
 export interface ConnectionState {
