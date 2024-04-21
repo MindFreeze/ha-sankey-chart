@@ -11,7 +11,6 @@ export function renderBranchConnectors(props: {
   section: SectionState;
   nextSection?: SectionState;
   sectionIndex: number;
-  statePerPixel: number;
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
   allConnections: ConnectionState[];
@@ -56,7 +55,6 @@ export function renderSection(props: {
   nextSection?: SectionState;
   sectionIndex: number;
   highlightedEntities: EntityConfigInternal[];
-  statePerPixel: number;
   connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
   allConnections: ConnectionState[];
