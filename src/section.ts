@@ -5,7 +5,7 @@ import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from
 import { formatState, getChildConnections, getEntityId } from './utils';
 import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
-import { MIN_LABEL_HEIGHT } from './const';
+import { renderLabel } from './label';
 
 export function renderBranchConnectors(props: {
   section: SectionState;
@@ -82,7 +82,7 @@ export function renderSection(props: {
   onMouseEnter: (config: Box) => void;
   onMouseLeave: () => void;
 }) {
-  const { show_names, show_icons, show_states, show_units } = props.config;
+  const { show_icons } = props.config;
   const {
     boxes,
     spacerSize,
@@ -106,30 +106,7 @@ export function renderSection(props: {
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
-        const maxLabelSize = box.size + spacerSize - 1;
 
-        // reduce label size if it doesn't fit
-        // @TODO handle vertical orientation and move this code to another function
-        const labelStyle: Record<string, string> = { lineHeight: MIN_LABEL_HEIGHT + 'px' };
-        const nameStyle: Record<string, string> = {};
-        if (maxLabelSize < MIN_LABEL_HEIGHT) {
-          const fontSize = maxLabelSize / MIN_LABEL_HEIGHT;
-          // labelStyle.maxHeight = maxLabelSize + 'px';
-          labelStyle.fontSize = `${fontSize}em`;
-          labelStyle.lineHeight = `${fontSize}em`;
-        }
-        const numLines = name.split('\n').filter(v => v).length;
-        if (numLines > 1) {
-          nameStyle.whiteSpace = 'pre';
-          if (labelStyle.fontSize) {
-            nameStyle.fontSize = `${1 / numLines + 0.1}rem`;
-            nameStyle.lineHeight = `${1 / numLines + 0.1}rem`;
-          } else if (maxLabelSize < MIN_LABEL_HEIGHT * numLines) {
-            nameStyle.fontSize = `${(maxLabelSize / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
-            nameStyle.lineHeight = `${(maxLabelSize / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
-          }
-        }
-        const shouldShowLabel = isNotPassthrough && (show_names || show_states);
         const sizeProp = props.vertical ? 'width' : 'height';
 
         return html`
@@ -151,20 +128,7 @@ export function renderSection(props: {
                 ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
                 : null}
             </div>
-            ${shouldShowLabel
-              ? html`<div class="label" style=${styleMap(labelStyle)}>
-                  ${show_states && isNotPassthrough
-                    ? html`<span>
-                        <span class="state">${formattedState}</span>${show_units
-                          ? html`<span class="unit">${box.unit_of_measurement}</span>`
-                          : null}
-                      </span>`
-                    : null}
-                  ${show_names && isNotPassthrough
-                    ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`
-                    : null}
-                </div>`
-              : null}
+            ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical)}
           </div>
           ${extraSpacers ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>` : null}
         `;

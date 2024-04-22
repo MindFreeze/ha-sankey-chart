@@ -96,11 +96,15 @@ export default css`
         text-overflow: ellipsis;
     }
     .vertical .box .label {
-        padding: 10px 0;
+        padding: 5px 0 0;
         flex-direction: column;
+        white-space: normal;
+        /* word-break: break-all; */
+        text-align: center;
     }
     .box .label .name {
         font-style: italic;
+        font-size: inherit;
     }
     .connectors {
         position: absolute;
