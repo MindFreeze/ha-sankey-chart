@@ -32,7 +32,6 @@ export function renderLabel(
     }
     if (show_names) {
       const nameChars = Math.max(...name.split(/[\s]+/).map(l => l.length));
-      console.log('nameChars', name, nameChars);
       const desiredNameWidth = nameChars * CHAR_WIDTH_RATIO;
       if (desiredNameWidth > maxLabelSize) {
         const fontSize = maxLabelSize / desiredNameWidth;
