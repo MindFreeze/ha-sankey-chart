@@ -20,6 +20,7 @@
     "fields": {
       "autoconfig": "Autoconfig",
       "print_yaml": "Print auto generated config yaml",
+      "layout": "Layout",
       "show_names": "Show names",
       "show_icons": "Show icons",
       "show_states": "Show states",
@@ -68,6 +69,11 @@
     "sort_dir": {
       "desc": "Descending",
       "asc": "Ascending"
+    },
+    "layout": {
+      "auto": "Auto",
+      "vertical": "Vertical",
+      "horizontal": "Horizontal"
     }
   }
 }

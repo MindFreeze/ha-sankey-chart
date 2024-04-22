@@ -86,7 +86,7 @@ export function renderSection(props: {
   const {
     boxes,
     spacerSize,
-    config: { min_width: minWidth },
+    config: { min_width },
     size,
   } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
@@ -94,7 +94,7 @@ export function renderSection(props: {
   const viewBox = props.vertical ? `0 0 ${size} 100` : `0 0 100 ${size}`;
 
   return html`
-    <div class="section" style=${styleMap({ minWidth })}>
+    <div class="section" style=${styleMap({ minWidth: min_width + 'px' })}>
       ${hasChildren
         ? html`<div class="connectors">
             <svg viewBox="${viewBox}" preserveAspectRatio="none">${renderBranchConnectors(props)}</svg>
@@ -154,9 +154,11 @@ export function renderSection(props: {
             ${shouldShowLabel
               ? html`<div class="label" style=${styleMap(labelStyle)}>
                   ${show_states && isNotPassthrough
-                    ? html`<span><span class="state">${formattedState}</span>${show_units
+                    ? html`<span>
+                        <span class="state">${formattedState}</span>${show_units
                           ? html`<span class="unit">${box.unit_of_measurement}</span>`
-                          : null}</span>`
+                          : null}
+                      </span>`
                     : null}
                   ${show_names && isNotPassthrough
                     ? html`&nbsp;<span class="name" style=${styleMap(nameStyle)}>${name}</span>`

@@ -26,7 +26,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   round?: number;
   height?: number;
   wide?: boolean;
-  vertical?: boolean;
+  layout?: 'auto' | 'vertical' | 'horizontal';
   show_icons?: boolean;
   show_names?: boolean;
   show_states?: boolean;
@@ -126,7 +126,7 @@ export interface SectionConfig {
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
-  min_width?: string;
+  min_width?: number;
 }
 
 export interface Section {
@@ -134,10 +134,11 @@ export interface Section {
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
-  min_width?: string;
+  min_width?: number;
 }
 
 export interface Config extends SankeyChartConfig {
+  layout: 'auto' | 'vertical' | 'horizontal';
   unit_prefix: '' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;

@@ -14,6 +14,7 @@ import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
 import { renderSection } from './section';
+import { shouldBeVertical } from './layout';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -39,7 +40,7 @@ export class Chart extends LitElement {
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
-    if (!this.config) {
+    if (!this.config || !this.width) {
       return false;
     }
     if (
@@ -77,9 +78,8 @@ export class Chart extends LitElement {
   }
 
   public willUpdate(changedProps: PropertyValues): void {
+    this.vertical = shouldBeVertical(this.config, this.width);
     if (!this.entityIds.length || changedProps.has('config')) {
-      // @TODO update dynamically based on config changes and width
-      this.vertical = this.config.vertical ?? false;
       this.entityIds = [];
       this.connections = [];
       this.connectionsByParent.clear();

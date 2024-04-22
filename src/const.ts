@@ -10,6 +10,7 @@ export const UNIT_PREFIXES = {
 
 export const MIN_LABEL_HEIGHT = 15;
 
+export const MIN_HORIZONTAL_SECTION_W = 150;
 export const MIN_VERTICAL_SECTION_H = 150;
 
 export const DEFAULT_ENTITY_CONF: Omit<EntityConfig, 'entity_id'> = {

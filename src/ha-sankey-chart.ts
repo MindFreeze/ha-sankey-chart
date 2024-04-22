@@ -312,7 +312,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         .states=${this.config.energy_date_selection ? this.states : this.hass.states}
         .config=${this.config}
         .forceUpdateTs=${this.forceUpdateTs}
-        .width=${this.clientWidth}
+        .width=${this.clientWidth || this.offsetWidth || this.parentElement?.clientWidth}
       ></sankey-chart-base>
       ${print_yaml && this.config.sections.length
         ? html`${until(renderError('', { ...this.config, autoconfig: undefined }, this.hass))}`
