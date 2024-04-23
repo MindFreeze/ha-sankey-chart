@@ -32,7 +32,6 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   show_states?: boolean;
   show_units?: boolean;
   energy_date_selection?: boolean;
-  min_box_height?: number;
   min_box_size?: number;
   min_box_distance?: number;
   throttle?: number;
