@@ -54,8 +54,6 @@ export interface EntityConfig {
   entity_id: string;
   add_entities?: string[];
   subtract_entities?: string[];
-  // @deprecated #100
-  substract_entities?: string[];
   attribute?: string;
   type?: BoxType;
   children?: ChildConfigOrStr[];

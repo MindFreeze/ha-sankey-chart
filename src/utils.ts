@@ -179,10 +179,6 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
           ];
         }
       }
-      // handle legacy subtract typo #100
-      if (entityConf.substract_entities) {
-        entityConf.subtract_entities = entityConf.substract_entities;
-      }
     });
   });
 
