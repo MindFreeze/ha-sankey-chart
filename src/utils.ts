@@ -146,39 +146,6 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
           }
         });
       }
-      // handle legacy remaining
-      if (entityConf.remaining) {
-        if (sectionIndex === sections.length - 1) {
-          console.warn("Can't use `remaining` option in the last section");
-        } else {
-          console.warn('The `remaining` option is deprecated. Use `type: remaining_parent_state` instead.');
-          let children = entityConf.children || [];
-          let lastChildIndex = 0;
-          const nextSectionEntities = sections[sectionIndex + 1].entities;
-          while (children.length && lastChildIndex < nextSectionEntities.length) {
-            children = children.filter(c => getEntityId(c) !== nextSectionEntities[lastChildIndex].entity_id);
-            lastChildIndex++;
-          }
-          const newChildId = 'remaining' + Date.now() + Math.random();
-          const remainingConf =
-            typeof entityConf.remaining === 'string' ? { name: entityConf.remaining } : entityConf.remaining;
-          entityConf.children = [...entityConf.children, newChildId];
-          sections[sectionIndex + 1].entities = [
-            ...nextSectionEntities.slice(0, lastChildIndex),
-            {
-              ...entityConf,
-              ...remainingConf,
-              entity_id: newChildId,
-              type: 'remaining_parent_state',
-              remaining: undefined,
-              children: [],
-              // accountedState: 0,
-              // foundChildren: [],
-            },
-            ...nextSectionEntities.slice(lastChildIndex),
-          ];
-        }
-      }
     });
   });
 
