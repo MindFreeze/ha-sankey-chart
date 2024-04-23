@@ -40,7 +40,7 @@ export class Chart extends LitElement {
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
-    if (!this.config || !this.width) {
+    if (!this.config) {
       return false;
     }
     if (

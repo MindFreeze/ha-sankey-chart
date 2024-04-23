@@ -36,9 +36,11 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kW</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kW</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -96,9 +98,11 @@ IDK" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kW</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kW</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -146,9 +150,11 @@ Blaa" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kW</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kW</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -159,9 +165,11 @@ Blaa" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kВ</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kВ</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -172,9 +180,11 @@ Blaa" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kW</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kW</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -219,9 +229,11 @@ Blaa" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
-                  kW</span></span>
-                  
-                </div>
+    <span>
+          <span class="state">kW</span>
+        </span>
+    
+  </div>
           </div>
           
         
@@ -323,11 +335,15 @@ Blaa" class="">
         text-overflow: ellipsis;
     }
     .vertical .box .label {
-        padding: 10px 0;
+        padding: 5px 0 0;
         flex-direction: column;
+        white-space: normal;
+        /* word-break: break-all; */
+        text-align: center;
     }
     .box .label .name {
         font-style: italic;
+        font-size: inherit;
     }
     .connectors {
         position: absolute;
