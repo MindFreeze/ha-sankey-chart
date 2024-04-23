@@ -173,9 +173,22 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         type: 'grid',
         name: '',
         schema: [
+          {
+            name: 'layout',
+            selector: {
+              select: {
+                mode: 'dropdown',
+                options: [
+                  { value: 'auto', label: localize('editor.layout.auto') },
+                  { value: 'horizontal', label: localize('editor.layout.horizontal') },
+                  { value: 'vertical', label: localize('editor.layout.vertical') },
+                ],
+              },
+            },
+          },
           { name: 'wide', selector: { boolean: {} } },
           { name: 'height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
-          { name: 'min_box_height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+          { name: 'min_box_size', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
           { name: 'min_box_distance', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
         ],
       },
@@ -183,7 +196,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         type: 'grid',
         name: '',
         schema: [
-          { name: 'min_state', selector: { number: { mode: 'box', min: 0., step: 'any' } } },
+          { name: 'min_state', selector: { number: { mode: 'box', min: 0, step: 'any' } } },
           { name: 'static_scale', selector: { number: { mode: 'box' } } },
           { name: 'round', selector: { number: { mode: 'box', unit_of_measurement: localize('editor.decimals') } } },
           {
@@ -200,7 +213,10 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
             selector: {
               select: {
                 mode: 'dropdown',
-                options: [{ value: 'none', label: localize('editor.sort_by.none') }, { value: 'state', label: localize('editor.sort_by.state') }],
+                options: [
+                  { value: 'none', label: localize('editor.sort_by.none') },
+                  { value: 'state', label: localize('editor.sort_by.state') },
+                ],
               },
             },
           },
@@ -232,7 +248,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       return html``;
     }
 
-    const isMetric = this.hass.config.unit_system.length == "km";
+    const isMetric = this.hass.config.unit_system.length == 'km';
     const config = normalizeConfig(this._config || ({} as SankeyChartConfig), isMetric);
     const { autoconfig } = config;
     const sections: SectionConfig[] = config.sections || [];
@@ -350,7 +366,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         margin-bottom: 20px;
       }
       ha-formfield {
-          padding-bottom: 8px;
+        padding-bottom: 8px;
       }
     `;
   }

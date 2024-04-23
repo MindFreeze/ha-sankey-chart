@@ -27,7 +27,7 @@
       "energy_date_selection": "Synchronizácia s komponentom energy_date_selection",
       "height": "Výška",
       "wide": "Šírka",
-      "min_box_height": "Min. výška boxu",
+      "min_box_size": "Min. výška boxu",
       "min_box_distance": "Minimálna vzdialenosť boxu",
       "min_state": "Min stav",
       "static_scale": "Statická mierka",

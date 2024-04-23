@@ -20,6 +20,7 @@
     "fields": {
       "autoconfig": "Autoconfig",
       "print_yaml": "Print auto generated config yaml",
+      "layout": "Layout",
       "show_names": "Show names",
       "show_icons": "Show icons",
       "show_states": "Show states",
@@ -27,7 +28,7 @@
       "energy_date_selection": "Sync with energy_date_selection component",
       "height": "Height",
       "wide": "Wide",
-      "min_box_height": "Min box height",
+      "min_box_size": "Min box size",
       "min_box_distance": "Min box distance",
       "min_state": "Min state",
       "static_scale": "Static scale",
@@ -68,6 +69,11 @@
     "sort_dir": {
       "desc": "Descending",
       "asc": "Ascending"
+    },
+    "layout": {
+      "auto": "Auto",
+      "vertical": "Vertical",
+      "horizontal": "Horizontal"
     }
   }
 }

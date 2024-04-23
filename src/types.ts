@@ -7,7 +7,39 @@ import {
   LovelaceCardEditor,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
-import { UNIT_PREFIXES } from './const';
+import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
+
+export interface SankeyChartConfig extends LovelaceCardConfig {
+  type: string;
+  autoconfig?: {
+    print_yaml?: boolean;
+  };
+  title?: string;
+  sections?: SectionConfig[];
+  convert_units_to?: '' | CONVERSION_UNITS;
+  co2_intensity_entity?: string;
+  gas_co2_intensity?: number;
+  monetary_unit?: string;
+  electricity_price?: number;
+  gas_price?: number;
+  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
+  round?: number;
+  height?: number;
+  wide?: boolean;
+  layout?: 'auto' | 'vertical' | 'horizontal';
+  show_icons?: boolean;
+  show_names?: boolean;
+  show_states?: boolean;
+  show_units?: boolean;
+  energy_date_selection?: boolean;
+  min_box_size?: number;
+  min_box_distance?: number;
+  throttle?: number;
+  min_state?: number;
+  static_scale?: number;
+  sort_by?: 'none' | 'state';
+  sort_dir?: 'asc' | 'desc';
+}
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -93,40 +125,7 @@ export interface SectionConfig {
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
-  min_width?: string;
-}
-
-export type CONVERSION_UNITS = 'MJ' | 'gCO2' | 'monetary';
-
-export interface SankeyChartConfig extends LovelaceCardConfig {
-  type: string;
-  autoconfig?: {
-    print_yaml?: boolean;
-  };
-  title?: string;
-  sections?: SectionConfig[];
-  convert_units_to?: '' | CONVERSION_UNITS;
-  co2_intensity_entity?: string;
-  gas_co2_intensity?: number;
-  monetary_unit?: string;
-  electricity_price?: number;
-  gas_price?: number;
-  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
-  round?: number;
-  height?: number;
-  wide?: boolean;
-  show_icons?: boolean;
-  show_names?: boolean;
-  show_states?: boolean;
-  show_units?: boolean;
-  energy_date_selection?: boolean;
-  min_box_height?: number;
-  min_box_distance?: number;
-  throttle?: number;
-  min_state?: number;
-  static_scale?: number;
-  sort_by?: 'none' | 'state';
-  sort_dir?: 'asc' | 'desc';
+  min_width?: number;
 }
 
 export interface Section {
@@ -134,14 +133,15 @@ export interface Section {
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
-  min_width?: string;
+  min_width?: number;
 }
 
 export interface Config extends SankeyChartConfig {
+  layout: 'auto' | 'vertical' | 'horizontal';
   unit_prefix: '' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;
-  min_box_height: number;
+  min_box_size: number;
   min_box_distance: number;
   min_state: number;
   sections: Section[];
@@ -180,9 +180,10 @@ export interface Box {
 export interface SectionState {
   boxes: Box[];
   total: number;
-  spacerH: number;
-  statePerPixelY: number;
+  spacerSize: number;
+  statePerPixel: number;
   config: Section;
+  size: number;
 }
 
 export interface ConnectionState {

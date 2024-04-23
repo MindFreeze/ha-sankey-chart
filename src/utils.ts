@@ -189,13 +189,15 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
   const default_co2_per_ft3 = 55.0  // gCO2e/ft3 tailpipe
                             + 11.6; // gCO2e/ft3 supply chain, US average
   return {
+    // set config defaults
+    layout: 'auto',
     height: 200,
     unit_prefix: '',
     round: 0,
     convert_units_to: '',
     co2_intensity_entity: 'sensor.co2_signal_co2_intensity',
     gas_co2_intensity: isMetric ? default_co2_per_ft3 * FT3_PER_M3 : default_co2_per_ft3,
-    min_box_height: 3,
+    min_box_size: 3,
     min_box_distance: 5,
     show_states: true,
     show_units: true,

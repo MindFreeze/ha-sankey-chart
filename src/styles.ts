@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { MIN_VERTICAL_SECTION_H } from './const';
 
 // https://lit.dev/docs/components/styles/
 export default css`
@@ -10,9 +11,13 @@ export default css`
         position: relative;
         /* height: 210px; */
         padding: 16px;
+        overflow: hidden;
     }
     .container.with-header {
         padding-top: 0;
+    }
+    .container.vertical {
+        flex-direction: column;
     }
     .section {
         flex: 1;
@@ -21,11 +26,23 @@ export default css`
         min-width: 0;
         max-width: 50%;
     }
+    .vertical .section {
+        display: flex;
+        flex: initial;
+        flex-direction: row-reverse;
+        align-items: flex-start;
+        max-width: 100%;
+        width: 100%;
+        height: ${MIN_VERTICAL_SECTION_H}px;
+    }
     .wide .section:last-child {
         flex: initial;
     }
     .spacerv {
-        transition: height 0.2s;
+        transition: height 0.25s;
+    }
+    .vertical .spacerv {
+        transition: width 0.25s;
     }
     .box {
         display: flex;
@@ -33,6 +50,10 @@ export default css`
         /* position: relative; */
         /* min-height: 1px; */
         transition: height 0.25s;
+    }
+    .vertical .box {
+        flex-direction: column;
+        transition: width 0.25s;
     }
     /* .box::before {
         content: "";
@@ -55,6 +76,10 @@ export default css`
         height: 100%;
         cursor: pointer;
     }
+    .vertical .box div:first-child {
+        width: 100%;
+        height: 15px;
+    }
     .box.type-passthrough div:first-child {
         opacity: 0.4;
     }
@@ -70,8 +95,16 @@ export default css`
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .box .label span {
+    .vertical .box .label {
+        padding: 5px 0 0;
+        flex-direction: column;
+        white-space: normal;
+        /* word-break: break-all; */
+        text-align: center;
+    }
+    .box .label .name {
         font-style: italic;
+        font-size: inherit;
     }
     .connectors {
         position: absolute;
@@ -81,10 +114,22 @@ export default css`
         height: 100%;
         overflow: hidden;
     }
+    .vertical .connectors {
+        top: 15px;
+        left: 0;
+        bottom: 0;
+        height: auto;
+    }
     .connectors svg {
         position: absolute;
         left: -1px;
         width: 101%;
         height: 100%;
+    }
+    .vertical .connectors svg {
+        top: -1px;
+        left: 0;
+        width: 100%;
+        height: 101%;
     }
 `;
