@@ -68,13 +68,6 @@ export interface EntityConfig {
   tap_action?: ActionConfigExtended;
   double_tap_action?: ActionConfigExtended;
   hold_action?: ActionConfigExtended;
-  // @deprecated
-  remaining?:
-    | string
-    | {
-        name: string;
-        color?: string;
-      };
 }
 
 export type EntityConfigInternal = EntityConfig & {
