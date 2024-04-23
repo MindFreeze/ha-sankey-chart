@@ -92,9 +92,10 @@ export function renderSection(props: {
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
 
   const viewBox = props.vertical ? `0 0 ${size} 100` : `0 0 100 ${size}`;
+  const minWidth = min_width && !props.vertical ? min_width + 'px' : undefined;
 
   return html`
-    <div class="section" style=${styleMap({ minWidth: min_width ? min_width + 'px' : undefined })}>
+    <div class="section" style=${styleMap({ minWidth })}>
       ${hasChildren
         ? html`<div class="connectors">
             <svg viewBox="${viewBox}" preserveAspectRatio="none">${renderBranchConnectors(props)}</svg>
