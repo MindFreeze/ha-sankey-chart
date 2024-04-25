@@ -17,35 +17,35 @@ This card is intended to display connections between entities with numeric state
 
 ## Options
 
-| Name              | Type    | Requirement  | Default             | Description                                 |
-| ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| type              | string  | **Required** |                     | `custom:sankey-chart`
-| autoconfig        | object  | **Optional** |                     | Experimental. See [autoconfig](#autoconfig)
-| sections          | list    | **Required** |                     | Not required if using autoconfig. Entities to show divided by sections, see [sections object](#sections-object) for additional options.
-| layout            | string  | **Optional** | auto                | Valid options are: 'horizontal' - flow left to right, 'vertical' - flow top to bottom & 'auto' - determine based on available space
-| energy_date_selection | boolean | **Optional** | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
-| title             | string  | **Optional** |                     | Optional header title for the card
-| unit_prefix       | string  | **Optional** |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
-| round             | number  | **Optional** | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
-| height            | number  | **Optional** | 200                 | The height of the card in pixels. Only matters while in horizontal layout. Vertical layout height is dynamic based on content
-| wide              | boolean | **Optional** | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size
-| show_icons        | boolean | **Optional** | false               | Display entity icons
-| show_names        | boolean | **Optional** | false               | Display entity names
-| show_states       | boolean | **Optional** | true                | Display entity states
-| show_units        | boolean | **Optional** | true                | Display unit of measurement
-| min_box_size      | number  | **Optional** | 3                   | Minimum size of an entity box
-| min_box_distance  | number  | **Optional** | 5                   | Minimum space between entity boxes
-| min_state         | number  | **Optional** | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
-| throttle          | number  | **Optional** |                     | Minimum time in ms between updates/rerenders
-| static_scale      | number  | **Optional** |                     | State value corresponding to the maximum size (height for horizontal layout and width in vertical) of the card. For example, if this is set to 1000, then a box with state 500 will take up half of its section. If some section exceeds the value of `static_scale`, the card will dynamically rescale overriding this option. See (#153)
-| convert_units_to  | string  | **Optional** |                     | If entities are electricity (kWh) or gas (ft³) usage, convert them to energy (MJ), cost (monetary) or carbon (gCO2). For cost, you must also specify `electricity_price` and/or `gas_price`, as well as the `monetary_unit` of the price(s). For gCO2, all kWh values will be multiplied by the varying grid CO2 intensity, as with the Energy Dashboard.
-| co2_intensity_entity |string | **Optional** | sensor. co2_signal_co2_intensity | Entity providing carbon intensity of electricity (gCO2eq/kWh). If you have solar or storage, you may wish to create a template sensor to convert grid CO2 intensity to consumption CO2 intensity.
-| gas_co2_intensity | number  | **Optional** | 66.6 g/ft³ or 2352 g/m³ | Carbon intensity of gas, e.g. in gCO2eq/ft³. Default value depends on locale; units must match those of gas entities.
-| electricity_price | number  | **Optional** |                     | Unit price of electricity, e.g. in USD/kWh. Automatic conversion does not support varying electricity prices like the Energy Dashboard does.
-| gas_price         | number  | **Optional** |                     | Unit price of gas, e.g. in USD/ft³.
-| monetary_unit     | string  | **Optional** |                     | Currency of the gas or electricity price, e.g. 'USD'
-| sort_by           | string  | **Optional** |                     | Sort the entities. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
-| sort_dir          | string  | **Optional** | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
+| Name              | Type    | Default             | Description                                 |
+| ----------------- | ------- | ------------------- | ------------------------------------------- |
+| type              | string  |                     | `custom:sankey-chart`
+| autoconfig        | object  |                     | Experimental. See [autoconfig](#autoconfig)
+| sections          | list    |                     | Required unless using autoconfig. Entities to show divided by sections, see [sections object](#sections-object) for additional options.
+| layout            | string  | auto                | Valid options are: 'horizontal' - flow left to right, 'vertical' - flow top to bottom & 'auto' - determine based on available space
+| energy_date_selection | boolean | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
+| title             | string  |                     | Optional header title for the card
+| unit_prefix       | string  |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
+| round             | number  | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
+| height            | number  | 200                 | The height of the card in pixels. Only matters while in horizontal layout. Vertical layout height is dynamic based on content
+| wide              | boolean | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size
+| show_icons        | boolean | false               | Display entity icons
+| show_names        | boolean | false               | Display entity names
+| show_states       | boolean | true                | Display entity states
+| show_units        | boolean | true                | Display unit of measurement
+| min_box_size      | number  | 3                   | Minimum size of an entity box
+| min_box_distance  | number  | 5                   | Minimum space between entity boxes
+| min_state         | number  | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
+| throttle          | number  |                     | Minimum time in ms between updates/rerenders
+| static_scale      | number  |                     | State value corresponding to the maximum size (height for horizontal layout and width in vertical) of the card. For example, if this is set to 1000, then a box with state 500 will take up half of its section. If some section exceeds the value of `static_scale`, the card will dynamically rescale overriding this option. See (#153)
+| convert_units_to  | string  |                     | If entities are electricity (kWh) or gas (ft³) usage, convert them to energy (MJ), cost (monetary) or carbon (gCO2). For cost, you must also specify `electricity_price` and/or `gas_price`, as well as the `monetary_unit` of the price(s). For gCO2, all kWh values will be multiplied by the varying grid CO2 intensity, as with the Energy Dashboard.
+| co2_intensity_entity |string | sensor. co2_signal_co2_intensity | Entity providing carbon intensity of electricity (gCO2eq/kWh). If you have solar or storage, you may wish to create a template sensor to convert grid CO2 intensity to consumption CO2 intensity.
+| gas_co2_intensity | number  | 66.6 g/ft³ or 2352 g/m³ | Carbon intensity of gas, e.g. in gCO2eq/ft³. Default value depends on locale; units must match those of gas entities.
+| electricity_price | number  |                     | Unit price of electricity, e.g. in USD/kWh. Automatic conversion does not support varying electricity prices like the Energy Dashboard does.
+| gas_price         | number  |                     | Unit price of gas, e.g. in USD/ft³.
+| monetary_unit     | string  |                     | Currency of the gas or electricity price, e.g. 'USD'
+| sort_by           | string  |                     | Sort the entities. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
+| sort_dir          | string  | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
 
 ### Sections object
 
@@ -82,7 +82,7 @@ This card is intended to display connections between entities with numeric state
 | Name                 | Type    | Requirement  | Default             | Description                                 |
 | -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id            | string  | **Required** |                     | Entity id of the child box
-| connection_entity_id | string  | **Required** |                     | Entity id of the sensor to that determines how much of the parent flows into the child
+| connection_entity_id | string  | **Optional** |                     | Entity id of the sensor to that determines how much of the parent flows into the child
 
 ### Entity types
 
@@ -229,6 +229,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 **Q: My (template) sensor doesn't work with energy_date_selection!?**
 
 **A:** Sensors should have a proper `state_class` in order for statistics to work. Most commonly `state_class: total`. See <https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics>
+
+**Q: Can you add feature X, so I don't have to create template entities in HA?**
+
+**A:** Most probably no. There is nothing wrong with template entities and they should be the prefered approach instead of duplicating HA functionality in every card. I do make exceptions for often required features like `remaining_parent_state` but prefer to rely on HA functionality whenever I can.
 
 ## Development
 
