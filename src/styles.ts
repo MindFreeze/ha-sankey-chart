@@ -1,4 +1,4 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
 import { MIN_VERTICAL_SECTION_H } from './const';
 
 // https://lit.dev/docs/components/styles/
@@ -33,7 +33,7 @@ export default css`
         align-items: flex-start;
         max-width: 100%;
         width: 100%;
-        height: ${MIN_VERTICAL_SECTION_H}px;
+        height: ${unsafeCSS(MIN_VERTICAL_SECTION_H + 'px')};
     }
     .wide .section:last-child {
         flex: initial;
