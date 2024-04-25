@@ -1,6 +1,6 @@
 {
   "name": "ha-sankey-chart",
-  "version": "2.0.4",
+  "version": "3.0.0-beta",
   "description": "Lovelace sankey diagram card",
   "keywords": [
     "home-assistant",
