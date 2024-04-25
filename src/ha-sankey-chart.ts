@@ -9,6 +9,7 @@ import { localize } from './localize/localize';
 import { normalizeConfig, renderError } from './utils';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
+import './print-config';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
   Conversions,
@@ -314,8 +315,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         .forceUpdateTs=${this.forceUpdateTs}
         .width=${this.clientWidth || this.offsetWidth || this.parentElement?.clientWidth || window.innerWidth}
       ></sankey-chart-base>
+
       ${print_yaml && this.config.sections.length
-        ? html`${until(renderError('', { ...this.config, autoconfig: undefined }, this.hass))}`
+        ? html`<sankey-chart-print-config .hass=${this.hass} .config=${this.config}></sankey-chart-print-config>`
         : ''}
     `;
   }
