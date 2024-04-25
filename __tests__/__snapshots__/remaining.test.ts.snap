@@ -25,12 +25,12 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           
         </defs>
         
-              <path d="M0,0 C50,0 50,0 100,0 L100,61.62162162162163 C50,61.62162162162163 50,61 0,61 Z" fill="url(#gradient0.0.0)" fill-opacity="0.4"></path>
+              <path d="M0,69.5 C50,69.5 50,5 100,5 L100,66.62162162162163 C50,66.62162162162163 50,130.5 0,130.5 Z" fill="url(#gradient0.0.0)" fill-opacity="0.4"></path>
             
       </svg>
           </div>
       
-          
+          <div class="spacerv" style="height:69.5px;"></div>
           
           <div class="box type-entity" style="height:61px;">
             <div style="background-color:var(--warning-color);" title="2kW Total" class="">
@@ -69,16 +69,16 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           
         </defs>
         
-              <path d="M0,0 C50,0 50,0 100,0 L100,63 C50,63 50,63.2879899767317 0,63.2879899767317 Z" fill="url(#gradient1.0.0)" fill-opacity="0.4"></path>
+              <path d="M0,5 C50,5 50,0 100,0 L100,63 C50,63 50,68.2879899767317 0,68.2879899767317 Z" fill="url(#gradient1.0.0)" fill-opacity="0.4"></path>
             
-              <path d="M0,63.2879899767317 C50,63.2879899767317 50,68.5 100,68.5 L100,131.5 C50,131.5 50,126.60998747091463 0,126.60998747091463 Z" fill="url(#gradient1.0.1)" fill-opacity="0.4"></path>
+              <path d="M0,68.2879899767317 C50,68.2879899767317 50,68.5 100,68.5 L100,131.5 C50,131.5 50,131.60998747091463 0,131.60998747091463 Z" fill="url(#gradient1.0.1)" fill-opacity="0.4"></path>
             
-              <path d="M0,126.60998747091462 C50,126.60998747091462 50,137 100,137 L100,200 C50,200 50,190 0,190 Z" fill="url(#gradient1.0.2)" fill-opacity="0.4"></path>
+              <path d="M0,131.60998747091463 C50,131.60998747091463 50,137 100,137 L100,200 C50,200 50,195.00000000000003 0,195.00000000000003 Z" fill="url(#gradient1.0.2)" fill-opacity="0.4"></path>
             
       </svg>
           </div>
       
-          
+          <div class="spacerv" style="height:5px;"></div>
           
           <div class="box type-remaining_child_state" style="height:190px;">
             <div style="background-color:darkslateblue;" title="6kW Total
@@ -121,7 +121,7 @@ IDK" class="">
           
         </defs>
         
-              <path d="M0,0 C50,0 50,0 100,0 L100,62.932367149758456 C50,62.932367149758456 50,63 0,63 Z" fill="url(#gradient2.0.0)" fill-opacity="0.4"></path>
+              <path d="M0,0 C50,0 50,68.5 100,68.5 L100,131.43236714975845 C50,131.43236714975845 50,63 0,63 Z" fill="url(#gradient2.0.0)" fill-opacity="0.4"></path>
             
       
         <defs>
@@ -133,7 +133,7 @@ IDK" class="">
           
         </defs>
         
-              <path d="M0,68.5 C50,68.5 50,62.932367149758456 100,62.932367149758456 L100,63 C50,63 50,68.56766917293233 0,68.56766917293233 Z" fill="url(#gradient2.1.0)" fill-opacity="0.4"></path>
+              <path d="M0,68.5 C50,68.5 50,131.43236714975845 100,131.43236714975845 L100,131.5 C50,131.5 50,68.56766917293233 0,68.56766917293233 Z" fill="url(#gradient2.1.0)" fill-opacity="0.4"></path>
             
       
         <defs>
@@ -203,12 +203,12 @@ Blaa" class="">
           
         </defs>
         
-              <path d="M0,0 C50,0 50,0 100,0 L100,63 C50,63 50,63 0,63 Z" fill="url(#gradient3.0.0)" fill-opacity="0.4"></path>
+              <path d="M0,68.5 C50,68.5 50,68.5 100,68.5 L100,131.5 C50,131.5 50,131.5 0,131.5 Z" fill="url(#gradient3.0.0)" fill-opacity="0.4"></path>
             
       </svg>
           </div>
       
-          
+          <div class="spacerv" style="height:68.5px;"></div>
           
           <div class="box type-passthrough" style="height:63px;">
             <div style="background-color:red;" title="2kW " class="">
@@ -223,7 +223,7 @@ Blaa" class="">
     <div class="section" style="">
       
       
-          
+          <div class="spacerv" style="height:68.5px;"></div>
           
           <div class="box type-entity" style="height:63px;">
             <div style="background-color:red;" title="2kW " class="">

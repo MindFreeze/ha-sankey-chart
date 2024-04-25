@@ -361,8 +361,8 @@ export class Chart extends LitElement {
       }
       // calc margin betwee boxes
       const extraSpace = sectionSize - totalSize;
-      const spacerSize = sizedBoxes.length > 1 ? extraSpace / (sizedBoxes.length - 1) : sectionSize;
-      let offset = 0;
+      const spacerSize = sizedBoxes.length > 1 ? extraSpace / (sizedBoxes.length - 1) : extraSpace / 2;
+      let offset = sizedBoxes.length > 1 ? 0 : extraSpace / 2;
       // calc y positions. needed for connectors
       sizedBoxes = sizedBoxes.map(box => {
         const top = offset;

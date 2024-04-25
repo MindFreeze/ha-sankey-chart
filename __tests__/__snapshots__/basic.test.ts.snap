@@ -30,14 +30,14 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
           
         </defs>
         
-              <path d="M0,0 C50,0 50,0 100,0 L100,97 C50,97 50,97.5 0,97.5 Z" fill="url(#gradient0.0.0)" fill-opacity="0.4"></path>
+              <path d="M0,2.5 C50,2.5 50,0 100,0 L100,97 C50,97 50,100 0,100 Z" fill="url(#gradient0.0.0)" fill-opacity="0.4"></path>
             
-              <path d="M0,97.5 C50,97.5 50,103 100,103 L100,200 C50,200 50,195 0,195 Z" fill="url(#gradient0.0.1)" fill-opacity="0.4"></path>
+              <path d="M0,100 C50,100 50,103 100,103 L100,200 C50,200 50,197.5 0,197.5 Z" fill="url(#gradient0.0.1)" fill-opacity="0.4"></path>
             
       </svg>
           </div>
       
-          
+          <div class="spacerv" style="height:2.5px;"></div>
           
           <div class="box type-entity" style="height:195px;">
             <div style="background-color:var(--primary-color);" title="2W " class="">

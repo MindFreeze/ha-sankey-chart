@@ -113,7 +113,7 @@ export function renderSection(props: {
         const sizeProp = props.vertical ? 'width' : 'height';
 
         return html`
-          ${i > 0 ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: spacerSize + 'px' })}></div>` : null}
+          ${box.top > 0 ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: spacerSize + 'px' })}></div>` : null}
           ${extraSpacers
             ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: extraSpacers + 'px' })}></div>`
             : null}
