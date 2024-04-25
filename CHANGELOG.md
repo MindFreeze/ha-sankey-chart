@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0-beta](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.4...v3.0.0-beta) (2024-04-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* `passthrough` entities no longer use `children` and just connect to the next entity with the same id
+* **#109:** `min_box_height` has been renamed to `min_box_size`
+* deprecated `remaining: true` option has been removed
+* `substract_entities` has been removed. Correct spelling is `subtract_entities`
+* **#109:** section `min_width` now only accepts numbers representing the width tin pixels
+
+### Features
+
+* **#109:** vertical layout ([#167](https://github.com/MindFreeze/ha-sankey-chart/issues/167)) ([44016cc](https://github.com/MindFreeze/ha-sankey-chart/commit/44016cc9ef40f260661f24d4457b64041052e6a8))
+* **#109:** vertical layout ([#167](https://github.com/MindFreeze/ha-sankey-chart/issues/167)) ([61a481a](https://github.com/MindFreeze/ha-sankey-chart/commit/61a481ac0963cc38315b6acac50dcb811c423228))
+* `passthrough` entities no longer use `children` and just connect to the next entity with the same id ([094ac46](https://github.com/MindFreeze/ha-sankey-chart/commit/094ac460452a68c4ceee3135b3d4d719267cdd8b))
+
+
+### Bug Fixes
+
+* fix passthrough connectors ([00adfb4](https://github.com/MindFreeze/ha-sankey-chart/commit/00adfb4c98276fc53399e6d5c58d5f75f1e156ba))
+
+
+### Miscellaneous Chores
+
+* deprecated `remaining: true` option has been removed ([2f428b3](https://github.com/MindFreeze/ha-sankey-chart/commit/2f428b3943dd886a3e8e45f37638db2853872112))
+* release 3.0.0-beta ([a584fd8](https://github.com/MindFreeze/ha-sankey-chart/commit/a584fd87e4f7883a4a853753754597a3495bb3c8))
+* remove deprecated `substract_entities`. Correct spelling is `subtract_entities` ([e09f9af](https://github.com/MindFreeze/ha-sankey-chart/commit/e09f9af941180b91f1cb0a0693e9f74f6bdb3be2))
+
 ## [2.0.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.3...v2.0.4) (2024-04-18)
 
 
