@@ -3,6 +3,7 @@
 exports[`SankeyChart with remaining type entities matches snapshot 1`] = `
 "
       <sankey-chart-base></sankey-chart-base>
+
       
     "
 `;

@@ -3,6 +3,7 @@
 exports[`SankeyChart matches a simple snapshot 1`] = `
 "
       <sankey-chart-base></sankey-chart-base>
+
       
     "
 `;
