@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-beta2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0-beta...v3.0.0-beta2) (2024-04-25)
+
+
+### Bug Fixes
+
+* **#182:** `print_yaml` now allows the text to be selected ([f80303b](https://github.com/MindFreeze/ha-sankey-chart/commit/f80303bf5b5a496d8a54b41043ca6bff3e03447c))
+* fix height in vertical mode ([ada764a](https://github.com/MindFreeze/ha-sankey-chart/commit/ada764a1bc73ddf6a72fb6698cd7624cdb9522bd))
+
 ## [3.0.0-beta](https://github.com/MindFreeze/ha-sankey-chart/compare/v2.0.4...v3.0.0-beta) (2024-04-25)
 
 
