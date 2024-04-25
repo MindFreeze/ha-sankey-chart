@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0-beta2...v3.0.0) (2024-04-25)
+
+
+### Features
+
+* single entities are now centered instead of at the top ([0bb5cd1](https://github.com/MindFreeze/ha-sankey-chart/commit/0bb5cd1ae80af2261a3a948d95d30e313d6c7d14))
+
+
+### Bug Fixes
+
+* reduce font size in vertical mode ([748e5f2](https://github.com/MindFreeze/ha-sankey-chart/commit/748e5f2895fd5cebbf1d290a5ab77773295ce427))
+
 ## [3.0.0-beta2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0-beta...v3.0.0-beta2) (2024-04-25)
 
 
