@@ -18,10 +18,12 @@ export function renderBranchConnectors(props: {
 }): SVGTemplateResult[] {
   const { boxes, size } = props.section;
   return boxes
-    .filter(b => b.children.length > 0)
+    .filter(b => b.children.length > 0 || b.config.type === 'passthrough')
     .map((b, boxIndex) => {
-      const children = props.nextSection!.boxes.filter(child =>
-        b.children.some(c => getEntityId(c) === child.entity_id),
+      const children = props.nextSection!.boxes.filter(
+        child =>
+          b.children.some(c => getEntityId(c) === child.entity_id) ||
+          (b.config.type === 'passthrough' && b.entity_id === child.entity_id),
       );
       const connections = getChildConnections(b, children, props.allConnections, props.connectionsByParent).filter(
         c => {
@@ -89,7 +91,7 @@ export function renderSection(props: {
     config: { min_width },
     size,
   } = props.section;
-  const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
+  const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0 || b.config.type === 'passthrough');
 
   const viewBox = props.vertical ? `0 0 ${size} 100` : `0 0 100 ${size}`;
   const minWidth = min_width && !props.vertical ? min_width + 'px' : undefined;
