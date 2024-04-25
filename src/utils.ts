@@ -137,7 +137,7 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
                   sections[j].entities.push({
                     ...(typeof childConf === 'string' ? { entity_id: childConf } : childConf),
                     type: 'passthrough',
-                    children: [child],
+                    children: [],
                   });
                 }
               }

@@ -95,8 +95,8 @@ export class Chart extends LitElement {
             const passthroughs: EntityConfigInternal[] = [];
             const childId = getEntityId(childConf);
             let child: EntityConfigInternal | undefined = ent;
-            for (let i = 1; i < this.config.sections.length; i++) {
-              child = this.config.sections[sectionIndex + i]?.entities.find(e => e.entity_id === childId);
+            for (let i = sectionIndex + 1; i < this.config.sections.length; i++) {
+              child = this.config.sections[i]?.entities.find(e => e.entity_id === childId);
               if (!child) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
                 throw this.error;
