@@ -20,6 +20,7 @@
     "fields": {
       "autoconfig": "Autokonfig",
       "print_yaml": "Vytlačte automaticky generovanú konfiguráciu yaml",
+      "layout": "Rozloženie",
       "show_names": "Zobraziť názvy",
       "show_icons": "Zobraziť ikony",
       "show_states": "Zobraziť stavy",
@@ -62,11 +63,17 @@
       "passthrough": "Prejsť cez"
     },
     "sort_by": {
+      "none": "Nič",
       "state": "Stav"
     },
     "sort_dir": {
       "desc": "Zostupne",
       "asc": "Vzostupne"
+    },
+    "layout": {
+      "auto": "Auto",
+      "vertical": "Vertikálne",
+      "horizontal": "Horizontálne"
     }
   }
 }
