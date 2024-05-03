@@ -27,12 +27,14 @@ export function formatState(state: number, round: number, locale: FrontendLocale
   } while (/^[0\.]*$/.test(rounded) && decimals < 100);
 
   if (!monetary_unit) {
-    return formatNumber(parseFloat(rounded), locale);
+    return formatNumber(parseFloat(rounded), locale, {
+      maximumFractionDigits: decimals-1,
+    });
   } else {
     return formatNumber(parseFloat(rounded), locale, {
       style: "currency",
       currency: monetary_unit,
-      minimumFractionDigits: round,
+      minimumFractionDigits: decimals-1,
     });
   }
 }
