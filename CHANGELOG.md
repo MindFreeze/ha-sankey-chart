@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0...v3.0.1) (2024-05-10)
+
+
+### Bug Fixes
+
+* **#191:** possible fix for missing historical data ([e2a6ea8](https://github.com/MindFreeze/ha-sankey-chart/commit/e2a6ea8148e119e6fc61ea4fdd7df0ab2db6c195))
+* fix rounding to show the first significant digit ([0e5d154](https://github.com/MindFreeze/ha-sankey-chart/commit/0e5d1543b7a7eb12236de56d18873711440777c8))
+
 ## [3.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0-beta2...v3.0.0) (2024-04-25)
 
 
