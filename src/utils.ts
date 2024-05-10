@@ -44,7 +44,7 @@ export function normalizeStateValue(
   state: number,
   unit_of_measurement?: string,
 ): { state: number; unit_of_measurement?: string } {
-  const validState = Math.max(0, state);
+  const validState = Math.max(0, state) || 0; // the 0 check is for NaN
   if (!unit_of_measurement || unit_of_measurement == 'monetary') {
     return { state: validState, unit_of_measurement };
   }
