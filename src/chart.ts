@@ -15,6 +15,7 @@ import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
 import { renderSection } from './section';
 import { shouldBeVertical } from './layout';
+import { reconcileEntity } from './reconcile';
 
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
@@ -29,6 +30,7 @@ export class Chart extends LitElement {
   @state() private connections: ConnectionState[] = [];
   @state() private connectionsByParent: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private connectionsByChild: Map<EntityConfigInternal, ConnectionState[]> = new Map();
+  @state() private reconciledStates: Map<EntityConfigInternal | string, number> = new Map();
   @state() private statePerPixel = 0;
   @state() private entityStates: Map<EntityConfigInternal | string, NormalizedState> = new Map();
   @state() private highlightedEntities: EntityConfigInternal[] = [];
@@ -84,6 +86,7 @@ export class Chart extends LitElement {
       this.connections = [];
       this.connectionsByParent.clear();
       this.connectionsByChild.clear();
+      this.reconciledStates.clear();
       this.config.sections.forEach(({ entities }, sectionIndex) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
@@ -261,7 +264,51 @@ export class Chart extends LitElement {
       }
       this.entityStates.set(entityConfOrStr, normalized);
     }
-    return this.entityStates.get(entityConfOrStr)!;
+    const state = this.entityStates.get(entityConfOrStr)!;
+    if (this.reconciledStates.has(entityConfOrStr)) {
+      return { ...state, state: this.reconciledStates.get(entityConfOrStr)! };
+    }
+    return state;
+  }
+
+  private _reconcileConnections() {
+    let shouldRecalc = false;
+    this.config.sections.forEach(section => {
+      section.entities.forEach(entityConf => {
+        if (entityConf.parents_sum) {
+          const reconciliations = reconcileEntity(
+            entityConf,
+            'parents',
+            this.connectionsByChild.get(entityConf) ?? [],
+            conf => this._getMemoizedState(conf).state,
+          );
+          if (reconciliations.size) {
+            shouldRecalc = true;
+            reconciliations.forEach((reconciled, entity) => {
+              this.reconciledStates.set(entity, reconciled);
+            });
+          }
+        }
+        if (entityConf.children_sum) {
+          const reconciliations = reconcileEntity(
+            entityConf,
+            'children',
+            this.connectionsByParent.get(entityConf) ?? [],
+            conf => this._getMemoizedState(conf).state,
+          );
+          if (reconciliations.size) {
+            shouldRecalc = true;
+            reconciliations.forEach((reconciled, entity) => {
+              this.reconciledStates.set(entity, reconciled);
+            });
+          }
+        }
+      });
+    });
+    if (shouldRecalc) {
+      this.entityStates.clear();
+      this._calcConnections();
+    }
   }
 
   private _calcBoxes() {
@@ -574,14 +621,13 @@ export class Chart extends LitElement {
       if (!Object.keys(this.states).length) {
         return html`
           <ha-card label="Sankey Chart" .header=${this.config.title}>
-            <div class=${containerClasses} style=${styleMap({ height: height })}>
-              ${localize('common.loading')}
-            </div>
+            <div class=${containerClasses} style=${styleMap({ height: height })}>${localize('common.loading')}</div>
           </ha-card>
         `;
       }
 
       this._calcConnections();
+      this._reconcileConnections();
       this._calcBoxes();
 
       this.lastUpdate = Date.now();
