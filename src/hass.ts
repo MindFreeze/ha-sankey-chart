@@ -3,6 +3,7 @@ import { HomeAssistant } from 'custom-card-helpers';
 export interface Area {
   area_id: string;
   name: string;
+  floor_id?: string | null;
 }
 
 export interface HomeAssistantReal extends HomeAssistant {
@@ -53,6 +54,14 @@ export interface ExtEntityRegistryEntry extends EntityRegistryEntry {
   original_device_class?: string;
 }
 
+export interface FloorRegistryEntry {
+  aliases: string[];
+  floor_id: string;
+  icon?: string;
+  level?: number;
+  name: string;
+}
+
 export const getExtendedEntityRegistryEntry = (
   hass: HomeAssistant,
   entityId: string,
@@ -70,7 +79,12 @@ export const fetchDeviceRegistry = async (hass: HomeAssistant): Promise<DeviceRe
   return (devicesCache = await hass.callWS({
     type: 'config/device_registry/list',
   }));
-}
+};
+
+export const fetchFloorRegistry = (hass: HomeAssistant): Promise<FloorRegistryEntry[]> =>
+  hass.callWS({
+    type: 'config/floor_registry/list',
+  });
 
 export async function getEntityArea(hass: HomeAssistant, entityId: string) {
   try {
@@ -93,7 +107,7 @@ export async function getEntitiesByArea(hass: HomeAssistantReal, entityIds: stri
   const result: Record<string, { area: Area; entities: string[] }> = {};
   for (const entityId of entityIds) {
     const areaId = await getEntityArea(hass, entityId);
-    const area = areaId ? hass.areas[areaId] : {area_id: 'no_area', name: 'No area'};
+    const area = areaId ? hass.areas[areaId] : { area_id: 'no_area', name: 'No area' };
     if (!result[area.area_id]) {
       result[area.area_id] = { area, entities: [] };
     }

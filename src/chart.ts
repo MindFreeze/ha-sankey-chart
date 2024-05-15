@@ -158,7 +158,7 @@ export class Chart extends LitElement {
       connection.calculating = true;
       [parent, child].forEach(ent => {
         if (ent.type === 'remaining_child_state') {
-          this.connectionsByParent.get(ent)!.forEach(c => {
+          this.connectionsByParent.get(ent)?.forEach(c => {
             if (!c.ready) {
               this.connectionsByChild.get(c.child)?.forEach(conn => {
                 if (conn !== connection && !conn.calculating) {
@@ -168,7 +168,7 @@ export class Chart extends LitElement {
             }
           });
         } else if (ent.type === 'remaining_parent_state') {
-          this.connectionsByChild.get(ent)!.forEach(c => {
+          this.connectionsByChild.get(ent)?.forEach(c => {
             if (!c.ready) {
               this.connectionsByParent.get(c.parent)?.forEach(conn => {
                 if (conn !== connection && !conn.calculating) {
@@ -543,7 +543,11 @@ export class Chart extends LitElement {
     if (entityConf.type === 'remaining_child_state') {
       const connections = this.connectionsByParent.get(entityConf);
       if (!connections) {
-        throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+        if (entityConf.children.length) {
+          throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
+        }
+        // no children means no state. simplifies autoconfig
+        return { state: 0, attributes: {} };
       }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       const childEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'children'));

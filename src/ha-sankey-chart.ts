@@ -20,7 +20,7 @@ import {
   getStatistics,
 } from './energy';
 import { until } from 'lit/directives/until';
-import { getEntitiesByArea, HomeAssistantReal } from './hass';
+import { fetchFloorRegistry, getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
 import './editor/index';
 
@@ -259,6 +259,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             children: [],
           },
         ],
+        sort_by: 'state',
+        sort_group_by_parent: true,
       },
       {
         entities: orderedDeviceIds.map(id => ({
@@ -267,6 +269,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           name: names[id],
           children: [],
         })),
+        sort_by: 'state',
+        sort_group_by_parent: true,
       },
     ].filter(s => s.entities.length > 0) as Section[];
 
@@ -299,6 +303,39 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
       sections[0].entities.forEach(entity => {
         entity.children.unshift(battery.stat_energy_to!);
+      });
+    }
+
+    const floors = await fetchFloorRegistry(this.hass);
+    if (floors.length) {
+      const orphanAreas = areas.filter(a => !a.area.floor_id);
+      sections[1].entities[sections[1].entities.length - 1].children = [
+        ...floors.map(f => f.floor_id),
+        ...orphanAreas.map(a => a.area.area_id),
+        'unknown',
+      ];
+      sections.splice(2, 0, {
+        entities: [
+          ...floors.map(
+            (f): EntityConfigInternal => ({
+              entity_id: f.floor_id,
+              type: 'remaining_child_state',
+              name: f.name,
+              children: areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+            }),
+          ),
+          ...orphanAreas.map((a): EntityConfigInternal => ({
+            entity_id: a.area.area_id,
+            type: 'passthrough',
+            children: [],
+          })),
+          {
+            entity_id: 'unknown',
+            type: 'passthrough',
+            children: [],
+          },
+        ],
+        sort_by: 'state',
       });
     }
 
