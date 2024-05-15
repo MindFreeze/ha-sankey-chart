@@ -197,15 +197,19 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         }
         return 1;
       });
+    const names: Record<string, string> = {};
     const deviceIds = (collection.prefs?.device_consumption || [])
-      .map(d => d.stat_consumption)
-      .filter(id => {
-        if (!this.hass.states[id]) {
-          console.warn('Ignoring missing entity ' + id);
+      .filter(d => {
+        if (!this.hass.states[d.stat_consumption]) {
+          console.warn('Ignoring missing entity ' + d.stat_consumption);
           return false;
         }
+        if (d.name) {
+          names[d.stat_consumption] = d.name;
+        }
         return true;
-      });
+      })
+      .map(d => d.stat_consumption);
     const areasResult = await getEntitiesByArea(this.hass, deviceIds);
     const areas = Object.values(areasResult)
       // put 'No area' last
@@ -260,6 +264,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         entities: orderedDeviceIds.map(id => ({
           entity_id: id,
           type: 'entity',
+          name: names[id],
           children: [],
         })),
       },

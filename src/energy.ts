@@ -73,6 +73,7 @@ export interface EnergySource {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface DeviceConsumptionEnergyPreference {
   stat_consumption: string;
+  name?: string;
 }
 
 export interface EnergyPreferences {
