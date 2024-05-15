@@ -1,4 +1,11 @@
-import { createThing, formatNumber, FrontendLocaleData, HomeAssistant, LovelaceCard, LovelaceCardConfig } from 'custom-card-helpers';
+import {
+  createThing,
+  formatNumber,
+  FrontendLocaleData,
+  HomeAssistant,
+  LovelaceCard,
+  LovelaceCardConfig,
+} from 'custom-card-helpers';
 import { html, TemplateResult } from 'lit';
 import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES, FT3_PER_M3 } from './const';
 import {
@@ -28,13 +35,13 @@ export function formatState(state: number, round: number, locale: FrontendLocale
 
   if (!monetary_unit) {
     return formatNumber(parseFloat(rounded), locale, {
-      maximumFractionDigits: decimals-1,
+      maximumFractionDigits: decimals - 1,
     });
   } else {
     return formatNumber(parseFloat(rounded), locale, {
-      style: "currency",
+      style: 'currency',
       currency: monetary_unit,
-      minimumFractionDigits: decimals-1,
+      minimumFractionDigits: decimals - 1,
     });
   }
 }
@@ -64,7 +71,12 @@ export function getEntityId(entity: EntityConfigOrStr | ChildConfigOrStr): strin
   return typeof entity === 'string' ? entity : entity.entity_id;
 }
 
-export function getChildConnections(parent: Box, children: Box[], allConnections: ConnectionState[], connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>): Connection[] {
+export function getChildConnections(
+  parent: Box,
+  children: Box[],
+  allConnections: ConnectionState[],
+  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
+): Connection[] {
   // @NOTE don't take prevParentState from connection because it is different
   let prevParentState = 0;
   let state = 0;
@@ -72,8 +84,9 @@ export function getChildConnections(parent: Box, children: Box[], allConnections
   return children.map(child => {
     let connections = childConnections?.filter(c => c.child.entity_id === child.entity_id);
     if (!connections?.length) {
-      connections = allConnections
-        .filter(c => c.passthroughs.includes(child) || c.passthroughs.includes(parent.config));
+      connections = allConnections.filter(
+        c => c.passthroughs.includes(child) || c.passthroughs.includes(parent.config),
+      );
       if (!connections.length) {
         throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
       }
@@ -151,8 +164,9 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
     });
   });
 
-  const default_co2_per_ft3 = 55.0  // gCO2e/ft3 tailpipe
-                            + 11.6; // gCO2e/ft3 supply chain, US average
+  const default_co2_per_ft3 =
+    55.0 + // gCO2e/ft3 tailpipe
+    11.6; // gCO2e/ft3 supply chain, US average
   return {
     // set config defaults
     layout: 'auto',
@@ -174,10 +188,19 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
 
 export function sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
   if (sort === 'state') {
-    const parentChildren = parentBoxes.map(p => p.children.map(getEntityId));
+    const parentChildren = parentBoxes.map(p =>
+      p.config.type === 'passthrough' ? [p.entity_id] : p.config.children.map(getEntityId),
+    );
     const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
-      const parentIndexA = parentChildren.findIndex(children => children.includes(a.entity_id));
-      const parentIndexB = parentChildren.findIndex(children => children.includes(b.entity_id));
+      let parentIndexA = parentChildren.findIndex(children => children.includes(a.entity_id));
+      let parentIndexB = parentChildren.findIndex(children => children.includes(b.entity_id));
+      // sort orphans to the end
+      if (parentIndexA === -1) {
+        parentIndexA = parentChildren.length;
+      }
+      if (parentIndexB === -1) {
+        parentIndexB = parentChildren.length;
+      }
       return parentIndexA < parentIndexB ? -1 : parentIndexA > parentIndexB ? 1 : realSort(a, b);
     };
 
