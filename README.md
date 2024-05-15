@@ -76,6 +76,8 @@ This card is intended to display connections between entities with numeric state
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
 | tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
+| children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See #37 and its related issues
+| parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See #37 and its related issues
 
 ### Children object
 
@@ -83,6 +85,13 @@ This card is intended to display connections between entities with numeric state
 | -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | entity_id            | string  | **Required** |                     | Entity id of the child box
 | connection_entity_id | string  | **Optional** |                     | Entity id of the sensor to that determines how much of the parent flows into the child
+
+### Reconcile config
+
+| Name                 | Type    | Requirement  | Default             | Description                                 |
+| -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| should_be            | string  | **Required** |                     | Valid options are 'equal', 'equal_or_less', 'equal_or_more'
+| reconcile_to         | string  | **Required** |                     | Valid options are 'min', 'max', 'mean'
 
 ### Entity types
 

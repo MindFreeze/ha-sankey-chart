@@ -68,6 +68,8 @@ export interface EntityConfig {
   tap_action?: ActionConfigExtended;
   double_tap_action?: ActionConfigExtended;
   hold_action?: ActionConfigExtended;
+  children_sum?: ReconcileConfig;
+  parents_sum?: ReconcileConfig;
 }
 
 export type EntityConfigInternal = EntityConfig & {
@@ -109,6 +111,11 @@ export interface CallServiceActionConfig extends BaseActionConfig {
   target?: HassServiceTarget;
   repeat?: number;
   haptic?: HapticType;
+}
+
+export interface ReconcileConfig {
+  should_be: 'equal' | 'equal_or_less' | 'equal_or_more';
+  reconcile_to: 'min' | 'max' | 'mean' |  'latest';
 }
 
 export interface SectionConfig {

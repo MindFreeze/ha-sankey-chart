@@ -52,6 +52,17 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
         { name: 'color_below', selector: { text: {} } },
       ]
     : []),
+    // {
+    //   name: 'children_sum.should_be',
+    //   selector: {
+    //     select: {
+    //       mode: 'dropdown',
+    //       options: [
+    //         { value: 'entity', label: localize('editor.entity_types.entity') },
+    //       ],
+    //     },
+    //   },
+    // },
 ];
 
 @customElement('sankey-chart-entity-editor')
