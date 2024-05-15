@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.1...v3.1.0) (2024-05-15)
+
+
+### Features
+
+* **#188:** use new energy display names for autoconfig ([552004b](https://github.com/MindFreeze/ha-sankey-chart/commit/552004befd76d753dee32d853df93d8638415ccd))
+* **#192:** use floors in autoconfig and add some sorting ([4db709a](https://github.com/MindFreeze/ha-sankey-chart/commit/4db709a2df3eb201db4e5cca43f1d1ba4a3cdcfe))
+* **#37:** options to reconcile inconsistency ([#195](https://github.com/MindFreeze/ha-sankey-chart/issues/195)) ([4016407](https://github.com/MindFreeze/ha-sankey-chart/commit/40164071325af958a64dfe32a9a8643211b71004))
+
+
+### Bug Fixes
+
+* **#194:** fixed `sort_group_by_parent` ([b40824c](https://github.com/MindFreeze/ha-sankey-chart/commit/b40824c49225495e97007c12fd9ca4133cc1ca9a))
+
 ## [3.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.0...v3.0.1) (2024-05-10)
 
 
