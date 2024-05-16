@@ -54,7 +54,7 @@ This card is intended to display connections between entities with numeric state
 | entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
 | sort_by           | string  | **Optional** |                     | Sort the entities in this section. Overrides the top level option
 | sort_dir          | string  | **Optional** | desc                | Sorting direction for this section. Overrides the top level option
-| sort_group_by_parent | boolean | **Optional** | false            | Group entities by parent before sorting. See #135
+| sort_group_by_parent | boolean | **Optional** | false            | Group entities by parent before sorting. See [#135](https://github.com/MindFreeze/ha-sankey-chart/issues/135)
 | min_width         | number   | **Optional** |                     | Minimum section width in pixels. Only relevant while in horizontal layout
 
 ### Entities object
@@ -76,8 +76,8 @@ This card is intended to display connections between entities with numeric state
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
 | tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
-| children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See #37 and its related issues
-| parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See #37 and its related issues
+| children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
+| parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
 
 ### Children object
 
@@ -207,6 +207,27 @@ This card supports automatic configuration generation based on the HA energy das
           name: Other
         - sensor.living_room
         - sensor.washer
+```
+
+### Reconcile state
+
+Example config where the state of the children must not exceed their parent. `reconcile_to: max` means to take the bigger of the two values. In other words, if the sum of the children is more than the state of the parent, the parent state will be set to the sum of its children within the card. `reconcile_to: min` would do the opposite and reduce the state of the children so they fully fit within the parent.
+
+```yaml
+- type: custom:sankey-chart
+  show_names: true
+  sections:
+    - entities:
+      - entity_id: sensor.power
+        children_sum:
+          should_be: equal_or_less
+          reconcile_to: max
+        children:
+          - sensor.washing_machine_power
+          - sensor.other_power
+    - entities:
+      - sensor.washing_machine_power
+      - sensor.other_power
 ```
 
 You can find more examples and help in the HA forum <https://community.home-assistant.io/t/anyone-using-the-sankey-chart-card/423125>
