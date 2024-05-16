@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.1.0...v3.2.0) (2024-05-16)
+
+
+### Features
+
+* **#37:** add `reconcile_to: latest` option ([1aa42a8](https://github.com/MindFreeze/ha-sankey-chart/commit/1aa42a8c969bb553898014a6c9b90948d5efe4c8))
+
 ## [3.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.0.1...v3.1.0) (2024-05-15)
 
 
