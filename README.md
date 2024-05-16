@@ -211,7 +211,7 @@ This card supports automatic configuration generation based on the HA energy das
 
 ### Reconcile state
 
-Example config where the state of the children must not exceed their parent. `reconcile_to: max` means to take the bigger of the two values. In other words, if the sum of the children is more than the state of the parent, the parent state will be set to the sum of its children within the card. `reconcile_to: min` would do the opposite and reduce the state of the children so they fully fit within the parent.
+Example config where the state of the children must not exceed their parent. `reconcile_to: max` means to take the bigger of the two values. In other words, if the sum of the children is more than the state of the parent, the parent state will be set to the sum of its children within the card. `reconcile_to: min` would do the opposite and reduce the state of the children so they fully fit within the parent. `latest` just takes whichever value was updated last.
 
 ```yaml
 - type: custom:sankey-chart
