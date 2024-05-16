@@ -91,7 +91,7 @@ This card is intended to display connections between entities with numeric state
 | Name                 | Type    | Requirement  | Default             | Description                                 |
 | -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | should_be            | string  | **Required** |                     | Valid options are 'equal', 'equal_or_less', 'equal_or_more'
-| reconcile_to         | string  | **Required** |                     | Valid options are 'min', 'max', 'mean'
+| reconcile_to         | string  | **Required** |                     | Which value to display in case of inconsistency. Valid options are 'min', 'max', 'mean', 'latest
 
 ### Entity types
 

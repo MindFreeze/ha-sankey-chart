@@ -228,7 +228,7 @@ export class Chart extends LitElement {
       const unit_of_measurement = this._getUnitOfMeasurement(
         entityConf.unit_of_measurement || entity.attributes.unit_of_measurement,
       );
-      const normalized = normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement);
+      const normalized = {...normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement), last_updated: entity.last_updated};
 
       if (entityConf.type === 'passthrough') {
         normalized.state = this.connections
@@ -280,7 +280,7 @@ export class Chart extends LitElement {
             entityConf,
             'parents',
             this.connectionsByChild.get(entityConf) ?? [],
-            conf => this._getMemoizedState(conf).state,
+            conf => this._getMemoizedState(conf),
           );
           if (reconciliations.size) {
             shouldRecalc = true;
@@ -294,7 +294,7 @@ export class Chart extends LitElement {
             entityConf,
             'children',
             this.connectionsByParent.get(entityConf) ?? [],
-            conf => this._getMemoizedState(conf).state,
+            conf => this._getMemoizedState(conf),
           );
           if (reconciliations.size) {
             shouldRecalc = true;
@@ -613,6 +613,7 @@ export class Chart extends LitElement {
         throw this.error;
       }
       this.entityStates.clear();
+      this.reconciledStates.clear();
       const containerClasses = classMap({
         container: true,
         wide: !!this.config.wide,

@@ -199,4 +199,5 @@ export interface ConnectionState {
 export interface NormalizedState {
   state: number;
   unit_of_measurement?: string;
+  last_updated: string;
 }
