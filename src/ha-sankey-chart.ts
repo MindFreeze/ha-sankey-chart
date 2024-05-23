@@ -154,6 +154,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         if (ent.type === 'entity') {
           this.entityIds.push(ent.entity_id);
         }
+        ent.children.forEach(childConf => {
+          if (typeof childConf === 'object' && childConf.connection_entity_id) {
+            this.entityIds.push(childConf.connection_entity_id);
+          }
+        });
         if (ent.add_entities) {
           ent.add_entities.forEach(e => this.entityIds.push(e));
         }
