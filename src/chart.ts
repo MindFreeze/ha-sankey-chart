@@ -241,7 +241,7 @@ export class Chart extends LitElement {
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
-            this._getUnitOfMeasurement(entityConf.unit_of_measurement || subEntity.attributes.unit_of_measurement)
+            this._getUnitOfMeasurement(subEntity.attributes.unit_of_measurement || unit_of_measurement)
           );
           normalized.state += state;
         });
@@ -252,7 +252,7 @@ export class Chart extends LitElement {
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
-            this._getUnitOfMeasurement(entityConf.unit_of_measurement || subEntity.attributes.unit_of_measurement)
+            this._getUnitOfMeasurement(subEntity.attributes.unit_of_measurement || unit_of_measurement)
           );
           // stay positive
           normalized.state -= Math.min(state, normalized.state);
