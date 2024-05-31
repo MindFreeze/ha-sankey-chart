@@ -33,7 +33,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           <div class="spacerv" style="height:69.5px;"></div>
           
           <div class="box type-entity" style="height:61px;">
-            <div style="background-color:var(--warning-color);" title="2kW Total" class="">
+            <div style="background-color:var(--warning-color);" title="1.8kW Total" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -81,7 +81,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           <div class="spacerv" style="height:5px;"></div>
           
           <div class="box type-remaining_child_state" style="height:190px;">
-            <div style="background-color:darkslateblue;" title="6kW Total
+            <div style="background-color:darkslateblue;" title="5.6kW Total
 All
 All
 All
@@ -146,7 +146,7 @@ IDK" class="">
           
           
           <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="2kW Varmtvann
+            <div style="background-color:var(--primary-color);" title="1.9kW Varmtvann
 Blaa" class="">
               
             </div>
@@ -162,7 +162,7 @@ Blaa" class="">
           <div class="spacerv" style="height:5.5px;"></div>
           
           <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="2kВ Avfukter" class="">
+            <div style="background-color:var(--primary-color);" title="1.9kВ Avfukter" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -177,7 +177,7 @@ Blaa" class="">
           <div class="spacerv" style="height:5.5px;"></div>
           
           <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="2kW " class="">
+            <div style="background-color:var(--primary-color);" title="1.9kW " class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -211,7 +211,7 @@ Blaa" class="">
           <div class="spacerv" style="height:68.5px;"></div>
           
           <div class="box type-passthrough" style="height:63px;">
-            <div style="background-color:red;" title="2kW " class="">
+            <div style="background-color:red;" title="1.9kW " class="">
               
             </div>
             
@@ -226,7 +226,7 @@ Blaa" class="">
           <div class="spacerv" style="height:68.5px;"></div>
           
           <div class="box type-entity" style="height:63px;">
-            <div style="background-color:red;" title="2kW " class="">
+            <div style="background-color:red;" title="1.9kW " class="">
               
             </div>
             <div class="label" style="line-height:15px;">

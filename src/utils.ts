@@ -35,6 +35,7 @@ export function formatState(state: number, round: number, locale: FrontendLocale
 
   if (!monetary_unit) {
     return formatNumber(parseFloat(rounded), locale, {
+      minimumFractionDigits: 0,
       maximumFractionDigits: decimals - 1,
     });
   } else {
@@ -42,6 +43,7 @@ export function formatState(state: number, round: number, locale: FrontendLocale
       style: 'currency',
       currency: monetary_unit,
       minimumFractionDigits: decimals - 1,
+      maximumFractionDigits: decimals - 1,
     });
   }
 }

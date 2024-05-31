@@ -29,6 +29,7 @@ describe('SankeyChart with remaining type entities', () => {
       show_states: true,
       min_state: 0.1,
       unit_prefix: 'k',
+      round: 1,
       sections: [
         {
           entities: [
