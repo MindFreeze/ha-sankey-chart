@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.1...v3.2.2) (2024-05-31)
+
+
+### Bug Fixes
+
+* **#200:** RangeError: maximumFactionDigits value is out of range ([0451b38](https://github.com/MindFreeze/ha-sankey-chart/commit/0451b389452fbaf1cf64528aa9c082541a9c6d94))
+
 ## [3.2.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.0...v3.2.1) (2024-05-31)
 
 
