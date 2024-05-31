@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.0...v3.2.1) (2024-05-31)
+
+
+### Bug Fixes
+
+* **#202:** fix padding issue with header ([d5f9289](https://github.com/MindFreeze/ha-sankey-chart/commit/d5f92892f05ddea0855b6a350ed78496c26c933f))
+* connection_entity_id and add_entities/subtract_entities ([#199](https://github.com/MindFreeze/ha-sankey-chart/issues/199)) ([d2c987d](https://github.com/MindFreeze/ha-sankey-chart/commit/d2c987df081ae56e639d00befc148a5ce2ebcf0e))
+
 ## [3.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.1.0...v3.2.0) (2024-05-16)
 
 
