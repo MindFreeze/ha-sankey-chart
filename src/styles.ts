@@ -14,7 +14,7 @@ export default css`
         overflow: hidden;
     }
     .container.with-header {
-        padding-top: 0;
+        margin-top: -16px;
     }
     .container.vertical {
         flex-direction: column;
