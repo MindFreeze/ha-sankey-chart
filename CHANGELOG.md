@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.2...v3.2.3) (2024-07-18)
+
+
+### Bug Fixes
+
+* **#209:** remove empty space at bottom of vertical layout ([cb5c3b5](https://github.com/MindFreeze/ha-sankey-chart/commit/cb5c3b52dd8025fdf7909a61219dadd0d2b5f1e0))
+
 ## [3.2.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.1...v3.2.2) (2024-05-31)
 
 
