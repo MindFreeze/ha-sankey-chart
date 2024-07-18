@@ -26,6 +26,9 @@ export default css`
         min-width: 0;
         max-width: 50%;
     }
+    .wide .section:last-child {
+        flex: initial;
+    }
     .vertical .section {
         display: flex;
         flex: initial;
@@ -35,8 +38,8 @@ export default css`
         width: 100%;
         height: ${unsafeCSS(MIN_VERTICAL_SECTION_H + 'px')};
     }
-    .wide .section:last-child {
-        flex: initial;
+    .vertical .section:last-child {
+        flex: 1;
     }
     .spacerv {
         transition: height 0.25s;
