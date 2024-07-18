@@ -28,7 +28,7 @@ This card is intended to display connections between entities with numeric state
 | unit_prefix       | string  |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
 | round             | number  | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
 | height            | number  | 200                 | The height of the card in pixels. Only matters while in horizontal layout. Vertical layout height is dynamic based on content
-| wide              | boolean | false               | Set this to true if you see extra empty space in the right side of the card. This will expand it horizontally to cover all the available space. Enable if you see empty space on the right size
+| wide              | boolean | false               | Set this to true if you see extra empty space on the right side of the card. This will expand it horizontally to cover all the available space. Only relevant in horizontal mode.
 | show_icons        | boolean | false               | Display entity icons
 | show_names        | boolean | false               | Display entity names
 | show_states       | boolean | true                | Display entity states
