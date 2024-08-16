@@ -36,8 +36,9 @@ console.info(
 (window as any).customCards.push({
   type: 'sankey-chart',
   name: 'Sankey Chart',
-  description:
-    'A card to display a sankey chart. For example for power consumptionA template custom card for you to create something awesome',
+  description: 'A card to display a sankey chart. For example for power or energy consumption',
+  documentationURL: 'https://github.com/MindFreeze/ha-sankey-chart',
+  // preview: true, // requires energy data
 });
 
 const ENERGY_DATA_TIMEOUT = 10000;
@@ -329,11 +330,13 @@ class SankeyChart extends SubscribeMixin(LitElement) {
               children: areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
             }),
           ),
-          ...orphanAreas.map((a): EntityConfigInternal => ({
-            entity_id: a.area.area_id,
-            type: 'passthrough',
-            children: [],
-          })),
+          ...orphanAreas.map(
+            (a): EntityConfigInternal => ({
+              entity_id: a.area.area_id,
+              type: 'passthrough',
+              children: [],
+            }),
+          ),
           {
             entity_id: 'unknown',
             type: 'passthrough',
