@@ -15,6 +15,10 @@ This card is intended to display connections between entities with numeric state
 
 ![Example card](img/example.png)
 
+## Installation
+
+Install through [HACS](https://hacs.xyz/)
+
 ## Options
 
 | Name              | Type    | Default             | Description                                 |
@@ -125,7 +129,7 @@ This card is intended to display connections between entities with numeric state
 This card supports automatic configuration generation based on the HA energy dashboard. It will set default values for some config parameters and populate the `sections` param. This is meant to show energy data and assumes you have configured your [Energy Dashboard in HA](https://my.home-assistant.io/redirect/config_energy). Use it like this:
 
 ```yaml
-- type: energy-date-selection # you can put this anywhere you want but it is required for energy dashboard integration 
+- type: energy-date-selection # you can put this anywhere you want but it is required for energy dashboard integration
 - type: custom:sankey-chart
   # ...any other options
   autoconfig:
