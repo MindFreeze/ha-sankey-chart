@@ -72,7 +72,7 @@ Install through [HACS](https://hacs.xyz/)
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
 | unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
-| color             | string  | **Optional** | var(--primary-color)| Color of the box
+| color             | string  | **Optional** | var(--primary-color)| Color of the box. Example values: 'red', '#FFAA2C', 'rgb(255, 170, 44)'
 | color_on_state    | boolean | **Optional** | false               | Color the box based on state value
 | color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
 | color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
