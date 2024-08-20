@@ -57,7 +57,9 @@ export function normalizeStateValue(
   if (!unit_of_measurement || unit_of_measurement == 'monetary') {
     return { state: validState, unit_of_measurement };
   }
-  const prefix = Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0) || '';
+  const cleanUnit = unit_of_measurement.replace('²', '').replace('³', '');
+  const prefix =
+    (cleanUnit.length > 1 && Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0)) || '';
   const currentFactor = UNIT_PREFIXES[prefix] || 1;
   const targetFactor = UNIT_PREFIXES[unit_prefix] || 1;
   if (currentFactor === targetFactor) {
