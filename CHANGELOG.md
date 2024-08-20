@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.3...v3.2.4) (2024-08-20)
+
+
+### Bug Fixes
+
+* fix for suffixed units like m³ ([36d1ce7](https://github.com/MindFreeze/ha-sankey-chart/commit/36d1ce7b56732eb197ce65c2530c8d0d01acc2a2))
+
 ## [3.2.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.2...v3.2.3) (2024-07-18)
 
 
