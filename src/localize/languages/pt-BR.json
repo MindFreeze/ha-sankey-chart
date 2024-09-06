@@ -1,0 +1,79 @@
+{
+  "common": {
+    "version": "Versão",
+    "invalid_configuration": "Configuração inválida",
+    "show_warning": "Mostar Aviso",
+    "entity_not_found": "Estado da entidade não encontrado",
+    "missing_child": "Entidade filho não encontrada",
+    "loading": "Carregando..."
+  },
+  "editor": {
+    "yaml_disclaimer": "Por favor, use o modo yaml para as outras opções",
+    "docs": "Documentação",
+    "sections": "Seções",
+    "section": "Seção",
+    "add_section": "+ Add seção",
+    "add_entity": "+ Adicionar entidade",
+    "entity_editor": "Editor de entidade",
+    "decimals": "decimais",
+    "section_options": "Opções",
+    "fields": {
+      "autoconfig": "Auto-configurar",
+      "print_yaml": "Imprimir yaml da configuração gerada automaticamente",
+      "layout": "Layout",
+      "show_names": "Mostrar nomes",
+      "show_icons": "Mostrar ícones",
+      "show_states": "Mostrar estados",
+      "show_units": "Mostrar unidades",
+      "energy_date_selection": "Sincronizar com o componente energy_date_selection",
+      "height": "Altura",
+      "wide": "Largura",
+      "min_box_size": "Tamanho mínimo da caixa",
+      "min_box_distance": "Distância mínima da caixa",
+      "min_state": "Estado mínimo",
+      "static_scale": "Escala estática",
+      "round": "Arredondar",
+      "throttle": "Acelerador",
+      "unit_prefix": "Prefixo da unidade",
+      "entity": "Entidade",
+      "type": "Tipo",
+      "children": "Filho",
+      "name": "Nome",
+      "icon": "Ícone",
+      "color": "Cor",
+      "unit_of_measurement": "Unidade de medida",
+      "tap_action": "Ação ao tocar",
+      "color_on_state": "Alterar cor com base no estado",
+      "color_limit": "Limite de estado para mudança de cor",
+      "color_above": "Cor acima do limite",
+      "color_below": "Cor abaixo do limite",
+      "sort_by": "Ordenar por",
+      "sort_dir": "Direção de ordenação",
+      "section": {
+        "min_width": "Largura mínima",
+        "sort_by": "Ordenar por",
+        "sort_dir": "Direção de ordenação",
+        "sort_group_by_parent": "Agrupar por pai"
+      }
+    },
+    "entity_types": {
+      "entity": "Entidade",
+      "remaining_parent_state": "Restante do estado pai",
+      "remaining_child_state": "Restante do estado filho",
+      "passthrough": "Passagem"
+    },
+    "sort_by": {
+      "none": "Nenhum",
+      "state": "Estado"
+    },
+    "sort_dir": {
+      "desc": "Descendente",
+      "asc": "Ascendente"
+    },
+    "layout": {
+      "auto": "Automático",
+      "vertical": "Vertical",
+      "horizontal": "Horizontal"
+    }
+  }
+}
