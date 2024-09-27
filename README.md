@@ -27,7 +27,7 @@ Install through [HACS](https://hacs.xyz/)
 | autoconfig        | object  |                     | Experimental. See [autoconfig](#autoconfig)
 | sections          | list    |                     | Required unless using autoconfig. Entities to show divided by sections, see [sections object](#sections-object) for additional options.
 | layout            | string  | auto                | Valid options are: 'horizontal' - flow left to right, 'vertical' - flow top to bottom & 'auto' - determine based on available space (based on the section->`min_witdh` option, which defaults to 150)
-| energy_date_selection | boolean | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart.
+| energy_date_selection | boolean | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart. Not compatible with `time_period`
 | title             | string  |                     | Optional header title for the card
 | unit_prefix       | string  |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T
 | round             | number  | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
@@ -50,6 +50,8 @@ Install through [HACS](https://hacs.xyz/)
 | monetary_unit     | string  |                     | Currency of the gas or electricity price, e.g. 'USD'
 | sort_by           | string  |                     | Sort the entities. Valid options are: 'state'. If your values change often, you may want to use the `throttle` option to limit update frequency
 | sort_dir          | string  | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
+| time_period_from | string  |                      | Start of custom time period (e.g., "now-1d", "now/d"). Not compatible with `energy_date_selection`. See [Time period](#time-period)
+| time_period_to   | string  | now                  | End of custom time period. Not compatible with `energy_date_selection`. See [Time period](#time-period)
 
 ### Sections object
 
@@ -137,9 +139,56 @@ This card supports automatic configuration generation based on the HA energy das
     # any additional autoconfig options (listed below)
 ```
 
+or like this:
+
+```yaml
+- type: custom:sankey-chart
+  autoconfig: true
+  time_period_from: "now/d" # today
+```
+
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | print_yaml        | boolean | **Optional** | false               | Prints the auto generated configuration after the card so you can use it as a starting point for customization. It shows up like an error. Don't worry about it.
+
+### Time Period
+
+The `time_period_from` and `time_period_to` options allow you to specify a custom time period for data retrieval. The format is based on [Grafana's time range format](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/?pg=blog&plcmt=body-txt#set-dashboard-time-range).
+
+Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks), M (months), y (years)
+
+Note that while seconds and minutes are supported, there is a delay in the statistics data in HA of up to 1 hour, so showing small periods like the last 30 mins probably won't work.
+
+Examples:
+
+- `now-5m`: 5 minutes ago
+- `now-1h`: 1 hour ago
+- `now-1d`: 1 day ago
+- `now-1w`: 1 week ago
+- `now-1M`: 1 month ago
+- `now/d`: Start of the current day
+- `now/w`: Start of the current week
+- `now/M`: Start of the current month
+- `now/y`: Start of the current year
+- `now-1d/d`: Start of the previous day
+
+If `time_period_to` is not specified, it defaults to `now`.
+
+Example configurations:
+
+```yaml
+type: custom:sankey-chart
+title: Last 7 days up to the current moment
+time_period_from: "now-7d"
+```
+
+```yaml
+type: custom:sankey-chart
+title: Yesterday
+time_period_from: "now-1d/d"
+time_period_to: "now/d"
+```
+
 
 ## Examples
 
@@ -240,7 +289,7 @@ You can find more examples and help in the HA forum <https://community.home-assi
 
 This card supports partial Energy dashboard integration. You still need to specify the entities and connections for now. See `energy_date_selection` option.
 
-Currently this chart just shows historical data based on a energy-date-selection card. It doesn’t know/care if your entities are in the default energy dashboard.
+Currently this chart just shows historical data based on a energy-date-selection card. It doesn't know/care if your entities are in the default energy dashboard.
 
 ## FAQ
 
@@ -250,7 +299,7 @@ Currently this chart just shows historical data based on a energy-date-selection
 
 **Q: How do I get total [daily] energy?**
 
-**A:** There isn’t a general Consumed Energy sensor in the HA Energy dashboard AFAIK. HA calculates it based on all the in/out kWh values. I can’t tell you exactly how to calculate it because it depends on what values you can monitor. Some people already have a Total Consumption sensor, others have a Current Consumption and create an integration sensor from that, etc.
+**A:** There isn't a general Consumed Energy sensor in the HA Energy dashboard AFAIK. HA calculates it based on all the in/out kWh values. I can't tell you exactly how to calculate it because it depends on what values you can monitor. Some people already have a Total Consumption sensor, others have a Current Consumption and create an integration sensor from that, etc.
 
 **Q: Can I group/sum entities in the chart?**
 
@@ -273,11 +322,11 @@ Currently this chart just shows historical data based on a energy-date-selection
 1. `npm i`
 2. `npm start`
 3. The compiled `.js` file will be accessible on
-   `http://127.0.0.1:5000/ha-sankey-chart.js`.
+   `http://127.0.0.1:3000/ha-sankey-chart.js`.
 4. On a running Home Assistant installation add this to your Lovelace `resources:`
 
 ```yaml
-- url: 'http://127.0.0.1:5000/ha-sankey-chart.js'
+- url: 'http://127.0.0.1:3000/ha-sankey-chart.js'
   type: module
 ```
 
@@ -287,3 +336,4 @@ Currently this chart just shows historical data based on a energy-date-selection
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2024.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [releases]: https://github.com/MindFreeze/ha-sankey-chart/releases
+

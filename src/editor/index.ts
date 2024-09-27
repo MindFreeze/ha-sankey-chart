@@ -73,6 +73,12 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         };
       }
     } else {
+      if (ev.detail.value.time_period_from && !this._config!.time_period_from) {
+        ev.detail.value.energy_date_selection = false;
+      } else if (ev.detail.value.energy_date_selection && !this._config!.energy_date_selection) {
+        ev.detail.value.time_period_from = undefined;
+        ev.detail.value.time_period_to = undefined;
+      }
       this._config = { ...ev.detail.value };
     }
     this._updateConfig();
@@ -164,15 +170,17 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       //   ],
       // },
       { name: 'title', selector: { text: {} } },
-      { name: 'show_names', selector: { boolean: {} } },
-      { name: 'show_icons', selector: { boolean: {} } },
-      { name: 'show_states', selector: { boolean: {} } },
-      { name: 'show_units', selector: { boolean: {} } },
       { name: 'energy_date_selection', selector: { boolean: {} } },
       {
         type: 'grid',
         name: '',
         schema: [
+          { name: 'time_period_from', selector: { text: {} } },
+          { name: 'time_period_to', selector: { text: {} } },
+          { name: 'show_names', selector: { boolean: {} } },
+          { name: 'show_icons', selector: { boolean: {} } },
+          { name: 'show_states', selector: { boolean: {} } },
+          { name: 'show_units', selector: { boolean: {} } },
           {
             name: 'layout',
             selector: {

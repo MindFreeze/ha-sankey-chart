@@ -20,6 +20,7 @@ import {
   Section,
   SectionConfig,
 } from './types';
+import { addSeconds, addMinutes, addHours, addDays, addWeeks, addMonths, addYears, startOfDay, startOfWeek, startOfMonth, startOfYear } from 'date-fns';
 
 export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
@@ -127,7 +128,7 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric: boolean): Con
   const { autoconfig } = conf;
   if (autoconfig || typeof autoconfig === 'object') {
     config = {
-      energy_date_selection: true,
+      energy_date_selection: !config.time_period_from,
       unit_prefix: 'k',
       round: 1,
       ...config,
@@ -246,4 +247,47 @@ export async function renderError(
   }
 
   return html` ${element} `;
+}
+
+export function calculateTimePeriod(from: string, to = 'now'): { start: Date; end: Date } {
+  const now = new Date();
+
+  function parseTimeString(timeStr: string): Date {
+    if (timeStr === 'now') return now;
+
+    const match = timeStr.match(/^now(-|\+)?(\d+)?([smhdwMy])?(\/(d|w|M|y))?$/);
+    if (!match) throw new Error(`Invalid time format: ${timeStr}`);
+
+    const [, sign, amount, unit, , roundTo] = match;
+    let date = new Date(now);
+
+    if (amount && unit) {
+      const numAmount = parseInt(amount, 10) * (sign === '-' ? -1 : 1);
+      switch (unit) {
+        case 's': date = addSeconds(date, numAmount); break;
+        case 'm': date = addMinutes(date, numAmount); break;
+        case 'h': date = addHours(date, numAmount); break;
+        case 'd': date = addDays(date, numAmount); break;
+        case 'w': date = addWeeks(date, numAmount); break;
+        case 'M': date = addMonths(date, numAmount); break;
+        case 'y': date = addYears(date, numAmount); break;
+      }
+    }
+
+    if (roundTo) {
+      switch (roundTo) {
+        case 'd': date = startOfDay(date); break;
+        case 'w': date = startOfWeek(date); break;
+        case 'M': date = startOfMonth(date); break;
+        case 'y': date = startOfYear(date); break;
+      }
+    }
+
+    return date;
+  }
+
+  const start = parseTimeString(from);
+  const end = parseTimeString(to);
+
+  return { start, end };
 }

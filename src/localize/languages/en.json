@@ -18,6 +18,9 @@
     "decimals": "decimals",
     "section_options": "Options",
     "fields": {
+      "title": "Title",
+      "time_period_from": "Time period from",
+      "time_period_to": "Time period to",
       "autoconfig": "Autoconfig",
       "print_yaml": "Print auto generated config yaml",
       "layout": "Layout",

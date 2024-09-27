@@ -39,6 +39,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   static_scale?: number;
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
+  time_period_from?: string;
+  time_period_to?: string;
 }
 
 declare global {

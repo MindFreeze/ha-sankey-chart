@@ -18,11 +18,14 @@ import {
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
+  getEnergyPreferences,
+  EnergyPreferences,
 } from './energy';
 import { until } from 'lit/directives/until';
 import { fetchFloorRegistry, getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
 import './editor/index';
+import { calculateTimePeriod } from './utils';
 
 /* eslint no-console: 0 */
 console.info(
@@ -64,76 +67,110 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private forceUpdateTs?: number;
 
   public hassSubscribe() {
-    if (!this.config.energy_date_selection) {
-      return [];
-    }
-    const start = Date.now();
-    const getEnergyDataCollectionPoll = (
-      resolve: (value: EnergyCollection | PromiseLike<EnergyCollection>) => void,
-      reject: (reason?: any) => void,
-    ) => {
-      const energyCollection = getEnergyDataCollection(this.hass);
-      if (energyCollection) {
-        resolve(energyCollection);
-      } else if (Date.now() - start > ENERGY_DATA_TIMEOUT) {
-        console.debug(getEnergyDataCollection(this.hass));
-        reject(
-          new Error('No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.'),
-        );
-      } else {
-        setTimeout(() => getEnergyDataCollectionPoll(resolve, reject), 100);
-      }
-    };
-    const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
-    setTimeout(() => {
-      if (!this.error && !Object.keys(this.states).length) {
-        this.error = new Error('Something went wrong. No energy data received.');
-        console.debug(getEnergyDataCollection(this.hass));
-      }
-    }, ENERGY_DATA_TIMEOUT * 2);
-    energyPromise.catch(err => {
-      this.error = err;
-    });
-    return [
-      energyPromise.then(async collection => {
-        const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
-        if (isAutoconfig && !this.config.sections.length) {
-          try {
-            await this.autoconfig(collection);
-          } catch (err: any) {
-            this.error = new Error(err?.message || err);
-          }
+    const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
+    if (this.config.energy_date_selection) {
+      const start = Date.now();
+      const getEnergyDataCollectionPoll = (
+        resolve: (value: EnergyCollection | PromiseLike<EnergyCollection>) => void,
+        reject: (reason?: any) => void,
+      ) => {
+        const energyCollection = getEnergyDataCollection(this.hass);
+        if (energyCollection) {
+          resolve(energyCollection);
+        } else if (Date.now() - start > ENERGY_DATA_TIMEOUT) {
+          console.debug(getEnergyDataCollection(this.hass));
+          reject(
+            new Error('No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.'),
+          );
+        } else {
+          setTimeout(() => getEnergyDataCollectionPoll(resolve, reject), 100);
         }
-        return collection.subscribe(async data => {
+      };
+      const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
+      setTimeout(() => {
+        if (!this.error && !Object.keys(this.states).length) {
+          this.error = new Error('Something went wrong. No energy data received.');
+          console.debug(getEnergyDataCollection(this.hass));
+        }
+      }, ENERGY_DATA_TIMEOUT * 2);
+      energyPromise.catch(err => {
+        this.error = err;
+      });
+      return [
+        energyPromise.then(async collection => {
           if (isAutoconfig && !this.config.sections.length) {
             try {
-              await this.autoconfig(collection);
+              await this.autoconfig(collection.prefs);
             } catch (err: any) {
               this.error = new Error(err?.message || err);
-              return;
             }
           }
-          if (this.entityIds.length) {
-            const conversions: Conversions = {
-              convert_units_to: this.config.convert_units_to!,
-              co2_intensity_entity: this.config.co2_intensity_entity!,
-              gas_co2_intensity: this.config.gas_co2_intensity!,
-              electricity_price: this.config.electricity_price,
-              gas_price: this.config.gas_price,
-            };
-            const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
-            const states: HassEntities = {};
-            Object.keys(stats).forEach(id => {
-              if (this.hass.states[id]) {
-                states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+          return collection.subscribe(async data => {
+            if (isAutoconfig && !this.config.sections.length) {
+              try {
+                await this.autoconfig(collection.prefs);
+              } catch (err: any) {
+                this.error = new Error(err?.message || err);
+                return;
               }
-            });
-            this.states = states;
+            }
+            if (this.entityIds.length) {
+              const conversions: Conversions = {
+                convert_units_to: this.config.convert_units_to!,
+                co2_intensity_entity: this.config.co2_intensity_entity!,
+                gas_co2_intensity: this.config.gas_co2_intensity!,
+                electricity_price: this.config.electricity_price,
+                gas_price: this.config.gas_price,
+              };
+              const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
+              const states: HassEntities = {};
+              Object.keys(stats).forEach(id => {
+                if (this.hass.states[id]) {
+                  states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+                }
+              });
+              this.states = states;
+            }
+            this.forceUpdateTs = Date.now();
+          });
+        }),
+      ];
+    } else if (this.config.time_period_from) {
+      const getTimePeriod = async () => {
+        if (isAutoconfig && !this.config.sections.length) {
+          await this.autoconfig();
+        }
+        if (this.config.time_period_from) {
+          try {
+            const { start, end } = calculateTimePeriod(this.config.time_period_from, this.config.time_period_to);
+            if (this.entityIds.length) {
+              const conversions: Conversions = {
+                convert_units_to: this.config.convert_units_to!,
+                co2_intensity_entity: this.config.co2_intensity_entity!,
+                gas_co2_intensity: this.config.gas_co2_intensity!,
+                electricity_price: this.config.electricity_price,
+                gas_price: this.config.gas_price,
+              };
+              const stats = await getStatistics(this.hass, { start, end }, this.entityIds, conversions);
+              const states: HassEntities = {};
+              Object.keys(stats).forEach(id => {
+                if (this.hass.states[id]) {
+                  states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+                }
+              });
+              this.states = states;
+            }
+          } catch (err: any) {
+            this.error = err;
           }
           this.forceUpdateTs = Date.now();
-        });
-      }),
-    ];
+        }
+      }
+      getTimePeriod();
+      const interval = setInterval(getTimePeriod, this.config.throttle || 1000);
+      return [() => clearInterval(interval)];
+    }
+    return [];
   }
 
   // https://lit.dev/docs/components/properties/#accessors-custom
@@ -170,11 +207,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
   }
 
-  private async autoconfig(collection: EnergyCollection) {
-    if (!collection.prefs) {
-      return;
+  private async autoconfig(prefs?: EnergyPreferences) {
+    if (!prefs) {
+      prefs = await getEnergyPreferences(this.hass);
     }
-    const sources = (collection.prefs?.energy_sources || [])
+    const sources = (prefs?.energy_sources || [])
       .map(s => ({
         ...s,
         ids: [s, ...(s.flow_from || [])]
@@ -204,7 +241,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         return 1;
       });
     const names: Record<string, string> = {};
-    const deviceIds = (collection.prefs?.device_consumption || [])
+    const deviceIds = (prefs?.device_consumption || [])
       .filter(d => {
         if (!this.hass.states[d.stat_consumption]) {
           console.warn('Ignoring missing entity ' + d.stat_consumption);
@@ -360,7 +397,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     return html`
       <sankey-chart-base
         .hass=${this.hass}
-        .states=${this.config.energy_date_selection ? this.states : this.hass.states}
+        .states=${Object.keys(this.states).length ? this.states : this.hass.states}
         .config=${this.config}
         .forceUpdateTs=${this.forceUpdateTs}
         .width=${this.clientWidth || this.offsetWidth || this.parentElement?.clientWidth || window.innerWidth}

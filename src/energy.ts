@@ -103,9 +103,14 @@ export const getEnergyDataCollection = (
   if ((hass.connection as any)[key]) {
     return (hass.connection as any)[key];
   }
-  // HA has not initialized the collection yet and we don't want to interfere with that
+  // HA has not initialized the collection yet and we don't want to interfere with that if energy_date_selection is enabled
   return null;
 };
+
+export const getEnergyPreferences = (hass: HomeAssistant) =>
+  hass.callWS<EnergyPreferences>({
+    type: "energy/get_prefs",
+  });
 
 
 const fetchStatistics = (
@@ -175,10 +180,10 @@ const calculateStatisticSumGrowth = (
   return growth;
 };
 
-export async function getStatistics(hass: HomeAssistant, energyData: EnergyData, devices: string[], conversions: Conversions): Promise<Record<string, number>> {
+export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<EnergyData, 'start' | 'end'>, devices: string[], conversions: Conversions): Promise<Record<string, number>> {
   const dayDifference = differenceInDays(
-    energyData.end || new Date(),
-    energyData.start
+    end || new Date(),
+    start
   );
   const period = dayDifference > 35 ? "month" : dayDifference > 2 ? "day" : "hour";
 
@@ -190,10 +195,10 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
         // If converting from kWh to CO2, we need to use a different API call to account for time-varying CO2 intensity
         time_variant_data[id] = fetchFossilEnergyConsumption(
           hass,
-          energyData.start,
+          start,
           [id],
           conversions.co2_intensity_entity,
-          energyData.end,
+          end,
           period
         );
       }
@@ -211,8 +216,8 @@ export async function getStatistics(hass: HomeAssistant, energyData: EnergyData,
   if (time_invariant_devices.length > 0) {
     time_invariant_data = await fetchStatistics(
       hass,
-      energyData.start,
-      energyData.end,
+      start,
+      end,
       time_invariant_devices,
       period,
       // units,

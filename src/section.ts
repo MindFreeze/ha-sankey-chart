@@ -103,7 +103,7 @@ export function renderSection(props: {
             <svg viewBox="${viewBox}" preserveAspectRatio="none">${renderBranchConnectors(props)}</svg>
           </div>`
         : null}
-      ${boxes.map((box, i) => {
+      ${boxes.map(box => {
         const { entity, extraSpacers } = box;
         const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
