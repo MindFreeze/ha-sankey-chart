@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.4...v3.3.0) (2024-09-27)
+
+
+### Features
+
+* **#151:** static relative start / end dates instead of using energy-date-selector ([13307f8](https://github.com/MindFreeze/ha-sankey-chart/commit/13307f8d818c2f7d5b5a9862bda59c8d29f536ae))
+* add pt-BR translation ([#221](https://github.com/MindFreeze/ha-sankey-chart/issues/221)) ([46ea331](https://github.com/MindFreeze/ha-sankey-chart/commit/46ea3318c93aae2742bb327116be0ed859457a67))
+
 ## [3.2.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.3...v3.2.4) (2024-08-20)
 
 
