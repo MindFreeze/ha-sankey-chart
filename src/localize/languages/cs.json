@@ -1,0 +1,79 @@
+{
+  "common": {
+    "version": "Verze",
+    "invalid_configuration": "Nesprávná konfigurace",
+    "show_warning": "Zobrazit upozornění",
+    "entity_not_found": "Stav entity sa nenašel",
+    "missing_child": "Chybí podřazená entita",
+    "loading": "Načítaní..."
+  },
+  "editor": {
+    "yaml_disclaimer": "Pro ostatní možnosti použijte režim yaml",
+    "docs": "Dokumentace",
+    "sections": "Oddíly",
+    "section": "Oddíl",
+    "add_section": "+ Přidat oddíl",
+    "add_entity": "+ Přidat entitu",
+    "entity_editor": "Editor entity",
+    "decimals": "desetinná místa",
+    "section_options": "Možnosti",
+    "fields": {
+      "autoconfig": "Autokonfig",
+      "print_yaml": "Ukáže automaticky generovaný konfigurační yaml",
+      "layout": "Rozložení",
+      "show_names": "Zobrazit názvy",
+      "show_icons": "Zobrazit ikony",
+      "show_states": "Zobrazit stavy",
+      "show_units": "Zobrazit jednotky",
+      "energy_date_selection": "Synchronizace s komponentem energy_date_selection",
+      "height": "Výška",
+      "wide": "Šírka",
+      "min_box_size": "Min. výška boxu",
+      "min_box_distance": "Minimální vzdálenost boxu",
+      "min_state": "Min stav",
+      "static_scale": "Statická míra",
+      "round": "Zaokrouhlit",
+      "throttle": "Plyn",
+      "unit_prefix": "Předpona jednotky",
+      "entity": "Entita",
+      "type": "Typ",
+      "children": "Podřazený",
+      "name": "Název",
+      "icon": "Ikona",
+      "color": "Barva",
+      "unit_of_measurement": "Jednotky meření",
+      "tap_action": "Klikněte na akci",
+      "color_on_state": "Zmeňte barvu podle stavu",
+      "color_limit": "Limit pro změnu barvy",
+      "color_above": "Barva nad limitem",
+      "color_below": "Barva pod limitem",
+      "sort_by": "Třídit podle",
+      "sort_dir": "Směr třídění",
+      "section": {
+        "min_width": "Min. šířka",
+        "sort_by": "Třídit podle",
+        "sort_dir": "Směr řazení",
+        "sort_group_by_parent": "Skupina podle nadřazených"
+      }
+    },
+    "entity_types": {
+      "entity": "Entita",
+      "remaining_parent_state": "Zbývající nadřazený stav",
+      "remaining_child_state": "Zbývající podřazený stav",
+      "passthrough": "Přejít přes"
+    },
+    "sort_by": {
+      "none": "Nic",
+      "state": "Stav"
+    },
+    "sort_dir": {
+      "desc": "Sestupně",
+      "asc": "Vzestupně"
+    },
+    "layout": {
+      "auto": "Auto",
+      "vertical": "Vertikálně",
+      "horizontal": "Horizontálně"
+    }
+  }
+}
