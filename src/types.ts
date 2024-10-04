@@ -67,6 +67,7 @@ export interface EntityConfig {
   color_above?: string;
   color_below?: string;
   color_limit?: number;
+  url?: string;
   tap_action?: ActionConfigExtended;
   double_tap_action?: ActionConfigExtended;
   hold_action?: ActionConfigExtended;
