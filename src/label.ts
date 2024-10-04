@@ -67,7 +67,7 @@ export function renderLabel(
         </span>`
       : null}
     ${show_names
-      ? html`${!vertical ? html`&nbsp;` : null}<span class="name" style=${styleMap(nameStyle)}>${(typeof box.config.url === 'undefined' || box.config.url === null) ? html`${name}` : html`<a href="${box.config.url}" target="_blank">${name}</a>`}</span>`
+      ? html`${!vertical ? html`&nbsp;` : null}<span class="name" style=${styleMap(nameStyle)}>${!box.config.url ? html`${name}` : html`<a href="${box.config.url}" target="_blank">${name}</a>`}</span>`
       : null}
   </div>`;
 }
