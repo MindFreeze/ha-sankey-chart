@@ -79,7 +79,8 @@ Install through [HACS](https://hacs.xyz/)
 | color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
 | color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
-| url               | string  | **Optional** |                     | URL for name link
+| url               | string  | **Optional** |                     | Specifying a URL will make the entity label into a link
+
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
 | tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
