@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.3.0...v3.4.0) (2024-10-04)
+
+
+### Features
+
+* Add link support for entity names ([#232](https://github.com/MindFreeze/ha-sankey-chart/issues/232)) ([a70811b](https://github.com/MindFreeze/ha-sankey-chart/commit/a70811be5278af0a4ca0065718bddf78a1d4399b))
+
 ## [3.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.2.4...v3.3.0) (2024-09-27)
 
 
