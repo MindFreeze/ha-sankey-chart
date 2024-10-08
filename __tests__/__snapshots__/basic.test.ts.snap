@@ -198,6 +198,11 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
         font-style: italic;
         font-size: inherit;
     }
+    .box .label .name a {
+        position: sticky;
+        z-index: 100;
+        color: var(--primary-text-color);
+    }
     .connectors {
         position: absolute;
         top: 0;
