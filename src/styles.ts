@@ -109,6 +109,11 @@ export default css`
         font-style: italic;
         font-size: inherit;
     }
+    .box .label .name a {
+        position: sticky;
+        z-index: 100;
+        color: var(--primary-text-color);
+    }
     .connectors {
         position: absolute;
         top: 0;
