@@ -1,12 +1,16 @@
 import * as en from './languages/en.json'
-import * as cz from './languages/cs.json';
+import * as cz from './languages/cz.json';
 import * as sk from './languages/sk.json';
+import * as nl from './languages/nl.json';
+import * as pt from './languages/pt-BR.json';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const languages: any = {
   en: en,
   cz: cz,
   sk: sk,
+  nl: nl,
+  pt: pt,
 };
 
 export function localize(string: string, search = '', replace = ''): string {
