@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.4.0...v3.5.0) (2024-10-24)
+
+
+### Features
+
+* enable nl, cz and pt translations ([90a7298](https://github.com/MindFreeze/ha-sankey-chart/commit/90a729836d53d004dac867852667506dd405e2d0))
+
 ## [3.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.3.0...v3.4.0) (2024-10-04)
 
 
