@@ -1,9 +1,11 @@
 import * as en from './languages/en.json'
+import * as cz from './languages/cs.json';
 import * as sk from './languages/sk.json';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const languages: any = {
   en: en,
+  cz: cz,
   sk: sk,
 };
 
