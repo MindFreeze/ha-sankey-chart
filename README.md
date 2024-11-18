@@ -318,6 +318,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 
 **A:** Most probably no. There is nothing wrong with template entities and they should be the prefered approach instead of duplicating HA functionality in every card. I do make exceptions for often required features like `remaining_parent_state` but prefer to rely on HA functionality whenever I can.
 
+**Q: My entities are not rendered where I expected**
+
+**A:** By default entities are displayed in the order in which they appear in the config. You can rearrange them in the YAML or use the sorting options.
+
 ## Development
 
 1. `npm i`
