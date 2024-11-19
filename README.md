@@ -111,7 +111,7 @@ Install through [HACS](https://hacs.xyz/)
   # Note that passthrough entities have no children as they always connect to their own entity_id in the next section
 ```
 
-- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Example:
+- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Obviously it must be listed in some prior entity's children. Example:
 
 ```yaml
 - entity_id: whatever # as long as it is unique
@@ -125,6 +125,8 @@ Install through [HACS](https://hacs.xyz/)
 - entity_id: whatever # as long as it is unique
   type: remaining_child_state
   name: Discrepancy
+  children:
+    # the relevant child entities
 ```
 
 ### Autoconfig
