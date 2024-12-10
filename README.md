@@ -52,6 +52,7 @@ Install through [HACS](https://hacs.xyz/)
 | sort_dir          | string  | desc                | Sorting direction. Valid options are: 'asc' for smallest first & 'desc' for biggest first
 | time_period_from | string  |                      | Start of custom time period (e.g., "now-1d", "now/d"). Not compatible with `energy_date_selection`. See [Time period](#time-period)
 | time_period_to   | string  | now                  | End of custom time period. Not compatible with `energy_date_selection`. See [Time period](#time-period)
+| ignore_missing_entities | boolean | false         | If true, missing entities will be treated as having a state of 0 instead of throwing an error |
 
 ### Sections object
 

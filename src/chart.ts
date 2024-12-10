@@ -568,6 +568,16 @@ export class Chart extends LitElement {
 
     let entity = this.states[getEntityId(entityConf)];
     if (!entity) {
+      if (this.config.ignore_missing_entities) {
+        // Return a fake entity with state 0 if ignoring missing entities
+        return {
+          state: 0,
+          attributes: {
+            unit_of_measurement: entityConf.unit_of_measurement || '',
+            friendly_name: entityConf.name || getEntityId(entityConf),
+          },
+        };
+      }
       throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
     }
 

@@ -31,8 +31,9 @@ const hass = mockHass({
   },
 });
 
+const ROOT_TAG = 'sankey-chart';
+
 describe('SankeyChart', () => {
-  const ROOT_TAG = 'sankey-chart';
   let sankeyChart: SankeyChart;
 
   beforeEach(() => {
@@ -70,5 +71,39 @@ describe('SankeyChart', () => {
     expect(sankeyChartBase).not.toBeNull();
 
     expect(sankeyChartBase.shadowRoot?.innerHTML.replace(/<!--.*-->/g, '')).toMatchSnapshot();
+  });
+});
+
+describe('Missing entities', () => {
+  let element: SankeyChart;
+
+  beforeEach(() => {
+    element = document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = hass as HomeAssistant;
+  });
+
+  test('treats missing entity as 0 when ignore_missing_entities is true', () => {
+    const config = {
+      type: 'custom:sankey-chart',
+      ignore_missing_entities: true,
+      sections: [
+        {
+          entities: [
+            {
+              entity_id: 'sensor.missing',
+              children: ['sensor.ent2'],
+            },
+          ],
+        },
+        {
+          entities: ['sensor.ent2'],
+        },
+      ],
+    };
+
+    element.setConfig(config, true);
+    // Should not throw
+    expect(() => element.requestUpdate()).not.toThrow();
   });
 });
