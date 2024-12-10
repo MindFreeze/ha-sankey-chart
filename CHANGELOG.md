@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.5.0...v3.6.0) (2024-12-10)
+
+
+### Features
+
+* **#228:** add `ignore_missing_entities` option ([4308a4e](https://github.com/MindFreeze/ha-sankey-chart/commit/4308a4e0f482cb5fd873c0abaea8fa002a7e1aed))
+
 ## [3.5.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.4.0...v3.5.0) (2024-10-24)
 
 
