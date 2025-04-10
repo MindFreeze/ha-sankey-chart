@@ -325,6 +325,10 @@ Currently this chart just shows historical data based on a energy-date-selection
 
 **A:** By default entities are displayed in the order in which they appear in the config. You can rearrange them in the YAML or use the sorting options.
 
+**Q: The font size is too small sometimes**
+
+**A:** The font size is determined by the available space, so you can increase the minimum font size by increasing `min_box_size` and/or `min_box_distance`
+
 ## Development
 
 1. `npm i`
