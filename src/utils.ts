@@ -32,7 +32,7 @@ export function formatState(state: number, round: number, locale: FrontendLocale
   do {
     // round to first significant digit
     rounded = state.toFixed(decimals++);
-  } while (/^[0\.]*$/.test(rounded) && decimals < 100);
+  } while (/^[0\.,]*$/.test(rounded) && decimals < 100);
 
   if (!monetary_unit) {
     return formatNumber(parseFloat(rounded), locale, {
