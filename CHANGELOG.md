@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.6.0...v3.7.0) (2025-04-16)
+
+
+### Features
+
+* **#264:** Option to auto set the unit_prefix based on the value ([b64316e](https://github.com/MindFreeze/ha-sankey-chart/commit/b64316e291f6f4a57c60a48415312714ff6809c4))
+
 ## [3.6.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.5.0...v3.6.0) (2024-12-10)
 
 
