@@ -20,7 +20,19 @@ import {
   Section,
   SectionConfig,
 } from './types';
-import { addSeconds, addMinutes, addHours, addDays, addWeeks, addMonths, addYears, startOfDay, startOfWeek, startOfMonth, startOfYear } from 'date-fns';
+import {
+  addSeconds,
+  addMinutes,
+  addHours,
+  addDays,
+  addWeeks,
+  addMonths,
+  addYears,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+} from 'date-fns';
 
 export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
@@ -50,18 +62,44 @@ export function formatState(state: number, round: number, locale: FrontendLocale
 }
 
 export function normalizeStateValue(
-  unit_prefix: '' | keyof typeof UNIT_PREFIXES,
+  unit_prefix: '' | 'auto' | keyof typeof UNIT_PREFIXES,
   state: number,
   unit_of_measurement?: string,
+  enableAutoPrefix = false,
 ): { state: number; unit_of_measurement?: string } {
   const validState = Math.max(0, state) || 0; // the 0 check is for NaN
   if (!unit_of_measurement || unit_of_measurement == 'monetary') {
     return { state: validState, unit_of_measurement };
   }
-  const cleanUnit = unit_of_measurement.replace('²', '').replace('³', '');
-  const prefix =
-    (cleanUnit.length > 1 && Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0)) || '';
+  const prefix = getUOMPrefix(unit_of_measurement);
   const currentFactor = UNIT_PREFIXES[prefix] || 1;
+
+  if (unit_prefix === 'auto') {
+    if (enableAutoPrefix) {
+      // Find the most appropriate prefix based on the state value
+      const magnitude = Math.abs(state * currentFactor);
+    
+      // Choose prefix based on the magnitude
+      if (magnitude < 1) {
+        unit_prefix = 'm';
+      } else if (magnitude >= 1000 && magnitude < 1000000) {
+        unit_prefix = 'k';
+      } else if (magnitude >= 1000000 && magnitude < 1000000000) {
+        unit_prefix = 'M';
+      } else if (magnitude >= 1000000000 && magnitude < 1000000000000) {
+        unit_prefix = 'G';
+      } else if (magnitude >= 1000000000000) {
+        unit_prefix = 'T';
+      } else {
+        // For values between 1-999, use no prefix
+        unit_prefix = '';
+      }
+    } else {
+      // ignore auto prefix for now. calculate it at render
+      unit_prefix = '';
+    }
+  }
+
   const targetFactor = UNIT_PREFIXES[unit_prefix] || 1;
   if (currentFactor === targetFactor) {
     return { state: validState, unit_of_measurement };
@@ -70,6 +108,11 @@ export function normalizeStateValue(
     state: (validState * currentFactor) / targetFactor,
     unit_of_measurement: prefix ? unit_of_measurement.replace(prefix, unit_prefix) : unit_prefix + unit_of_measurement,
   };
+}
+
+function getUOMPrefix(unit_of_measurement: string): string {
+  const cleanUnit = unit_of_measurement.replace('²', '').replace('³', '');
+  return (cleanUnit.length > 1 && Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0)) || '';
 }
 
 export function getEntityId(entity: EntityConfigOrStr | ChildConfigOrStr): string {
@@ -264,22 +307,44 @@ export function calculateTimePeriod(from: string, to = 'now'): { start: Date; en
     if (amount && unit) {
       const numAmount = parseInt(amount, 10) * (sign === '-' ? -1 : 1);
       switch (unit) {
-        case 's': date = addSeconds(date, numAmount); break;
-        case 'm': date = addMinutes(date, numAmount); break;
-        case 'h': date = addHours(date, numAmount); break;
-        case 'd': date = addDays(date, numAmount); break;
-        case 'w': date = addWeeks(date, numAmount); break;
-        case 'M': date = addMonths(date, numAmount); break;
-        case 'y': date = addYears(date, numAmount); break;
+        case 's':
+          date = addSeconds(date, numAmount);
+          break;
+        case 'm':
+          date = addMinutes(date, numAmount);
+          break;
+        case 'h':
+          date = addHours(date, numAmount);
+          break;
+        case 'd':
+          date = addDays(date, numAmount);
+          break;
+        case 'w':
+          date = addWeeks(date, numAmount);
+          break;
+        case 'M':
+          date = addMonths(date, numAmount);
+          break;
+        case 'y':
+          date = addYears(date, numAmount);
+          break;
       }
     }
 
     if (roundTo) {
       switch (roundTo) {
-        case 'd': date = startOfDay(date); break;
-        case 'w': date = startOfWeek(date); break;
-        case 'M': date = startOfMonth(date); break;
-        case 'y': date = startOfYear(date); break;
+        case 'd':
+          date = startOfDay(date);
+          break;
+        case 'w':
+          date = startOfWeek(date);
+          break;
+        case 'M':
+          date = startOfMonth(date);
+          break;
+        case 'y':
+          date = startOfYear(date);
+          break;
       }
     }
 

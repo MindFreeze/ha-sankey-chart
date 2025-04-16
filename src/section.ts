@@ -2,7 +2,7 @@ import { html, svg, SVGTemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
-import { formatState, getChildConnections, getEntityId } from './utils';
+import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
 import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { renderLabel } from './label';
@@ -105,6 +105,9 @@ export function renderSection(props: {
         : null}
       ${boxes.map(box => {
         const { entity, extraSpacers } = box;
+        if (props.config.unit_prefix === 'auto') {
+          box = { ...box, ...normalizeStateValue(props.config.unit_prefix, box.state, box.unit_of_measurement, true) };
+        }
         const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
         const name = box.config.name || entity.attributes.friendly_name || '';

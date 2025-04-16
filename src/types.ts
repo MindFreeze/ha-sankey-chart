@@ -22,7 +22,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   monetary_unit?: string;
   electricity_price?: number;
   gas_price?: number;
-  unit_prefix?: '' | keyof typeof UNIT_PREFIXES;
+  unit_prefix?: '' | 'auto' | keyof typeof UNIT_PREFIXES;
   round?: number;
   height?: number;
   wide?: boolean;
@@ -140,7 +140,7 @@ export interface Section {
 
 export interface Config extends SankeyChartConfig {
   layout: 'auto' | 'vertical' | 'horizontal';
-  unit_prefix: '' | keyof typeof UNIT_PREFIXES;
+  unit_prefix: '' | 'auto' | keyof typeof UNIT_PREFIXES;
   round: number;
   height: number;
   min_box_size: number;

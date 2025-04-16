@@ -212,7 +212,11 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
             selector: {
               select: {
                 mode: 'dropdown',
-                options: [{ value: '' }, ...Object.keys(UNIT_PREFIXES).map(key => ({ value: key, label: key }))],
+                options: [
+                  { value: '' },
+                  { value: 'auto', label: localize('editor.layout.auto') },
+                  ...Object.keys(UNIT_PREFIXES).map(key => ({ value: key, label: key })),
+                ],
               },
             },
           },
