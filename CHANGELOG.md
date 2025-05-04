@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.7.0...v3.8.0) (2025-05-04)
+
+
+### Features
+
+* **#224:** Support "random" as a color value ([a1c5aaf](https://github.com/MindFreeze/ha-sankey-chart/commit/a1c5aafad5d22329ca58dce4f444fbc9f75c036b))
+
 ## [3.7.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.6.0...v3.7.0) (2025-04-16)
 
 
