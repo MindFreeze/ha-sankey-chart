@@ -9,7 +9,7 @@ import { HomeAssistant } from 'custom-card-helpers'; // This is a community main
 import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { getEntityId, normalizeStateValue, renderError, sortBoxes } from './utils';
+import { getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
@@ -39,6 +39,8 @@ export class Chart extends LitElement {
   @state() private width = 0; // passed from parent
   @state() public zoomEntity?: EntityConfigInternal;
   @state() public error?: Error;
+
+  private randomColors = new Map<string, string>();
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -339,7 +341,13 @@ export class Chart extends LitElement {
           total += state;
 
           let finalColor = entityConf.color || 'var(--primary-color)';
-          if (entityConf.color_on_state) {
+          if (entityConf.color === 'random') {
+            const entityId = getEntityId(entityConf);
+            if (!this.randomColors.has(entityId)) {
+              this.randomColors.set(entityId, generateRandomRGBColor());
+            }
+            finalColor = this.randomColors.get(entityId)!;
+          } else if (entityConf.color_on_state) {
             let state4color = state;
             if (entityConf.type === 'passthrough') {
               // passthrough color is based on the child state
