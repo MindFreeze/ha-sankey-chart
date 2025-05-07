@@ -356,7 +356,7 @@ export class Chart extends LitElement {
             }
             const colorLimit = entityConf.color_limit ?? 1;
             const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
-            const colorAbove = entityConf.color_above ?? 'var(--paper-item-icon-color)';
+            const colorAbove = entityConf.color_above ?? 'var(--state-icon-color)';
             if (state4color > colorLimit) {
               finalColor = colorAbove;
             } else if (state4color < colorLimit) {

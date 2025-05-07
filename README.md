@@ -78,7 +78,7 @@ Install through [HACS](https://hacs.xyz/)
 | color             | string  | **Optional** | var(--primary-color)| Color of the box. Example values: 'red', '#FFAA2C', 'rgb(255, 170, 44)', 'random' (assigns a random RGB color)
 | color_on_state    | boolean | **Optional** | false               | Color the box based on state value
 | color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
-| color_above       | string  | **Optional** | var(--paper-item-icon-color)| Color for state value above color_limit
+| color_above       | string  | **Optional** | var(--state-icon-color)| Color for state value above color_limit
 | color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
 | url               | string  | **Optional** |                     | Specifying a URL will make the entity label into a link
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
