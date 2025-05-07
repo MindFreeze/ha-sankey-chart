@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.8.0...v3.8.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* **#273:** Replaced --paper-item-icon-color with --state-icon-color ([448498b](https://github.com/MindFreeze/ha-sankey-chart/commit/448498be17c7bcda08d58d317f4eec3a6f78a8c9))
+
 ## [3.8.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.7.0...v3.8.0) (2025-05-04)
 
 
