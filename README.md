@@ -2,7 +2,6 @@
 
 A Home Assistant lovelace card to display a sankey chart. For example for energy/power/water consumption.
 
-[![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE.md)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![GitHub Activity][commits-shield]][commits]
@@ -345,6 +344,3 @@ Currently this chart just shows historical data based on a energy-date-selection
 [commits-shield]: https://img.shields.io/github/commit-activity/y/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
 [commits]: https://github.com//MindFreeze/ha-sankey-chart/commits/master
 [license-shield]: https://img.shields.io/github/license/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/MindFreeze/ha-sankey-chart.svg?style=for-the-badge
-[releases]: https://github.com/MindFreeze/ha-sankey-chart/releases
-
