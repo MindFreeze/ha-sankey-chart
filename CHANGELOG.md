@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.9.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.8.1...v3.9.0) (2025-06-16)
+
+
+### Features
+
+* **#280:** Show new energy hierarchy and add grouping options to autoconfig ([299544a](https://github.com/MindFreeze/ha-sankey-chart/commit/299544a96f13ce68c1403eb0017e9c4216097b39))
+
+
+### Bug Fixes
+
+* **#279:** properly handle multiple grid sources in autoconfig ([7f94603](https://github.com/MindFreeze/ha-sankey-chart/commit/7f94603eb7f057332dc3fcafe5632cccb74084f5))
+
 ## [3.8.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.8.0...v3.8.1) (2025-05-07)
 
 
