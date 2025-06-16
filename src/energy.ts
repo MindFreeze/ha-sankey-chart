@@ -74,6 +74,7 @@ export interface EnergySource {
 export interface DeviceConsumptionEnergyPreference {
   stat_consumption: string;
   name?: string;
+  included_in_stat?: string;
 }
 
 export interface EnergyPreferences {

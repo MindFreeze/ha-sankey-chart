@@ -13,6 +13,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
     print_yaml?: boolean;
+    group_by_floor?: boolean;
+    group_by_area?: boolean;
   };
   title?: string;
   sections?: SectionConfig[];

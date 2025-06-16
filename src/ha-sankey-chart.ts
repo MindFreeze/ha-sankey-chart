@@ -6,7 +6,7 @@ import { customElement, property, query, state } from 'lit/decorators';
 import type { Config, EntityConfigInternal, SankeyChartConfig, Section } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
-import { normalizeConfig, renderError } from './utils';
+import { createPassthroughs, normalizeConfig, renderError } from './utils';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import './print-config';
@@ -46,6 +46,8 @@ console.info(
 
 const ENERGY_DATA_TIMEOUT = 10000;
 
+type DeviceNode = { id: string; name?: string; parent?: string };
+
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
@@ -54,7 +56,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   }
 
   public static getStubConfig(): Record<string, unknown> {
-    return { autoconfig: { print_yaml: false } };
+    return { autoconfig: { print_yaml: false, group_by_floor: true, group_by_area: true } };
   }
 
   // https://lit.dev/docs/components/properties/
@@ -239,24 +241,31 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       }
       return 1;
     });
-    const names: Record<string, string> = {};
-    const deviceIds = (prefs?.device_consumption || [])
-      .filter(d => {
-        if (!this.hass.states[d.stat_consumption]) {
-          console.warn('Ignoring missing entity ' + d.stat_consumption);
-          return false;
-        }
-        if (d.name) {
-          names[d.stat_consumption] = d.name;
-        }
-        return true;
-      })
-      .map(d => d.stat_consumption);
-    const areasResult = await getEntitiesByArea(this.hass, deviceIds);
-    const areas = Object.values(areasResult)
-      // put 'No area' last
-      .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
-    const orderedDeviceIds = areas.reduce((all: string[], a) => [...all, ...a.entities], []);
+    const deviceNodes: DeviceNode[] = [];
+    const parentLinks: Record<string, string> = {};
+    prefs.device_consumption.forEach((device, idx) => {
+      const node = {
+        id: device.stat_consumption,
+        name: device.name,
+        parent: device.included_in_stat,
+      };
+      if (node.parent) {
+        parentLinks[node.id] = node.parent;
+      }
+      deviceNodes.push(node);
+    });
+    const devicesWithoutParent = deviceNodes.filter(node => !parentLinks[node.id]);
+
+    const totalNode: EntityConfigInternal = {
+      entity_id: 'total',
+      type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
+      name: 'Total Consumption',
+      children: ['unknown'],
+      children_sum: {
+        should_be: 'equal_or_less',
+        reconcile_to: 'max',
+      },
+    };
 
     const sections = [
       {
@@ -274,44 +283,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         }),
       },
       {
-        entities: [
-          {
-            entity_id: 'total',
-            type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
-            name: 'Total Consumption',
-            children: [...areas.map(a => a.area.area_id), 'unknown'],
-          },
-        ],
-      },
-      {
-        entities: [
-          ...areas.map(
-            ({ area, entities }): EntityConfigInternal => ({
-              entity_id: area.area_id,
-              type: 'remaining_child_state',
-              name: area.name,
-              children: entities,
-            }),
-          ),
-          {
-            entity_id: 'unknown',
-            type: 'remaining_parent_state',
-            name: 'Unknown',
-            children: [],
-          },
-        ],
-        sort_by: 'state',
-        sort_group_by_parent: true,
-      },
-      {
-        entities: orderedDeviceIds.map(id => ({
-          entity_id: id,
-          type: 'entity',
-          name: names[id],
-          children: [],
-        })),
-        sort_by: 'state',
-        sort_group_by_parent: true,
+        entities: [totalNode],
       },
     ].filter(s => s.entities.length > 0) as Section[];
 
@@ -347,42 +319,115 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
     }
 
-    const floors = await fetchFloorRegistry(this.hass);
-    if (floors.length) {
-      const orphanAreas = areas.filter(a => !a.area.floor_id);
-      sections[1].entities[sections[1].entities.length - 1].children = [
-        ...floors.map(f => f.floor_id),
-        ...orphanAreas.map(a => a.area.area_id),
-        'unknown',
-      ];
-      sections.splice(2, 0, {
-        entities: [
-          ...floors.map(
-            (f): EntityConfigInternal => ({
-              entity_id: f.floor_id,
+    if (this.config.autoconfig!.group_by_floor !== false || this.config.autoconfig!.group_by_area !== false) {
+      const areasResult = await getEntitiesByArea(
+        this.hass,
+        devicesWithoutParent.map(d => d.id),
+      );
+      const areas = Object.values(areasResult)
+        // put 'No area' last
+        .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
+
+      const floors = await fetchFloorRegistry(this.hass);
+      if (this.config.autoconfig!.group_by_floor !== false) {
+        const orphanAreas = areas.filter(a => !a.area.floor_id);
+        if (orphanAreas.length !== areas.length) {
+          totalNode.children = [
+            ...totalNode.children,
+            ...floors.map(f => f.floor_id),
+            ...(this.config.autoconfig!.group_by_area === false
+              ? orphanAreas.map(a => a.entities).flat()
+              : orphanAreas.map(a => a.area.area_id)),
+          ];
+          sections.push({
+            entities: [
+              ...floors.map(
+                (f): EntityConfigInternal => ({
+                  entity_id: f.floor_id,
+                  type: 'remaining_child_state',
+                  name: f.name,
+                  children:
+                    this.config.autoconfig!.group_by_area === false
+                      ? areas
+                          .filter(a => a.area.floor_id === f.floor_id)
+                          .map(a => a.entities)
+                          .flat()
+                      : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+                }),
+              ),
+            ],
+            sort_by: 'state',
+          });
+        }
+      } else {
+        totalNode.children = [...totalNode.children, ...areas.map(a => a.area.area_id)];
+      }
+      if (this.config.autoconfig!.group_by_area !== false) {
+        sections.push({
+          entities: areas.map(
+            ({ area, entities }): EntityConfigInternal => ({
+              entity_id: area.area_id,
               type: 'remaining_child_state',
-              name: f.name,
-              children: areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+              name: area.name,
+              children: entities,
             }),
           ),
-          ...orphanAreas.map(
-            (a): EntityConfigInternal => ({
-              entity_id: a.area.area_id,
-              type: 'passthrough',
-              children: [],
-            }),
-          ),
-          {
-            entity_id: 'unknown',
-            type: 'passthrough',
-            children: [],
-          },
-        ],
-        sort_by: 'state',
+          sort_by: 'state',
+          sort_group_by_parent: true,
+        });
+      }
+    } else {
+      totalNode.children = [...totalNode.children, ...devicesWithoutParent.map(d => d.id)];
+    }
+
+    const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
+    deviceSections.forEach((section, i) => {
+      if (section.length) {
+        sections.push({
+          entities: section.map(d => ({
+            entity_id: d.id,
+            type: 'entity',
+            name: d.name,
+            children: deviceSections[i + 1]?.filter(c => c.parent === d.id).map(c => c.id) || [],
+          })),
+          sort_by: 'state',
+          sort_group_by_parent: true,
+        });
+      }
+    });
+
+    // add unknown section after total node
+    const totalIndex = sections.findIndex(s => s.entities.find(e => e.entity_id === 'total'));
+    if (totalIndex !== -1 && sections[totalIndex + 1]) {
+      sections[totalIndex + 1]?.entities.push({
+        entity_id: 'unknown',
+        type: 'remaining_parent_state',
+        name: 'Unknown',
+        children: [],
       });
     }
 
+    createPassthroughs(sections);
     this.setNormalizedConfig({ ...this.config, sections });
+  }
+
+  private getDeviceSections(parentLinks: Record<string, string>, deviceNodes: DeviceNode[]): DeviceNode[][] {
+    const parentSection: DeviceNode[] = [];
+    const childSection: DeviceNode[] = [];
+    const parentIds = Object.values(parentLinks);
+    const remainingLinks: typeof parentLinks = {};
+    deviceNodes.forEach(deviceNode => {
+      if (parentIds.includes(deviceNode.id)) {
+        parentSection.push(deviceNode);
+        remainingLinks[deviceNode.id] = parentLinks[deviceNode.id];
+      } else {
+        childSection.push(deviceNode);
+      }
+    });
+    if (parentSection.length > 0) {
+      return [...this.getDeviceSections(remainingLinks, parentSection), childSection];
+    }
+    return [deviceNodes];
   }
 
   // https://lit.dev/docs/components/rendering/

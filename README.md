@@ -154,6 +154,8 @@ or like this:
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
 | print_yaml        | boolean | **Optional** | false               | Prints the auto generated configuration after the card so you can use it as a starting point for customization. It shows up like an error. Don't worry about it.
+| group_by_floor    | boolean | **Optional** | true                | Display data per floor
+| group_by_area     | boolean | **Optional** | true                | Display data per area
 
 ### Time Period
 
