@@ -165,7 +165,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           }
           this.forceUpdateTs = Date.now();
         }
-      }
+      };
       getTimePeriod();
       const interval = setInterval(getTimePeriod, this.config.throttle || 1000);
       return [() => clearInterval(interval)];
@@ -211,35 +211,34 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     if (!prefs) {
       prefs = await getEnergyPreferences(this.hass);
     }
-    const sources = (prefs?.energy_sources || [])
-      .map(s => ({
-        ...s,
-        ids: [s, ...(s.flow_from || [])]
-          .map(f => f.stat_energy_from)
-          .filter(id => {
-            if (!id || !this.hass.states[id]) {
-              if (id) {
-                console.warn('Ignoring missing entity ' + id);
-              }
-              return false;
-            }
-            return true;
-          }) as string[],
-      }))
-      .filter(s => ENERGY_SOURCE_TYPES.includes(s.type) && s.ids.length)
-      .sort((s1, s2) => {
-        // sort to solar, battery, grid
-        if (s1.type === s2.type) {
-          return 0;
+    const sources: typeof prefs.energy_sources = [];
+    (prefs?.energy_sources || []).forEach(s => {
+      if (!ENERGY_SOURCE_TYPES.includes(s.type)) {
+        return;
+      }
+      [s, ...(s.flow_from || [])].forEach(f => {
+        if (f.stat_energy_from) {
+          if (!this.hass.states[f.stat_energy_from]) {
+            console.warn('Ignoring missing entity ' + f.stat_energy_from);
+          } else {
+            sources.push({ ...s, ...f });
+          }
         }
-        if (s1.type === 'solar') {
-          return -1;
-        }
-        if (s1.type === 'battery' && s2.type !== 'solar') {
-          return -1;
-        }
-        return 1;
       });
+    });
+    sources.sort((s1, s2) => {
+      // sort to solar, battery, grid
+      if (s1.type === s2.type) {
+        return 0;
+      }
+      if (s1.type === 'solar') {
+        return -1;
+      }
+      if (s1.type === 'battery' && s2.type !== 'solar') {
+        return -1;
+      }
+      return 1;
+    });
     const names: Record<string, string> = {};
     const deviceIds = (prefs?.device_consumption || [])
       .filter(d => {
@@ -266,8 +265,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             ? [source.stat_energy_to]
             : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
-            entity_id: source.ids[0],
-            add_entities: source.ids?.length > 1 ? source.ids.slice(1) : undefined,
+            entity_id: source.stat_energy_from,
             subtract_entities: subtract,
             type: 'entity',
             color: getEnergySourceColor(source.type),
