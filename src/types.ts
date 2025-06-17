@@ -9,6 +9,22 @@ import {
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
 
+export const DEFAULT_CONFIG: Config = {
+  type: 'custom:ha-sankey-chart',
+  layout: 'auto',
+  height: 200,
+  unit_prefix: '',
+  round: 0,
+  convert_units_to: '',
+  co2_intensity_entity: 'sensor.co2_signal_co2_intensity',
+  min_box_size: 3,
+  min_box_distance: 5,
+  min_state: 0,
+  show_states: true,
+  show_units: true,
+  sections: [],
+};
+
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   autoconfig?: {
