@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.0...v3.9.1) (2025-06-17)
+
+
+### Bug Fixes
+
+* **#282:** fix disconnected areas ([bc2b902](https://github.com/MindFreeze/ha-sankey-chart/commit/bc2b902479247ea9e9ab90647e41c8a7c1423c9f))
+
 ## [3.9.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.8.1...v3.9.0) (2025-06-16)
 
 
