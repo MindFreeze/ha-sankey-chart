@@ -319,7 +319,10 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
     }
 
-    if (this.config.autoconfig!.group_by_floor !== false || this.config.autoconfig!.group_by_area !== false) {
+    const groupByFloor = this.config.autoconfig?.group_by_floor !== false;
+    const groupByArea = this.config.autoconfig?.group_by_area !== false;
+
+    if (groupByFloor || groupByArea) {
       const areasResult = await getEntitiesByArea(
         this.hass,
         devicesWithoutParent.map(d => d.id),
@@ -330,13 +333,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
       const floors = await fetchFloorRegistry(this.hass);
       const orphanAreas = areas.filter(a => !a.area.floor_id);
-      if (this.config.autoconfig!.group_by_floor !== false && orphanAreas.length !== areas.length) {
+      if (groupByFloor && orphanAreas.length !== areas.length) {
         totalNode.children = [
           ...totalNode.children,
           ...floors.map(f => f.floor_id),
-          ...(this.config.autoconfig!.group_by_area === false
-            ? orphanAreas.map(a => a.entities).flat()
-            : orphanAreas.map(a => a.area.area_id)),
+          ...(groupByArea ? orphanAreas.map(a => a.entities).flat() : orphanAreas.map(a => a.area.area_id)),
         ];
         sections.push({
           entities: [
@@ -345,13 +346,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
                 entity_id: f.floor_id,
                 type: 'remaining_child_state',
                 name: f.name,
-                children:
-                  this.config.autoconfig!.group_by_area === false
-                    ? areas
-                        .filter(a => a.area.floor_id === f.floor_id)
-                        .map(a => a.entities)
-                        .flat()
-                    : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+                children: groupByArea
+                  ? areas
+                      .filter(a => a.area.floor_id === f.floor_id)
+                      .map(a => a.entities)
+                      .flat()
+                  : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
               }),
             ),
           ],
@@ -360,7 +360,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       } else {
         totalNode.children = [...totalNode.children, ...areas.map(a => a.area.area_id)];
       }
-      if (this.config.autoconfig!.group_by_area !== false) {
+      if (groupByArea) {
         sections.push({
           entities: areas.map(
             ({ area, entities }): EntityConfigInternal => ({
