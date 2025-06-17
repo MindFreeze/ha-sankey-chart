@@ -337,7 +337,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         totalNode.children = [
           ...totalNode.children,
           ...floors.map(f => f.floor_id),
-          ...(groupByArea ? orphanAreas.map(a => a.entities).flat() : orphanAreas.map(a => a.area.area_id)),
+          ...(groupByArea ? orphanAreas.map(a => a.area.area_id) : orphanAreas.map(a => a.entities).flat()),
         ];
         sections.push({
           entities: [
@@ -347,11 +347,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
                 type: 'remaining_child_state',
                 name: f.name,
                 children: groupByArea
-                  ? areas
+                  ? areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id)
+                  : areas
                       .filter(a => a.area.floor_id === f.floor_id)
                       .map(a => a.entities)
-                      .flat()
-                  : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+                      .flat(),
               }),
             ),
           ],
