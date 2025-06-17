@@ -329,36 +329,34 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
 
       const floors = await fetchFloorRegistry(this.hass);
-      if (this.config.autoconfig!.group_by_floor !== false) {
-        const orphanAreas = areas.filter(a => !a.area.floor_id);
-        if (orphanAreas.length !== areas.length) {
-          totalNode.children = [
-            ...totalNode.children,
-            ...floors.map(f => f.floor_id),
-            ...(this.config.autoconfig!.group_by_area === false
-              ? orphanAreas.map(a => a.entities).flat()
-              : orphanAreas.map(a => a.area.area_id)),
-          ];
-          sections.push({
-            entities: [
-              ...floors.map(
-                (f): EntityConfigInternal => ({
-                  entity_id: f.floor_id,
-                  type: 'remaining_child_state',
-                  name: f.name,
-                  children:
-                    this.config.autoconfig!.group_by_area === false
-                      ? areas
-                          .filter(a => a.area.floor_id === f.floor_id)
-                          .map(a => a.entities)
-                          .flat()
-                      : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
-                }),
-              ),
-            ],
-            sort_by: 'state',
-          });
-        }
+      const orphanAreas = areas.filter(a => !a.area.floor_id);
+      if (this.config.autoconfig!.group_by_floor !== false && orphanAreas.length !== areas.length) {
+        totalNode.children = [
+          ...totalNode.children,
+          ...floors.map(f => f.floor_id),
+          ...(this.config.autoconfig!.group_by_area === false
+            ? orphanAreas.map(a => a.entities).flat()
+            : orphanAreas.map(a => a.area.area_id)),
+        ];
+        sections.push({
+          entities: [
+            ...floors.map(
+              (f): EntityConfigInternal => ({
+                entity_id: f.floor_id,
+                type: 'remaining_child_state',
+                name: f.name,
+                children:
+                  this.config.autoconfig!.group_by_area === false
+                    ? areas
+                        .filter(a => a.area.floor_id === f.floor_id)
+                        .map(a => a.entities)
+                        .flat()
+                    : areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id),
+              }),
+            ),
+          ],
+          sort_by: 'state',
+        });
       } else {
         totalNode.children = [...totalNode.children, ...areas.map(a => a.area.area_id)];
       }
