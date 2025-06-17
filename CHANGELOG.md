@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.1...v3.9.2) (2025-06-17)
+
+
+### Bug Fixes
+
+* **#284:** fix for null autoconfig ([960539c](https://github.com/MindFreeze/ha-sankey-chart/commit/960539cb8b9a8771f14e066394445cd4b5360f26))
+
 ## [3.9.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.0...v3.9.1) (2025-06-17)
 
 
