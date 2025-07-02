@@ -80,7 +80,7 @@ Install through [HACS](https://hacs.xyz/)
 | url               | string  | **Optional** |                     | Specifying a URL will make the entity label into a link
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
-| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`
+| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`. Ex: `action: zoom`
 | children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
 | parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
 
