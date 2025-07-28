@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.3...v3.9.4) (2025-07-28)
+
+
+### Bug Fixes
+
+* **#291:** fix print_yaml option ([61de924](https://github.com/MindFreeze/ha-sankey-chart/commit/61de92409639431241204bd7aa24bebfba4706bc))
+
 ## [3.9.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.2...v3.9.3) (2025-06-17)
 
 
