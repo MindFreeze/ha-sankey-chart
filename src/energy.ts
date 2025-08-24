@@ -192,7 +192,9 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
   const time_variant_data = {};
   if (conversions.convert_units_to == 'gCO2' || conversions.convert_units_to == "gCO2eq") {
     for (const id of devices) {
-      if (hass.states[id].attributes.unit_of_measurement == "kWh") {
+      if (hass.states[id].attributes.unit_of_measurement == "Wh" ||
+          hass.states[id].attributes.unit_of_measurement == "kWh" ||
+          hass.states[id].attributes.unit_of_measurement == "MWh") {
         // If converting from kWh to CO2, we need to use a different API call to account for time-varying CO2 intensity
         time_variant_data[id] = fetchFossilEnergyConsumption(
           hass,
@@ -265,11 +267,14 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
           case 'MJ':
             scale = 1;
             break;
+          case "MWh":
+            scale = 3600;
+            break;
           case "kWh":
             scale = 3.6;
             break;
           case "Wh":
-            scale = 3600;
+            scale = 0.0036;
             break;
           case "ft³":
           case "ft3":
@@ -285,11 +290,14 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
       }
       else if (conversions.convert_units_to == 'monetary') {
         switch (hass.states[id].attributes.unit_of_measurement) {
+          case "MWh":
+            scale = conversions.electricity_price ? conversions.electricity_price * 1000: 0;
+            break;
           case "kWh":
             scale = conversions.electricity_price ? conversions.electricity_price : 0;
             break;
           case "Wh":
-            scale = conversions.electricity_price ? conversions.electricity_price * 1000 : 0;
+            scale = conversions.electricity_price ? conversions.electricity_price * 0.001 : 0;
             break;
           case "ft³":
           case "ft3":
