@@ -383,3 +383,10 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     `;
   }
 }
+
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'sankey-chart-editor': LovelaceCardEditor;
+  }
+}

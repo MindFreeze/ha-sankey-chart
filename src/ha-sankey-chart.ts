@@ -100,7 +100,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
       return [
         energyPromise.then(async collection => {
-          if (isAutoconfig && !this.config.sections.length) {
+          if (isAutoconfig && !this.config.nodes.length) {
             try {
               await this.autoconfig(collection.prefs);
             } catch (err: any) {
@@ -108,7 +108,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           return collection.subscribe(async data => {
-            if (isAutoconfig && !this.config.sections.length) {
+            if (isAutoconfig && !this.config.nodes.length) {
               try {
                 await this.autoconfig(collection.prefs);
               } catch (err: any) {
@@ -189,23 +189,13 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     this.config = config;
 
     this.entityIds = [];
-    this.config.sections.forEach(({ entities }) => {
-      entities.forEach(ent => {
-        if (ent.type === 'entity') {
-          this.entityIds.push(ent.entity_id);
-        }
-        ent.children.forEach(childConf => {
-          if (typeof childConf === 'object' && childConf.connection_entity_id) {
-            this.entityIds.push(childConf.connection_entity_id);
-          }
-        });
-        if (ent.add_entities) {
-          ent.add_entities.forEach(e => this.entityIds.push(e));
-        }
-        if (ent.subtract_entities) {
-          ent.subtract_entities.forEach(e => this.entityIds.push(e));
-        }
-      });
+    this.config.nodes.forEach(({ id }) => {
+      this.entityIds.push(id);
+    });
+    this.config.links.forEach(({ value }) => {
+      if (value) {
+        this.entityIds.push(value);
+      }
     });
   }
 

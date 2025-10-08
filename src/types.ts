@@ -22,18 +22,20 @@ export const DEFAULT_CONFIG: Config = {
   min_state: 0,
   show_states: true,
   show_units: true,
-  sections: [],
+  nodes: [],
+  links: [],
 };
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
+  nodes?: Node[];
+  links?: Link[];
   autoconfig?: {
     print_yaml?: boolean;
     group_by_floor?: boolean;
     group_by_area?: boolean;
   };
   title?: string;
-  sections?: SectionConfig[];
   convert_units_to?: '' | CONVERSION_UNITS;
   co2_intensity_entity?: string;
   gas_co2_intensity?: number;
@@ -62,21 +64,40 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   ignore_missing_entities?: boolean;
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'sankey-chart-editor': LovelaceCardEditor;
-    'hui-error-card': LovelaceCard;
-  }
+export interface Node {
+  id: string;
+  type: NodeType
+  name: string;
+  attribute?: string;
+  unit_of_measurement?: string; // for attribute
+  color?: string;
+  icon?: string;
+  // color_on_state?: boolean;
+  // color_above?: string;
+  // color_below?: string;
+  // color_limit?: number;
+  // url?: string;
+  tap_action?: ActionConfigExtended;
+  double_tap_action?: ActionConfigExtended;
+  hold_action?: ActionConfigExtended;
+  // children_sum?: ReconcileConfig;
+  // parents_sum?: ReconcileConfig;
 }
 
-export type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+export interface Link {
+  source: string;
+  target: string;
+  value: string;
+}
+
+export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
 
 export interface EntityConfig {
   entity_id: string;
   add_entities?: string[];
   subtract_entities?: string[];
   attribute?: string;
-  type?: BoxType;
+  type?: NodeType;
   children?: ChildConfigOrStr[];
   unit_of_measurement?: string; // for attribute
   color?: string;
@@ -164,7 +185,8 @@ export interface Config extends SankeyChartConfig {
   min_box_size: number;
   min_box_distance: number;
   min_state: number;
-  sections: Section[];
+  nodes: Node[];
+  links: Link[];
 }
 
 export interface Connection {
