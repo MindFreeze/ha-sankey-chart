@@ -70,18 +70,23 @@ export interface Node {
   name: string;
   attribute?: string;
   unit_of_measurement?: string; // for attribute
-  color?: string;
+  color?: string | {
+    [color: string]: {
+      from?: number;
+      to?: number;
+    }
+  };
   icon?: string;
-  // color_on_state?: boolean;
-  // color_above?: string;
-  // color_below?: string;
-  // color_limit?: number;
-  // url?: string;
+  // color_on_state?: boolean; // @depracated. use color instead
+  // color_above?: string; // @depracated. use color instead
+  // color_below?: string; // @depracated. use color instead
+  // color_limit?: number; // @depracated. use color instead
+  // url?: string; // @depracated. use tap_action instead
   tap_action?: ActionConfigExtended;
   double_tap_action?: ActionConfigExtended;
   hold_action?: ActionConfigExtended;
-  // children_sum?: ReconcileConfig;
-  // parents_sum?: ReconcileConfig;
+  children_sum?: ReconcileConfig;
+  parents_sum?: ReconcileConfig;
 }
 
 export interface Link {
