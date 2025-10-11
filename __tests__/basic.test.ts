@@ -3,7 +3,7 @@ import { HomeAssistant } from 'custom-card-helpers';
 import '../src/ha-sankey-chart';
 import '../src/chart';
 import SankeyChart from '../src/ha-sankey-chart';
-import { SankeyChartConfig } from '../src/types';
+import type { SankeyChartConfig } from '../src/types';
 import mockHass from './__mocks__/hass.mock';
 import { LitElement } from 'lit';
 
@@ -49,16 +49,33 @@ describe('SankeyChart', () => {
   it('matches a simple snapshot', async () => {
     const config: SankeyChartConfig = {
       type: '',
-      sections: [
+      nodes: [
         {
-          entities: [
-            {
-              entity_id: 'ent1',
-              children: ['ent2', 'ent3'],
-            },
-          ],
+          id: 'ent1',
+          section: 0,
+          type: 'entity',
+          name: '',
         },
-        { entities: ['ent2', 'ent3'] },
+        {
+          id: 'ent2',
+          section: 1,
+          type: 'entity',
+          name: '',
+        },
+        {
+          id: 'ent3',
+          section: 1,
+          type: 'entity',
+          name: '',
+        },
+      ],
+      links: [
+        { source: 'ent1', target: 'ent2' },
+        { source: 'ent1', target: 'ent3' },
+      ],
+      sections: [
+        {},
+        {},
       ],
     };
     sankeyChart.setConfig(config, true);
@@ -84,21 +101,29 @@ describe('Missing entities', () => {
   });
 
   test('treats missing entity as 0 when ignore_missing_entities is true', () => {
-    const config = {
+    const config: SankeyChartConfig = {
       type: 'custom:sankey-chart',
       ignore_missing_entities: true,
+      nodes: [
+        {
+          id: 'sensor.missing',
+          section: 0,
+          type: 'entity',
+          name: '',
+        },
+        {
+          id: 'sensor.ent2',
+          section: 1,
+          type: 'entity',
+          name: '',
+        },
+      ],
+      links: [
+        { source: 'sensor.missing', target: 'sensor.ent2' },
+      ],
       sections: [
-        {
-          entities: [
-            {
-              entity_id: 'sensor.missing',
-              children: ['sensor.ent2'],
-            },
-          ],
-        },
-        {
-          entities: ['sensor.ent2'],
-        },
+        {},
+        {},
       ],
     };
 

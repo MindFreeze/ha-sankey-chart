@@ -7,19 +7,19 @@ import {
   LovelaceCardConfig,
 } from 'custom-card-helpers';
 import { html, TemplateResult } from 'lit';
-import { DEFAULT_ENTITY_CONF, UNIT_PREFIXES, FT3_PER_M3 } from './const';
+import { UNIT_PREFIXES, FT3_PER_M3 } from './const';
 import {
   Box,
-  ChildConfigOrStr,
   Config,
   Connection,
   ConnectionState,
   DEFAULT_CONFIG,
-  EntityConfigInternal,
-  EntityConfigOrStr,
   SankeyChartConfig,
   Section,
   SectionConfig,
+  Node,
+  Link,
+  NodeInternal,
 } from './types';
 import {
   addSeconds,
@@ -34,6 +34,8 @@ import {
   startOfMonth,
   startOfYear,
 } from 'date-fns';
+import { migrateV3Config } from './migrate';
+import type { V3Config, V3SectionConfig } from './migrate';
 
 export function generateRandomRGBColor(): string {
   const r = Math.floor(Math.random() * 256);
@@ -86,7 +88,7 @@ export function normalizeStateValue(
     if (enableAutoPrefix) {
       // Find the most appropriate prefix based on the state value
       const magnitude = Math.abs(state * currentFactor);
-    
+
       // Choose prefix based on the magnitude
       if (magnitude < 1) {
         unit_prefix = 'm';
@@ -123,28 +125,28 @@ function getUOMPrefix(unit_of_measurement: string): string {
   return (cleanUnit.length > 1 && Object.keys(UNIT_PREFIXES).find(p => unit_of_measurement!.indexOf(p) === 0)) || '';
 }
 
-export function getEntityId(entity: EntityConfigOrStr | ChildConfigOrStr): string {
-  return typeof entity === 'string' ? entity : entity.entity_id;
+export function getEntityId(entity: string | Node | Record<string, unknown>): string {
+  return typeof entity === 'string' ? entity : ((entity.id || (entity as Record<string, unknown>).entity_id) as string);
 }
 
 export function getChildConnections(
   parent: Box,
   children: Box[],
   allConnections: ConnectionState[],
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>,
+  connectionsByParent: Map<NodeInternal, ConnectionState[]>,
 ): Connection[] {
   // @NOTE don't take prevParentState from connection because it is different
   let prevParentState = 0;
   let state = 0;
   const childConnections = connectionsByParent.get(parent.config);
   return children.map(child => {
-    let connections = childConnections?.filter(c => c.child.entity_id === child.entity_id);
+    let connections = childConnections?.filter(c => c.child.id === child.id);
     if (!connections?.length) {
       connections = allConnections.filter(
-        c => c.passthroughs.includes(child) || c.passthroughs.includes(parent.config),
+        c => c.passthroughs.includes(child.config) || c.passthroughs.includes(parent.config),
       );
       if (!connections.length) {
-        throw new Error(`Missing connection: ${parent.entity_id} - ${child.entity_id}`);
+        throw new Error(`Missing connection: ${parent.id} - ${child.id}`);
       }
     }
     state = connections.reduce((sum, c) => sum + c.state, 0);
@@ -173,8 +175,66 @@ export function getChildConnections(
   });
 }
 
-export function normalizeConfig(conf: SankeyChartConfig, isMetric?: boolean): Config {
-  let config = { sections: [], ...cloneObj(conf) };
+export function convertNodesToSections(nodes: Node[], links: Link[], sectionConfigs?: SectionConfig[]): Section[] {
+  // Group nodes by section index
+  const nodesBySection = new Map<number, NodeInternal[]>();
+
+  nodes.forEach(node => {
+    const nodeInternal: NodeInternal = {
+      ...node,
+      children: [],
+    };
+
+    if (!nodesBySection.has(node.section || 0)) {
+      nodesBySection.set(node.section || 0, []);
+    }
+    nodesBySection.get(node.section || 0)!.push(nodeInternal);
+  });
+
+  // Build children arrays from links
+  links.forEach(link => {
+    const sourceNode = nodes.find(n => n.id === link.source);
+    if (sourceNode) {
+      const internalNode = nodesBySection.get(sourceNode.section || 0)?.find(n => n.id === link.source);
+      if (internalNode) {
+        if (link.value) {
+          // Connection has a specific entity
+          internalNode.children.push({
+            entity_id: link.target,
+            connection_entity_id: link.value,
+          });
+        } else {
+          // Simple connection
+          internalNode.children.push(link.target);
+        }
+      }
+    }
+  });
+
+  // Convert to sections, sorted by section index
+  const sectionIndices = Array.from(nodesBySection.keys()).sort((a, b) => a - b);
+  const sections: Section[] = sectionIndices.map(sectionIndex => {
+    // Get section config if available, otherwise use empty config
+    const sectionConfig = sectionConfigs?.[sectionIndex] || {};
+
+    return {
+      entities: nodesBySection.get(sectionIndex) || [],
+      sort_by: sectionConfig.sort_by,
+      sort_dir: sectionConfig.sort_dir,
+      sort_group_by_parent: sectionConfig.sort_group_by_parent,
+      min_width: sectionConfig.min_width,
+    };
+  });
+
+  createPassthroughs(sections);
+  return sections;
+}
+
+export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: boolean): Config {
+  // V3 detection: check if sections have entities
+  let config: SankeyChartConfig = conf.sections?.some(section => (section as V3SectionConfig).entities)
+    ? migrateV3Config(conf as V3Config)
+    : cloneObj(conf);
 
   const { autoconfig } = conf;
   if (autoconfig || typeof autoconfig === 'object') {
@@ -183,19 +243,12 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric?: boolean): Co
       unit_prefix: 'k',
       round: 1,
       ...config,
-      sections: [],
+      nodes: config.nodes || [],
+      links: config.links || [],
     };
   }
 
-  const sections: Section[] = config.sections.map((section: SectionConfig) => ({
-    ...section,
-    entities: section.entities.map(entityConf =>
-      typeof entityConf === 'string'
-        ? { ...DEFAULT_ENTITY_CONF, children: [], entity_id: entityConf }
-        : { ...DEFAULT_ENTITY_CONF, children: [], ...entityConf },
-    ),
-  }));
-  createPassthroughs(sections);
+  const sections: Section[] = convertNodesToSections(config.nodes || [], config.links || [], config.sections);
 
   const default_co2_per_ft3 =
     55.0 + // gCO2e/ft3 tailpipe
@@ -205,6 +258,8 @@ export function normalizeConfig(conf: SankeyChartConfig, isMetric?: boolean): Co
     gas_co2_intensity: isMetric ? default_co2_per_ft3 * FT3_PER_M3 : default_co2_per_ft3,
     ...config,
     min_state: config.min_state ? Math.abs(config.min_state) : 0,
+    nodes: config.nodes || [],
+    links: config.links || [],
     sections,
   };
 }
@@ -221,9 +276,10 @@ export function createPassthroughs(sections: Section[]): void {
               if (i > sectionIndex + 1) {
                 for (let j = sectionIndex + 1; j < i; j++) {
                   sections[j].entities.push({
-                    ...(typeof childConf === 'string' ? { entity_id: childConf } : childConf),
+                    ...(typeof childConf === 'string' ? { id: childConf } : childConf),
                     type: 'passthrough',
                     children: [],
+                    section: j,
                   });
                 }
               }
@@ -239,11 +295,11 @@ export function createPassthroughs(sections: Section[]): void {
 export function sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
   if (sort === 'state') {
     const parentChildren = parentBoxes.map(p =>
-      p.config.type === 'passthrough' ? [p.entity_id] : p.config.children.map(getEntityId),
+      p.config.type === 'passthrough' ? [p.id] : p.config.children.map(getEntityId),
     );
     const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
-      let parentIndexA = parentChildren.findIndex(children => children.includes(a.entity_id));
-      let parentIndexB = parentChildren.findIndex(children => children.includes(b.entity_id));
+      let parentIndexA = parentChildren.findIndex(children => children.includes(a.id));
+      let parentIndexB = parentChildren.findIndex(children => children.includes(b.id));
       // sort orphans to the end
       if (parentIndexA === -1) {
         parentIndexA = parentChildren.length;

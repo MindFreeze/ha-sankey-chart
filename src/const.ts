@@ -14,10 +14,6 @@ export const CHAR_WIDTH_RATIO = 8.15; // px per char, trial and error
 export const MIN_HORIZONTAL_SECTION_W = 150;
 export const MIN_VERTICAL_SECTION_H = 150;
 
-export const DEFAULT_ENTITY_CONF: Omit<EntityConfig, 'entity_id'> = {
-  type: 'entity',
-};
-
 export const FT3_PER_M3 = 35.31;
 
 export type CONVERSION_UNITS = 'MJ' | 'gCO2' | 'monetary';

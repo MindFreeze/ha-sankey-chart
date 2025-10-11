@@ -347,20 +347,30 @@ export class Chart extends LitElement {
               this.randomColors.set(entityId, generateRandomRGBColor());
             }
             finalColor = this.randomColors.get(entityId)!;
-          } else if (entityConf.color_on_state) {
+          } else if (typeof entityConf.color === 'object') {
+            // Handle complex color format (range-based)
             let state4color = state;
             if (entityConf.type === 'passthrough') {
               // passthrough color is based on the child state
               const childState = this._getMemoizedState(this._findRelatedRealEntity(entityConf, 'children'));
               state4color = childState.state;
             }
-            const colorLimit = entityConf.color_limit ?? 1;
-            const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
-            const colorAbove = entityConf.color_above ?? 'var(--state-icon-color)';
-            if (state4color > colorLimit) {
-              finalColor = colorAbove;
-            } else if (state4color < colorLimit) {
-              finalColor = colorBelow;
+            const colorRanges = entityConf.color as { [color: string]: { from?: number; to?: number } };
+            // Find matching color range
+            for (const [color, range] of Object.entries(colorRanges)) {
+              const { from, to } = range;
+              if (from !== undefined && to !== undefined) {
+                if (state4color >= from && state4color <= to) {
+                  finalColor = color;
+                  break;
+                }
+              } else if (from !== undefined && state4color >= from) {
+                finalColor = color;
+                break;
+              } else if (to !== undefined && state4color <= to) {
+                finalColor = color;
+                break;
+              }
             }
           }
 

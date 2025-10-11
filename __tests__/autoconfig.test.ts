@@ -58,6 +58,21 @@ describe('SankeyChart autoconfig', () => {
     await (sankeyChart as any)['autoconfig']();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = (sankeyChart as any).config;
+
+    // Check V4 format (nodes and links)
+    expect(Array.isArray(config.nodes)).toBe(true);
+    expect(config.nodes.length).toBeGreaterThan(0);
+    expect(Array.isArray(config.links)).toBe(true);
+    expect(config.links.length).toBeGreaterThan(0);
+
+    // Check nodes contain expected entities
+    const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+    expect(allNodeIds).toContain('sensor.grid_in');
+    expect(allNodeIds).toContain('sensor.solar');
+    expect(allNodeIds).toContain('sensor.battery_in');
+    expect(allNodeIds).toContain('sensor.device1');
+
+    // Check sections are calculated from nodes
     expect(Array.isArray(config.sections)).toBe(true);
     expect(config.sections.length).toBeGreaterThan(0);
     const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities.map((e: { entity_id: string }) => e.entity_id));

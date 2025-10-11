@@ -2,17 +2,18 @@ import { HomeAssistant } from 'custom-card-helpers';
 import { LitElement, html, TemplateResult, css, CSSResultGroup } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property } from 'lit/decorators';
-import { SectionConfig } from '../types';
+import type { Section } from '../types';
 import { localize } from '../localize/localize';
 import { repeat } from 'lit/directives/repeat';
 import { getEntityId } from '../utils';
 
+
 @customElement('sankey-chart-section-editor')
 class SankeyChartSectionEditor extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) public section!: SectionConfig;
+  @property({ attribute: false }) public section!: Section;
   @property({ attribute: false }) public index!: number;
-  @property({ attribute: false }) public onChange!: (sectionConf: SectionConfig) => void;
+  @property({ attribute: false }) public onChange!: (sectionConf: Section) => void;
   @property({ attribute: false }) public onConfigEntity!: (entityIndex: number) => void;
   @property({ attribute: false }) public onChangeEntity!: (ev: CustomEvent) => void;
   @property({ attribute: false }) public onAddEntity!: (ev: CustomEvent) => void;

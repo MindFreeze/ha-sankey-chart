@@ -2,7 +2,7 @@ import { HomeAssistant, stateIcon } from 'custom-card-helpers';
 import { LitElement, html, TemplateResult, css, CSSResultGroup } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property } from 'lit/decorators';
-import { EntityConfig, EntityConfigOrStr } from '../types';
+import type { EntityConfig, EntityConfigOrStr } from '../types';
 import { localize } from '../localize/localize';
 import { repeat } from 'lit/directives/repeat';
 import { DEFAULT_ENTITY_CONF } from '../const';

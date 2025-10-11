@@ -2,9 +2,7 @@ import {
   ActionConfig,
   BaseActionConfig,
   HapticType,
-  LovelaceCard,
   LovelaceCardConfig,
-  LovelaceCardEditor,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
@@ -24,12 +22,14 @@ export const DEFAULT_CONFIG: Config = {
   show_units: true,
   nodes: [],
   links: [],
+  sections: [],
 };
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   nodes?: Node[];
   links?: Link[];
+  sections?: SectionConfig[];
   autoconfig?: {
     print_yaml?: boolean;
     group_by_floor?: boolean;
@@ -66,10 +66,13 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
 
 export interface Node {
   id: string;
+  section?: number; // index in sections array
   type: NodeType
-  name: string;
+  name?: string;
   attribute?: string;
   unit_of_measurement?: string; // for attribute
+  add_entities?: string[]; // temporary - will be replaced
+  subtract_entities?: string[]; // temporary - will be replaced
   color?: string | {
     [color: string]: {
       from?: number;
@@ -92,41 +95,16 @@ export interface Node {
 export interface Link {
   source: string;
   target: string;
-  value: string;
+  value?: string; // optional connection entity
 }
 
 export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
 
-export interface EntityConfig {
-  entity_id: string;
-  add_entities?: string[];
-  subtract_entities?: string[];
-  attribute?: string;
-  type?: NodeType;
-  children?: ChildConfigOrStr[];
-  unit_of_measurement?: string; // for attribute
-  color?: string;
-  name?: string;
-  icon?: string;
-  color_on_state?: boolean;
-  color_above?: string;
-  color_below?: string;
-  color_limit?: number;
-  url?: string;
-  tap_action?: ActionConfigExtended;
-  double_tap_action?: ActionConfigExtended;
-  hold_action?: ActionConfigExtended;
-  children_sum?: ReconcileConfig;
-  parents_sum?: ReconcileConfig;
-}
-
-export type EntityConfigInternal = EntityConfig & {
+export interface NodeInternal extends Node {
   children: ChildConfigOrStr[];
   accountedState?: number;
   foundChildren?: string[];
-};
-
-export type EntityConfigOrStr = string | EntityConfig;
+}
 
 export type ChildConfig = {
   entity_id: string;
@@ -167,7 +145,6 @@ export interface ReconcileConfig {
 }
 
 export interface SectionConfig {
-  entities: EntityConfigOrStr[];
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
@@ -175,7 +152,7 @@ export interface SectionConfig {
 }
 
 export interface Section {
-  entities: EntityConfigInternal[];
+  entities: NodeInternal[];
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
@@ -192,6 +169,7 @@ export interface Config extends SankeyChartConfig {
   min_state: number;
   nodes: Node[];
   links: Link[];
+  sections: Section[]; // calculated from nodes/links by depth
 }
 
 export interface Connection {
@@ -206,11 +184,11 @@ export interface Connection {
 }
 
 export interface Box {
-  config: EntityConfigInternal;
+  config: NodeInternal;
   entity: Omit<HassEntity, 'state'> & {
     state: string | number;
   };
-  entity_id: string;
+  id: string;
   state: number;
   unit_of_measurement?: string;
   children: ChildConfigOrStr[];
@@ -234,15 +212,15 @@ export interface SectionState {
 }
 
 export interface ConnectionState {
-  parent: EntityConfigInternal;
-  child: EntityConfigInternal;
+  parent: NodeInternal;
+  child: NodeInternal;
   state: number;
   prevParentState: number;
   prevChildState: number;
   ready: boolean;
   calculating?: boolean;
   highlighted?: boolean;
-  passthroughs: EntityConfigInternal[];
+  passthroughs: NodeInternal[];
 }
 
 export interface NormalizedState {

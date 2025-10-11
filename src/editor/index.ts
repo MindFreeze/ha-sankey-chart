@@ -5,13 +5,14 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { SankeyChartConfig, SectionConfig } from '../types';
+import { SankeyChartConfig, Section } from '../types';
 import { localize } from '../localize/localize';
-import { normalizeConfig } from '../utils';
+import { normalizeConfig, convertNodesToSections } from '../utils';
 import './section';
 import './entity';
 import { EntityConfigOrStr } from '../types';
 import { UNIT_PREFIXES } from '../const';
+import { migrateV3Config } from '../migrate';
 
 @customElement('sankey-chart-editor')
 export class SankeyChartEditor extends LitElement implements LovelaceCardEditor {
@@ -23,7 +24,17 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   private _initialized = false;
 
   public setConfig(config: SankeyChartConfig): void {
-    this._config = config;
+    // Convert V4 config to V3 format for editing
+    if (config.nodes && config.nodes.length > 0) {
+      // Convert nodes/links to sections with entities for editor
+      const sections = convertNodesToSections(config.nodes, config.links || [], config.sections);
+      this._config = {
+        ...config,
+        sections: sections as any, // V3 format sections with entities
+      };
+    } else {
+      this._config = config;
+    }
 
     this.loadCardHelpers();
   }
@@ -91,7 +102,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     }
     const target = ev.target;
     if (typeof target.section === 'number') {
-      const sections: SectionConfig[] = this._config?.sections || [];
+      const sections: Section[] = this._config?.sections as any || [];
       this._config = {
         ...this._config!,
         sections: sections.map((section, i) =>
@@ -113,7 +124,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     const newConf = typeof value === 'string' ? { entity_id: value } : value;
     const target = ev.target;
     if (typeof target.section === 'number' && typeof target.index === 'number') {
-      const sections: SectionConfig[] = this._config?.sections || [];
+      const sections: Section[] = this._config?.sections as any || [];
       this._config = {
         ...this._config!,
         sections: sections.map((section, i) => {
@@ -135,7 +146,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   }
 
   private _configEntity(sectionIndex: number, entityIndex: number): void {
-    const sections: SectionConfig[] = this._config?.sections || [];
+    const sections: Section[] = this._config?.sections as any || [];
     this._entityConfig = { sectionIndex, entityIndex, entity: sections[sectionIndex].entities[entityIndex] };
   }
 
@@ -147,7 +158,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     this._entityConfig = { ...this._entityConfig!, entity: entityConf };
   };
 
-  private _handleSectionChange = (index: number, sectionConf: SectionConfig): void => {
+  private _handleSectionChange = (index: number, sectionConf: Section): void => {
     this._config = {
       ...this._config!,
       sections: this._config?.sections?.map((section, i) => (i === index ? sectionConf : section)),
@@ -156,7 +167,12 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   };
 
   private _updateConfig(): void {
-    fireEvent(this, 'config-changed', { config: this._config });
+    // Convert V3 format (with entities in sections) back to V4 format before saving
+    const configToSave = this._config?.sections && (this._config.sections[0] as any)?.entities
+      ? migrateV3Config(this._config as any)
+      : this._config;
+
+    fireEvent(this, 'config-changed', { config: configToSave });
   }
 
   private _computeSchema() {
@@ -263,7 +279,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     const isMetric = this.hass.config.unit_system.length == 'km';
     const config = normalizeConfig(this._config || ({} as SankeyChartConfig), isMetric);
     const { autoconfig } = config;
-    const sections: SectionConfig[] = config.sections || [];
+    const sections: Section[] = this._config?.sections as any || [];
 
     if (this._entityConfig) {
       return html`
@@ -325,7 +341,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     `;
   }
 
-  private _renderSections(sections: SectionConfig[]): TemplateResult {
+  private _renderSections(sections: Section[]): TemplateResult {
     return html`
       <div class="sections">
         <h3>${localize('editor.sections')}</h3>
