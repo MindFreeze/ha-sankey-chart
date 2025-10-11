@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.4...v3.10.0) (2025-10-11)
+
+
+### Features
+
+* Ukrainian translation ([44ac796](https://github.com/MindFreeze/ha-sankey-chart/commit/44ac796ac8c11b8e17e41fdbbde9cb648ca68b9c))
+
 ## [3.9.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.3...v3.9.4) (2025-07-28)
 
 
