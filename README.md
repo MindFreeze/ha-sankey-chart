@@ -22,7 +22,9 @@ Install through [HACS](https://hacs.xyz/)
 | ----------------- | ------- | ------------------- | ------------------------------------------- |
 | type              | string  |                     | `custom:sankey-chart`
 | autoconfig        | object  |                     | Experimental. See [autoconfig](#autoconfig)
-| sections          | list    |                     | Required unless using autoconfig. Entities to show divided by sections, see [sections object](#sections-object) for additional options.
+| nodes             | list    |                     | List of entities/nodes to display. See [nodes object](#nodes-object). Required unless using autoconfig.
+| links             | list    |                     | Connections between nodes. See [links object](#links-object)
+| sections          | list    |                     | Section-level configuration (sorting, min_width). See [sections object](#sections-object)
 | layout            | string  | auto                | Valid options are: 'horizontal' - flow left to right, 'vertical' - flow top to bottom & 'auto' - determine based on available space (based on the section->`min_witdh` option, which defaults to 150)
 | energy_date_selection | boolean | false           | Integrate with the Energy Dashboard. Filters data based on the [energy-date-selection](https://www.home-assistant.io/dashboards/energy/) card. Use this only for accumulated data sensors (energy/water/gas) and with a `type:energy-date-selection` card. You still need to specify all your entities as HA doesn't know exactly how to connect them but you can use the general kWh entities that you have in the energy dashboard. In the future we may use areas to auto configure the chart. Not compatible with `time_period`
 | title             | string  |                     | Optional header title for the card
@@ -51,45 +53,59 @@ Install through [HACS](https://hacs.xyz/)
 | time_period_to   | string  | now                  | End of custom time period. Not compatible with `energy_date_selection`. See [Time period](#time-period)
 | ignore_missing_entities | boolean | false         | If true, missing entities will be treated as having a state of 0 instead of throwing an error |
 
+### Nodes object
+
+| Name              | Type    | Requirement  | Default             | Description                                 |
+| ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| id                | string  | **Required** |                     | Entity id of the sensor
+| section           | number  | **Optional** |                     | Index of the section this node belongs to (0-based). Determines horizontal/vertical position
+| attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
+| type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
+| name              | string  | **Optional** | entity name from HA | Custom label for this entity
+| icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
+| unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
+| color             | string/object | **Optional** | var(--primary-color)| Color of the box. Can be a simple color string ('red', '#FFAA2C', 'rgb(255, 170, 44)', 'random') or a range object for state-based coloring. See [color ranges](#color-ranges)
+| add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
+| subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
+| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`. Ex: `action: zoom`
+| double_tap_action | action  | **Optional** |                     | Home assistant action to perform on double tap
+| hold_action       | action  | **Optional** |                     | Home assistant action to perform on hold
+| children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
+| parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
+
+### Links object
+
+| Name                 | Type    | Requirement  | Default             | Description                                 |
+| -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| source               | string  | **Required** |                     | Entity id of the parent/source node
+| target               | string  | **Required** |                     | Entity id of the child/target node
+| value                | string  | **Optional** |                     | Entity id of a sensor that determines how much of the parent flows into the child (connection entity)
+
+### Color ranges
+
+You can color nodes based on their state value by using an object instead of a simple color string:
+
+```yaml
+nodes:
+  - id: sensor.temperature
+    color:
+      red:
+        from: 30  # red when >= 30
+      orange:
+        from: 20
+        to: 30    # orange when >= 20 and < 30
+      green:
+        to: 20    # green when < 20
+```
+
 ### Sections object
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| entities          | list    | **Required** |                     | Entities to show in this section. Could be just the entity_id as a string or an object, see [entities object](#entities-object) for additional options. Note that the order of this list matters
 | sort_by           | string  | **Optional** |                     | Sort the entities in this section. Overrides the top level option
 | sort_dir          | string  | **Optional** | desc                | Sorting direction for this section. Overrides the top level option
 | sort_group_by_parent | boolean | **Optional** | false            | Group entities by parent before sorting. See [#135](https://github.com/MindFreeze/ha-sankey-chart/issues/135)
 | min_width         | number   | **Optional** |                     | Minimum section width in pixels. Only relevant while in horizontal layout
-
-### Entities object
-
-| Name              | Type    | Requirement  | Default             | Description                                 |
-| ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| entity_id         | string  | **Required** |                     | Entity id of the sensor
-| attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
-| type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
-| children          | list    | **Optional** |                     | List of entity ids (strings or [childred objects](#children-object)) describing child entities (branches). Only entities in subsequent sections will be connected. *The last section must not contain `children:`*
-| name              | string  | **Optional** | entity name from HA | Custom label for this entity
-| icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
-| unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
-| color             | string  | **Optional** | var(--primary-color)| Color of the box. Example values: 'red', '#FFAA2C', 'rgb(255, 170, 44)', 'random' (assigns a random RGB color)
-| color_on_state    | boolean | **Optional** | false               | Color the box based on state value
-| color_limit       | string  | **Optional** | 1                   | State value for coloring the box based on state value
-| color_above       | string  | **Optional** | var(--state-icon-color)| Color for state value above color_limit
-| color_below       | string  | **Optional** | var(--primary-color)| Color for state value below color_limit
-| url               | string  | **Optional** |                     | Specifying a URL will make the entity label into a link
-| add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
-| subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
-| tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`. Ex: `action: zoom`
-| children_sum      | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
-| parents_sum       | object  | **Optional** |                     | [reconcile config](#reconcile-config). Determines how to handle mismatches between parents & children. For example if the sum of the energy from all rooms shouldn't exceed the energy of the whole house. See [#37](https://github.com/MindFreeze/ha-sankey-chart/issues/37) and its related issues
-
-### Children object
-
-| Name                 | Type    | Requirement  | Default             | Description                                 |
-| -------------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| entity_id            | string  | **Required** |                     | Entity id of the child box
-| connection_entity_id | string  | **Optional** |                     | Entity id of the sensor to that determines how much of the parent flows into the child
 
 ### Reconcile config
 
@@ -104,32 +120,38 @@ Install through [HACS](https://hacs.xyz/)
 - `passthrough` - Used for connecting entities across sections, passing through intermediate sections. The card creates such passtroughs automatically when needed but you can create them manually in order to have the connection pass through a specific place. See issue [#9](https://github.com/MindFreeze/ha-sankey-chart/issues/9). Here is an example passthrough config:
 
 ```yaml
-- entity_id: sensor.child_sensor
-  type: passthrough
-  # Note that passthrough entities have no children as they always connect to their own entity_id in the next section
+nodes:
+  - id: sensor.child_sensor
+    type: passthrough
+    # Note that passthrough entities have no children as they always connect to their own id in the next section
 ```
 
-- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Obviously it must be listed in some prior entity's children. Example:
+- `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Obviously it must be listed as a target in some link. Example:
 
 ```yaml
-- entity_id: whatever # as long as it is unique
-  type: remaining_parent_state
-  name: Other
+nodes:
+  - id: other_consumption  # as long as it is unique
+    type: remaining_parent_state
+    name: Other
 ```
 
 - `remaining_child_state` - Used for representing the unaccounted state in this entity's children. Like `remaining_parent_state` but in reverse. Useful for displaying discrepancies where the children add up to more than the parent. See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#15](https://github.com/MindFreeze/ha-sankey-chart/issues/15). Example:
 
 ```yaml
-- entity_id: whatever # as long as it is unique
-  type: remaining_child_state
-  name: Discrepancy
-  children:
-    # the relevant child entities
+nodes:
+  - id: discrepancy  # as long as it is unique
+    type: remaining_child_state
+    name: Discrepancy
+links:
+  - source: discrepancy
+    target: sensor.child1
+  - source: discrepancy
+    target: sensor.child2
 ```
 
 ### Autoconfig
 
-This card supports automatic configuration generation based on the HA energy dashboard. It will set default values for some config parameters and populate the `sections` param. This is meant to show energy data and assumes you have configured your [Energy Dashboard in HA](https://my.home-assistant.io/redirect/config_energy). Use it like this:
+This card supports automatic configuration generation based on the HA energy dashboard. It will set default values for some config parameters and populate the `nodes` and `links` arrays. This is meant to show energy data and assumes you have configured your [Energy Dashboard in HA](https://my.home-assistant.io/redirect/config_energy). Use it like this:
 
 ```yaml
 - type: energy-date-selection # you can put this anywhere you want but it is required for energy dashboard integration
@@ -202,15 +224,18 @@ time_period_to: "now/d"
 ```yaml
 - type: custom:sankey-chart
   show_names: true
-  sections:
-    - entities:
-      - entity_id: sensor.power
-        children:
-          - sensor.washing_machine_power
-          - sensor.other_power
-    - entities:
-      - sensor.washing_machine_power
-      - sensor.other_power
+  nodes:
+    - id: sensor.power
+      section: 0
+    - id: sensor.washing_machine_power
+      section: 1
+    - id: sensor.other_power
+      section: 1
+  links:
+    - source: sensor.power
+      target: sensor.washing_machine_power
+    - source: sensor.power
+      target: sensor.other_power
 ```
 
 ### Energy use
@@ -223,46 +248,65 @@ time_period_to: "now/d"
   unit_prefix: k
   round: 1
   wide: true
-  sections:
-    - entities:
-        - entity_id: sensor.solar
-          color: var(--warning-color)
-          children:
-            - sensor.total_energy
-        - entity_id: sensor.grid
-          children:
-            - sensor.total_energy
-        - entity_id: sensor.battery
-          color: var(--success-color)
-          children:
-            - sensor.total_energy
-    - entities:
-        - entity_id: sensor.total_energy
-          children:
-            - sensor.floor1
-            - sensor.floor2
-            - sensor.garage
-    - entities:
-        - entity_id: sensor.garage
-          color: purple
-          children:
-            - sensor.ev_charger
-            - garage_other
-        - entity_id: sensor.floor1
-          children:
-            - sensor.living_room
-            - entity_id: sensor.washer
-              connection_entity_id: sensor.washer_energy_net
-        - entity_id: sensor.floor2
-    - entities:
-        - entity_id: sensor.ev_charger
-          tap_action:
-            action: toggle
-        - entity_id: garage_other
-          type: remaining_parent_state
-          name: Other
-        - sensor.living_room
-        - sensor.washer
+  nodes:
+    # Section 0 - Sources
+    - id: sensor.solar
+      section: 0
+      color: var(--warning-color)
+    - id: sensor.grid
+      section: 0
+    - id: sensor.battery
+      section: 0
+      color: var(--success-color)
+    # Section 1 - Total
+    - id: sensor.total_energy
+      section: 1
+    # Section 2 - Distribution
+    - id: sensor.garage
+      section: 2
+      color: purple
+    - id: sensor.floor1
+      section: 2
+    - id: sensor.floor2
+      section: 2
+    # Section 3 - End consumers
+    - id: sensor.ev_charger
+      section: 3
+      tap_action:
+        action: toggle
+    - id: garage_other
+      section: 3
+      type: remaining_parent_state
+      name: Other
+    - id: sensor.living_room
+      section: 3
+    - id: sensor.washer
+      section: 3
+  links:
+    # Sources -> Total
+    - source: sensor.solar
+      target: sensor.total_energy
+    - source: sensor.grid
+      target: sensor.total_energy
+    - source: sensor.battery
+      target: sensor.total_energy
+    # Total -> Distribution
+    - source: sensor.total_energy
+      target: sensor.floor1
+    - source: sensor.total_energy
+      target: sensor.floor2
+    - source: sensor.total_energy
+      target: sensor.garage
+    # Distribution -> End consumers
+    - source: sensor.garage
+      target: sensor.ev_charger
+    - source: sensor.garage
+      target: garage_other
+    - source: sensor.floor1
+      target: sensor.living_room
+    - source: sensor.floor1
+      target: sensor.washer
+      value: sensor.washer_energy_net  # connection entity
 ```
 
 ### Reconcile state
@@ -272,18 +316,21 @@ Example config where the state of the children must not exceed their parent. `re
 ```yaml
 - type: custom:sankey-chart
   show_names: true
-  sections:
-    - entities:
-      - entity_id: sensor.power
-        children_sum:
-          should_be: equal_or_less
-          reconcile_to: max
-        children:
-          - sensor.washing_machine_power
-          - sensor.other_power
-    - entities:
-      - sensor.washing_machine_power
-      - sensor.other_power
+  nodes:
+    - id: sensor.power
+      section: 0
+      children_sum:
+        should_be: equal_or_less
+        reconcile_to: max
+    - id: sensor.washing_machine_power
+      section: 1
+    - id: sensor.other_power
+      section: 1
+  links:
+    - source: sensor.power
+      target: sensor.washing_machine_power
+    - source: sensor.power
+      target: sensor.other_power
 ```
 
 You can find more examples and help in the HA forum <https://community.home-assistant.io/t/anyone-using-the-sankey-chart-card/423125>
@@ -295,6 +342,10 @@ This card supports partial Energy dashboard integration. You still need to speci
 Currently this chart just shows historical data based on a energy-date-selection card. It doesn't know/care if your entities are in the default energy dashboard.
 
 ## FAQ
+
+**Q: How do I migrate my config from the old format (v3) to the new format (v4)?**
+
+**A:** See the [Migration Guide](MIGRATION.md) for step-by-step instructions on converting your configuration.
 
 **Q: Do my entities need to be added to the energy dashboard first?**
 
