@@ -39,8 +39,8 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
       
           <div class="spacerv" style="height:2.5px;"></div>
           
-          <div class="box type-entity" style="height:195px;">
-            <div style="background-color:var(--primary-color);" title="2W " class="">
+          <div class="box type-entity" style="height:195px;" title="2W ">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -59,8 +59,8 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
       
           
           
-          <div class="box type-entity" style="height:97px;">
-            <div style="background-color:var(--primary-color);" title="1W " class="">
+          <div class="box type-entity" style="height:97px;" title="1W ">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -74,8 +74,8 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
         
           <div class="spacerv" style="height:6px;"></div>
           
-          <div class="box type-entity" style="height:97px;">
-            <div style="background-color:var(--primary-color);" title="1W " class="">
+          <div class="box type-entity" style="height:97px;" title="1W ">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">

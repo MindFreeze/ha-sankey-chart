@@ -32,8 +32,8 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
       
           <div class="spacerv" style="height:69.5px;"></div>
           
-          <div class="box type-entity" style="height:61px;">
-            <div style="background-color:var(--warning-color);" title="1.8kW Total" class="">
+          <div class="box type-entity" style="height:61px;" title="1.8kW Total">
+            <div style="background-color:var(--warning-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -80,8 +80,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
       
           <div class="spacerv" style="height:5px;"></div>
           
-          <div class="box type-remaining_child_state" style="height:190px;">
-            <div style="background-color:darkslateblue;" title="5.6kW Total
+          <div class="box type-remaining_child_state" style="height:190px;" title="5.6kW Total
 All
 All
 All
@@ -95,7 +94,8 @@ IDK
 IDK
 IDK
 IDK
-IDK" class="">
+IDK">
+            <div style="background-color:darkslateblue;" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -145,9 +145,9 @@ IDK" class="">
       
           
           
-          <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="1.9kW Varmtvann
-Blaa" class="">
+          <div class="box type-entity" style="height:63px;" title="1.9kW Varmtvann
+Blaa">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -161,8 +161,8 @@ Blaa" class="">
         
           <div class="spacerv" style="height:5.5px;"></div>
           
-          <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="1.9kВ Avfukter" class="">
+          <div class="box type-entity" style="height:63px;" title="1.9kВ Avfukter">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -176,8 +176,8 @@ Blaa" class="">
         
           <div class="spacerv" style="height:5.5px;"></div>
           
-          <div class="box type-entity" style="height:63px;">
-            <div style="background-color:var(--primary-color);" title="1.9kW " class="">
+          <div class="box type-entity" style="height:63px;" title="1.9kW ">
+            <div style="background-color:var(--primary-color);" class="">
               
             </div>
             <div class="label" style="line-height:15px;">
@@ -210,8 +210,8 @@ Blaa" class="">
       
           <div class="spacerv" style="height:68.5px;"></div>
           
-          <div class="box type-passthrough" style="height:63px;">
-            <div style="background-color:red;" title="1.9kW " class="">
+          <div class="box type-passthrough" style="height:63px;" title="1.9kW ">
+            <div style="background-color:red;" class="">
               
             </div>
             
@@ -225,8 +225,8 @@ Blaa" class="">
       
           <div class="spacerv" style="height:68.5px;"></div>
           
-          <div class="box type-entity" style="height:63px;">
-            <div style="background-color:red;" title="1.9kW " class="">
+          <div class="box type-entity" style="height:63px;" title="1.9kW ">
+            <div style="background-color:red;" class="">
               
             </div>
             <div class="label" style="line-height:15px;">

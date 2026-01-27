@@ -120,14 +120,17 @@ export function renderSection(props: {
           ${extraSpacers
             ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: extraSpacers + 'px' })}></div>`
             : null}
-          <div class=${'box type-' + box.config.type!} style=${styleMap({ [sizeProp]: box.size + 'px' })}>
+          <div
+            class=${'box type-' + box.config.type!}
+            style=${styleMap({ [sizeProp]: box.size + 'px' })}
+            @click=${() => props.onTap(box)}
+            @dblclick=${() => props.onDoubleTap(box)}
+            @mouseenter=${() => props.onMouseEnter(box)}
+            @mouseleave=${props.onMouseLeave}
+            title=${formattedState + box.unit_of_measurement + ' ' + name}
+          >
             <div
               style=${styleMap({ backgroundColor: box.color })}
-              @click=${() => props.onTap(box)}
-              @dblclick=${() => props.onDoubleTap(box)}
-              @mouseenter=${() => props.onMouseEnter(box)}
-              @mouseleave=${props.onMouseLeave}
-              title=${formattedState + box.unit_of_measurement + ' ' + name}
               class=${props.highlightedEntities.includes(box.config) ? 'hl' : ''}
             >
               ${show_icons && isNotPassthrough
