@@ -92,7 +92,7 @@ export class Chart extends LitElement {
       this.config.sections.forEach(({ entities }, sectionIndex) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
-            this.entityIds.push(ent.entity_id);
+            this.entityIds.push(ent.id);
           } else if (ent.type === 'passthrough') {
             return;
           }
@@ -101,7 +101,7 @@ export class Chart extends LitElement {
             const childId = getEntityId(childConf);
             let child: EntityConfigInternal | undefined = ent;
             for (let i = sectionIndex + 1; i < this.config.sections.length; i++) {
-              child = this.config.sections[i]?.entities.find(e => e.entity_id === childId);
+              child = this.config.sections[i]?.entities.find(e => e.id === childId);
               if (!child) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
                 throw this.error;
@@ -195,7 +195,7 @@ export class Chart extends LitElement {
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
-      const connConfig = parent.children.find(c => getEntityId(c) === child.entity_id);
+      const connConfig = parent.children.find(c => getEntityId(c) === child.id);
       if (typeof connConfig === 'object' && connConfig.connection_entity_id) {
         const connectionState = this._getMemoizedState(connConfig.connection_entity_id).state ?? 0;
         connection.state = Math.min(parentState, childState, connectionState);
@@ -225,7 +225,7 @@ export class Chart extends LitElement {
   private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
     if (!this.entityStates.has(entityConfOrStr)) {
       const entityConf =
-        typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
+        typeof entityConfOrStr === 'string' ? { id: entityConfOrStr, type: 'entity' as const, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = this._getUnitOfMeasurement(
         entityConf.unit_of_measurement || entity.attributes.unit_of_measurement,
@@ -239,7 +239,7 @@ export class Chart extends LitElement {
       }
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
-          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
@@ -250,7 +250,7 @@ export class Chart extends LitElement {
       }
       if (entityConf.subtract_entities) {
         entityConf.subtract_entities.forEach(subId => {
-          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
@@ -377,10 +377,10 @@ export class Chart extends LitElement {
           return {
             config: entityConf,
             entity: this._getEntityState(entityConf),
-            entity_id: getEntityId(entityConf),
+            id: getEntityId(entityConf),
             state,
             unit_of_measurement,
-            color: finalColor,
+            color: finalColor as string,
             children: entityConf.children,
             connections: { parents: [] },
             top: 0,

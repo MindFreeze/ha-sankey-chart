@@ -3,11 +3,21 @@ import { filterConfigByZoomEntity } from '../src/zoom';
 
 const config = {
   type: '',
+  layout: 'auto' as const,
+  unit_prefix: '',
+  round: 0,
+  height: 200,
+  min_box_size: 3,
+  min_box_distance: 5,
+  min_state: 0,
+  nodes: [],
+  links: [],
   sections: [
     {
       entities: [
         {
-          entity_id: 'ent1',
+          id: 'ent1',
+          type: 'entity' as const,
           children: ['ent2', 'ent3'],
         },
       ],
@@ -15,11 +25,13 @@ const config = {
     {
       entities: [
         {
-          entity_id: 'ent2',
+          id: 'ent2',
+          type: 'entity' as const,
           children: ['ent4'],
         },
         {
-          entity_id: 'ent3',
+          id: 'ent3',
+          type: 'entity' as const,
           children: ['ent5'],
         },
       ],
@@ -27,11 +39,13 @@ const config = {
     {
       entities: [
         {
-          entity_id: 'ent4',
+          id: 'ent4',
+          type: 'entity' as const,
           children: [],
         },
         {
-          entity_id: 'ent5',
+          id: 'ent5',
+          type: 'entity' as const,
           children: [],
         },
       ],
@@ -41,27 +55,27 @@ const config = {
 
 describe('zoom action', () => {
   it('filters a config based on zoom entity', async () => {
-    expect(filterConfigByZoomEntity(config, config.sections[1].entities[0])).toEqual({
-      type: '',
-      sections: [
-        {
-          entities: [
-            {
-              entity_id: 'ent2',
-              children: ['ent4'],
-            },
-          ],
-        },
-        {
-          entities: [
-            {
-              entity_id: 'ent4',
-              children: [],
-            },
-          ],
-        },
-      ],
-    });
+    const filtered = filterConfigByZoomEntity(config, config.sections[1].entities[0]);
+    expect(filtered.sections).toEqual([
+      {
+        entities: [
+          {
+            id: 'ent2',
+            type: 'entity',
+            children: ['ent4'],
+          },
+        ],
+      },
+      {
+        entities: [
+          {
+            id: 'ent4',
+            type: 'entity',
+            children: [],
+          },
+        ],
+      },
+    ]);
   });
   it('returns the same config when there is no zoom entity', async () => {
     expect(filterConfigByZoomEntity(config, undefined)).toEqual(config);

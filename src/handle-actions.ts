@@ -64,7 +64,7 @@ export const handleAction = async (
         case "more-info": {
             fireEvent(node, "hass-more-info", {
                 // @ts-ignore
-                entityId: actionConfig.entity ?? actionConfig.data?.entity_id ?? config.entity_id,
+                entityId: actionConfig.entity ?? actionConfig.data?.entity_id ?? config.id,
             });
             break;
         }
@@ -90,7 +90,7 @@ export const handleAction = async (
             break;
         }
         case "toggle": {
-            toggleEntity(hass, config.entity_id);
+            toggleEntity(hass, config.id);
             forwardHaptic("light");
             break;
         }

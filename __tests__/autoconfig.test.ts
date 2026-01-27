@@ -75,7 +75,7 @@ describe('SankeyChart autoconfig', () => {
     // Check sections are calculated from nodes
     expect(Array.isArray(config.sections)).toBe(true);
     expect(config.sections.length).toBeGreaterThan(0);
-    const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities.map((e: { entity_id: string }) => e.entity_id));
+    const allEntities = config.sections.flatMap((s: { entities: { id: string }[] }) => s.entities.map((e: { id: string }) => e.id));
     expect(allEntities).toContain('sensor.grid_in');
     expect(allEntities).toContain('sensor.solar');
     expect(allEntities).toContain('sensor.battery_in');

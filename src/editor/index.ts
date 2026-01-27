@@ -5,12 +5,12 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { SankeyChartConfig, Section } from '../types';
+import { SankeyChartConfig, Section, Node } from '../types';
 import { localize } from '../localize/localize';
 import { normalizeConfig, convertNodesToSections } from '../utils';
 import './section';
 import './entity';
-import { EntityConfigOrStr } from '../types';
+import { NodeConfigOrStr } from '../types';
 import { UNIT_PREFIXES } from '../const';
 import { migrateV3Config } from '../migrate';
 
@@ -20,23 +20,25 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   @property({ attribute: false }) public lovelace?: LovelaceConfig;
   @state() private _config?: SankeyChartConfig;
   @state() private _helpers?: any;
-  @state() private _entityConfig?: { sectionIndex: number; entityIndex: number; entity: EntityConfigOrStr };
+  @state() private _entityConfig?: { sectionIndex: number; entityIndex: number; entity: NodeConfigOrStr };
   private _initialized = false;
 
   public setConfig(config: SankeyChartConfig): void {
-    // Convert V4 config to V3 format for editing
-    if (config.nodes && config.nodes.length > 0) {
-      // Convert nodes/links to sections with entities for editor
-      const sections = convertNodesToSections(config.nodes, config.links || [], config.sections);
-      this._config = {
-        ...config,
-        sections: sections as any, // V3 format sections with entities
-      };
-    } else {
-      this._config = config;
-    }
-
+    // Store config directly in V4 format
+    // Auto-migrate V3 configs if detected
+    this._config = config.sections?.some(s => (s as any).entities)
+      ? migrateV3Config(config as any)
+      : config;
     this.loadCardHelpers();
+  }
+
+  private _getSections(): Section[] {
+    if (!this._config) return [];
+    return convertNodesToSections(
+      this._config.nodes || [],
+      this._config.links || [],
+      this._config.sections
+    );
   }
 
   protected shouldUpdate(): boolean {
@@ -97,22 +99,19 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
 
   private _addEntity(ev): void {
     const value = ev.detail.value;
-    if (value === '') {
-      return;
-    }
+    if (value === '') return;
+
     const target = ev.target;
     if (typeof target.section === 'number') {
-      const sections: Section[] = this._config?.sections as any || [];
+      const newNode: Node = {
+        id: value,
+        section: target.section,
+        type: 'entity',
+      };
+
       this._config = {
         ...this._config!,
-        sections: sections.map((section, i) =>
-          i === target.section
-            ? {
-                ...section,
-                entities: [...section.entities, value],
-              }
-            : section,
-        ),
+        nodes: [...(this._config!.nodes || []), newNode],
       };
     }
     ev.target.value = '';
@@ -121,41 +120,88 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
 
   private _editEntity(ev): void {
     const { value } = ev.detail;
-    const newConf = typeof value === 'string' ? { entity_id: value } : value;
     const target = ev.target;
-    if (typeof target.section === 'number' && typeof target.index === 'number') {
-      const sections: Section[] = this._config?.sections as any || [];
+
+    if (typeof target.section !== 'number' || typeof target.index !== 'number') {
+      return;
+    }
+
+    const sections = this._getSections();
+    const section = sections[target.section];
+    if (!section) return;
+
+    const nodeInternal = section.entities[target.index];
+    const nodeId = nodeInternal.id;
+
+    // Find node in config
+    const nodes = this._config?.nodes || [];
+    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    if (nodeIndex < 0) return;
+
+    const newConf = typeof value === 'string' ? { id: value } : value;
+
+    if (!newConf.id) {
+      // Deleting node - remove from nodes and clean up links
       this._config = {
         ...this._config!,
-        sections: sections.map((section, i) => {
-          if (i !== target.section) {
-            return section;
-          }
-          const existing = section.entities[target.index];
-          const newVal = typeof existing === 'string' ? newConf : { ...existing, ...newConf };
-          return {
-            ...section,
-            entities: newConf?.entity_id
-              ? [...section.entities.slice(0, target.index), newVal, ...section.entities.slice(target.index + 1)]
-              : section.entities.filter((e, i) => i !== target.index),
-          };
-        }),
+        nodes: nodes.filter((_, i) => i !== nodeIndex),
+        links: (this._config!.links || []).filter(
+          l => l.source !== nodeId && l.target !== nodeId
+        ),
+      };
+    } else {
+      const updatedNodes = [...nodes];
+      const existingNode = updatedNodes[nodeIndex];
+
+      // Merge changes
+      updatedNodes[nodeIndex] = { ...existingNode, ...newConf };
+
+      // Handle children sync to links
+      let updatedLinks = this._config!.links || [];
+      if ('children' in newConf) {
+        // Remove old links from this source
+        updatedLinks = updatedLinks.filter(l => l.source !== nodeId);
+
+        // Add new links from children
+        (newConf.children || []).forEach(child => {
+          const childConf = typeof child === 'string'
+            ? { entity_id: child }
+            : child;
+          updatedLinks.push({
+            source: nodeId,
+            target: childConf.entity_id,
+            value: 'connection_entity_id' in childConf
+              ? childConf.connection_entity_id
+              : undefined,
+          });
+        });
+      }
+
+      this._config = {
+        ...this._config!,
+        nodes: updatedNodes,
+        links: updatedLinks,
       };
     }
+
     this._updateConfig();
   }
 
   private _configEntity(sectionIndex: number, entityIndex: number): void {
-    const sections: Section[] = this._config?.sections as any || [];
-    this._entityConfig = { sectionIndex, entityIndex, entity: sections[sectionIndex].entities[entityIndex] };
+    const sections = this._getSections();
+    this._entityConfig = {
+      sectionIndex,
+      entityIndex,
+      entity: sections[sectionIndex].entities[entityIndex]
+    };
   }
 
-  private _handleEntityChange = (entityConf: EntityConfigOrStr): void => {
+  private _handleEntityChange = (nodeConf: NodeConfigOrStr): void => {
     this._editEntity({
-      detail: { value: entityConf },
+      detail: { value: nodeConf },
       target: { section: this._entityConfig?.sectionIndex, index: this._entityConfig?.entityIndex },
     });
-    this._entityConfig = { ...this._entityConfig!, entity: entityConf };
+    this._entityConfig = { ...this._entityConfig!, entity: nodeConf };
   };
 
   private _handleSectionChange = (index: number, sectionConf: Section): void => {
@@ -167,12 +213,8 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   };
 
   private _updateConfig(): void {
-    // Convert V3 format (with entities in sections) back to V4 format before saving
-    const configToSave = this._config?.sections && (this._config.sections[0] as any)?.entities
-      ? migrateV3Config(this._config as any)
-      : this._config;
-
-    fireEvent(this, 'config-changed', { config: configToSave });
+    // Config is already in V4 format - save directly
+    fireEvent(this, 'config-changed', { config: this._config });
   }
 
   private _computeSchema() {
@@ -279,7 +321,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     const isMetric = this.hass.config.unit_system.length == 'km';
     const config = normalizeConfig(this._config || ({} as SankeyChartConfig), isMetric);
     const { autoconfig } = config;
-    const sections: Section[] = this._config?.sections as any || [];
+    const sections = this._getSections();
 
     if (this._entityConfig) {
       return html`
@@ -364,7 +406,10 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         <ha-actions>
           <mwc-button
             ?raised=${false}
-            .configValue=${conf => ({ ...conf, sections: [...conf.sections, { entities: [] }] })}
+            .configValue=${conf => ({
+              ...conf,
+              sections: [...(conf.sections || []), {}]  // Add empty section config, not entities
+            })}
             @click=${this._valueChanged}
           >
             ${localize('editor.add_section')}

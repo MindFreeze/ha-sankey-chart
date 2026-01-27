@@ -106,6 +106,16 @@ export interface NodeInternal extends Node {
   foundChildren?: string[];
 }
 
+// Backward compatibility alias
+export type EntityConfigInternal = NodeInternal;
+
+// Editor-specific types - working with nodes that have temporary children array
+export interface NodeConfigForEditor extends Node {
+  children?: ChildConfigOrStr[]; // temporary UI property, synced with links
+}
+
+export type NodeConfigOrStr = string | NodeConfigForEditor;
+
 export type ChildConfig = {
   entity_id: string;
   connection_entity_id: string;

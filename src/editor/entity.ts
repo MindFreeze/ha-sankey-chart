@@ -2,12 +2,12 @@ import { HomeAssistant, stateIcon } from 'custom-card-helpers';
 import { LitElement, html, TemplateResult, css, CSSResultGroup } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property } from 'lit/decorators';
-import type { EntityConfig, EntityConfigOrStr } from '../types';
+import type { NodeConfigForEditor, NodeConfigOrStr } from '../types';
 import { localize } from '../localize/localize';
 import { repeat } from 'lit/directives/repeat';
 import { DEFAULT_ENTITY_CONF } from '../const';
 
-const computeSchema = (entityConf: EntityConfig, icon: string) => [
+const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
   {
     name: 'type',
     selector: {
@@ -22,12 +22,12 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
       },
     },
   },
-  { name: 'entity_id', selector: { entity: {} } },
+  { name: 'id', selector: { entity: {} } },
   {
     type: 'grid',
     name: '',
     schema: [
-      { name: 'attribute', selector: { attribute: { entity_id: entityConf.entity_id } } },
+      { name: 'attribute', selector: { attribute: { entity_id: nodeConf.id } } },
       { name: 'unit_of_measurement', selector: { text: {} } },
     ],
   },
@@ -41,19 +41,8 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
     ],
   },
   { name: 'tap_action', selector: { 'ui-action': {} } },
-  { name: 'color_on_state', selector: { boolean: {} } },
-  ...(entityConf.color_on_state
-    ? [
-        {
-          name: 'color_limit',
-          selector: { number: { mode: 'box', unit_of_measurement: entityConf.unit_of_measurement, min: 0., step: 'any' } },
-        },
-        { name: 'color_above', selector: { text: {} } },
-        { name: 'color_below', selector: { text: {} } },
-      ]
-    : []),
-    // {
-    //   name: 'children_sum.should_be',
+  // {
+  //   name: 'children_sum.should_be',
     //   selector: {
     //     select: {
     //       mode: 'dropdown',
@@ -68,9 +57,9 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
 @customElement('sankey-chart-entity-editor')
 class SankeyChartEntityEditor extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) public entity!: EntityConfigOrStr;
+  @property({ attribute: false }) public entity!: NodeConfigOrStr;
   @property({ attribute: false }) public onClose!: () => void;
-  @property({ attribute: false }) public onChange!: (c: EntityConfigOrStr) => void;
+  @property({ attribute: false }) public onChange!: (c: NodeConfigOrStr) => void;
 
   private _valueChanged(ev: CustomEvent): void {
     this.onChange(ev.detail.value);
@@ -92,7 +81,7 @@ class SankeyChartEntityEditor extends LitElement {
       detail: { value },
       target,
     } = ev;
-    const conf = typeof this.entity === 'string' ? { entity_id: this.entity } : this.entity;
+    const conf = typeof this.entity === 'string' ? { id: this.entity, type: 'entity' as const, children: [] } : this.entity;
     let children = conf.children ?? [];
     if (typeof target?.index === 'number') {
       if (value) {
@@ -113,10 +102,10 @@ class SankeyChartEntityEditor extends LitElement {
   }
 
   protected render(): TemplateResult | void {
-    const conf = typeof this.entity === 'string' ? { entity_id: this.entity } : this.entity;
+    const conf = typeof this.entity === 'string' ? { id: this.entity, type: 'entity' as const } : this.entity;
     const data = { ...DEFAULT_ENTITY_CONF, ...conf };
 
-    const icon = data.icon || this._getEntityIcon(conf.entity_id);
+    const icon = data.icon || this._getEntityIcon(conf.id);
 
     const schema = computeSchema(data, icon);
     return html`

@@ -22,8 +22,8 @@ export function renderBranchConnectors(props: {
     .map((b, boxIndex) => {
       const children = props.nextSection!.boxes.filter(
         child =>
-          b.children.some(c => getEntityId(c) === child.entity_id) ||
-          (b.config.type === 'passthrough' && b.entity_id === child.entity_id),
+          b.children.some(c => getEntityId(c) === child.id) ||
+          (b.config.type === 'passthrough' && b.id === child.id),
       );
       const connections = getChildConnections(b, children, props.allConnections, props.connectionsByParent).filter(
         c => {
