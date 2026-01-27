@@ -131,6 +131,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     if (!section) return;
 
     const nodeInternal = section.entities[target.index];
+    if (!nodeInternal) return;
     const nodeId = nodeInternal.id;
 
     // Find node in config
@@ -140,7 +141,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
 
     const newConf = typeof value === 'string' ? { id: value } : value;
 
-    if (!newConf.id) {
+    if (!newConf || !newConf.id) {
       // Deleting node - remove from nodes and clean up links
       this._config = {
         ...this._config!,
