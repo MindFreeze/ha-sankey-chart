@@ -5,7 +5,7 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { SankeyChartConfig, Section, Node } from '../types';
+import { SankeyChartConfig, Section, SectionConfig, Node } from '../types';
 import { localize } from '../localize/localize';
 import { normalizeConfig, convertNodesToSections } from '../utils';
 import './section';
@@ -92,7 +92,15 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         ev.detail.value.time_period_from = undefined;
         ev.detail.value.time_period_to = undefined;
       }
-      this._config = { ...ev.detail.value };
+      // Preserve original nodes, links, and sections (don't use normalized values which include entities)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { nodes, links, sections, ...otherValues } = ev.detail.value;
+      this._config = {
+        ...otherValues,
+        nodes: this._config!.nodes,
+        links: this._config!.links,
+        sections: this._config!.sections,
+      };
     }
     this._updateConfig();
   }
@@ -206,9 +214,13 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   };
 
   private _handleSectionChange = (index: number, sectionConf: Section): void => {
+    // Only extract SectionConfig properties, not the entities array
+    const { sort_by, sort_dir, sort_group_by_parent, min_width } = sectionConf;
+    const sectionConfigOnly: SectionConfig = { sort_by, sort_dir, sort_group_by_parent, min_width };
+
     this._config = {
       ...this._config!,
-      sections: this._config?.sections?.map((section, i) => (i === index ? sectionConf : section)),
+      sections: this._config?.sections?.map((section, i) => (i === index ? sectionConfigOnly : section)),
     };
     this._updateConfig();
   };
@@ -348,6 +360,10 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                   const newConf = { ...conf };
                   if (val && !conf.autoconfig) {
                     newConf.autoconfig = { print_yaml: false };
+                    // Clear manual config when enabling autoconfig
+                    newConf.nodes = [];
+                    newConf.links = [];
+                    newConf.sections = [];
                   } else if (!val && conf.autoconfig) {
                     delete newConf.autoconfig;
                   }
