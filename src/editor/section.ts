@@ -154,6 +154,7 @@ class SankeyChartSectionEditor extends LitElement {
 
       .entity ha-entity-picker {
         flex-grow: 1;
+        min-width: 0;
       }
 
       .edit-icon {

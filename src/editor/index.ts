@@ -405,8 +405,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
             `,
         )}
         <ha-actions>
-          <mwc-button
-            ?raised=${false}
+          <ha-button
             .configValue=${conf => ({
               ...conf,
               sections: [...(conf.sections || []), {}]  // Add empty section config, not entities
@@ -414,7 +413,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
             @click=${this._valueChanged}
           >
             ${localize('editor.add_section')}
-          </mwc-button>
+          </ha-button>
         </ha-actions>
       </div>
     `;

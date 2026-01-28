@@ -41,17 +41,6 @@ const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
     ],
   },
   { name: 'tap_action', selector: { 'ui-action': {} } },
-  // {
-  //   name: 'children_sum.should_be',
-    //   selector: {
-    //     select: {
-    //       mode: 'dropdown',
-    //       options: [
-    //         { value: 'entity', label: localize('editor.entity_types.entity') },
-    //       ],
-    //     },
-    //   },
-    // },
 ];
 
 @customElement('sankey-chart-entity-editor')

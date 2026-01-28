@@ -212,7 +212,12 @@ export function convertNodesToSections(nodes: Node[], links: Link[], sectionConf
   });
 
   // Convert to sections, sorted by section index
-  const sectionIndices = Array.from(nodesBySection.keys()).sort((a, b) => a - b);
+  // Include both sections with nodes AND empty sections defined in sectionConfigs
+  const nodeIndices = Array.from(nodesBySection.keys());
+  const configIndices = sectionConfigs ? sectionConfigs.map((_, i) => i) : [];
+  const allIndices = new Set([...nodeIndices, ...configIndices]);
+  const sectionIndices = Array.from(allIndices).sort((a, b) => a - b);
+
   const sections: Section[] = sectionIndices.map(sectionIndex => {
     // Get section config if available, otherwise use empty config
     const sectionConfig = sectionConfigs?.[sectionIndex] || {};
