@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.0...v3.10.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* handle new grid format ([3ef6c2b](https://github.com/MindFreeze/ha-sankey-chart/commit/3ef6c2b83bd562cac6d3182c135ff7afe1644134))
+
 ## [3.10.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.4...v3.10.0) (2025-10-11)
 
 
