@@ -287,22 +287,27 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       },
     ].filter(s => s.entities.length > 0) as Section[];
 
-    const grid = sources.find(s => s.type === 'grid');
-    if (grid && grid?.flow_to?.length) {
-      // grid export
-      grid?.flow_to.forEach(({ stat_energy_to }) => {
-        sections[1].entities.unshift({
-          entity_id: stat_energy_to,
-          subtract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
-          type: 'entity',
-          color: getEnergySourceColor(grid.type),
-          children: [],
+    const gridSources = sources.filter(s => s.type === 'grid');
+    const seenFlowTo = new Set<string>();
+    gridSources.forEach(grid => {
+      if (grid?.flow_to?.length) {
+        // grid export
+        grid.flow_to.forEach(({ stat_energy_to }) => {
+          if (seenFlowTo.has(stat_energy_to)) return;
+          seenFlowTo.add(stat_energy_to);
+          sections[1].entities.unshift({
+            entity_id: stat_energy_to,
+            subtract_entities: (grid.flow_from || []).map(e => e.stat_energy_from),
+            type: 'entity',
+            color: getEnergySourceColor(grid.type),
+            children: [],
+          });
+          sections[0].entities.forEach(entity => {
+            entity.children.unshift(stat_energy_to);
+          });
         });
-        sections[0].entities.forEach(entity => {
-          entity.children.unshift(stat_energy_to);
-        });
-      });
-    }
+      }
+    });
 
     const battery = sources.find(s => s.type === 'battery');
     if (battery && battery.stat_energy_from && battery.stat_energy_to) {
