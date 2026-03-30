@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.10.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.1...v3.10.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **#314:** handle grid export in new energy format without flow_to ([f69a0b5](https://github.com/MindFreeze/ha-sankey-chart/commit/f69a0b586a96049b6d072f0a0f90981e9082913b))
+* **#314:** handle grid export in new energy format without flow_to ([5333d1b](https://github.com/MindFreeze/ha-sankey-chart/commit/5333d1b950ae1655841db22e4df308c50ca27411))
+
 ## [3.10.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.0...v3.10.1) (2026-03-23)
 
 
