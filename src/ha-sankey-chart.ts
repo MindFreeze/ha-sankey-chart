@@ -271,7 +271,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const sections = [
       {
         entities: sources.map(source => {
-          const subtract = source.type === 'grid' && !showNetFlows
+          const subtract = (source.type === 'grid' || source.type === 'battery') && !showNetFlows
             ? undefined
             : source.stat_energy_to
               ? [source.stat_energy_to]
