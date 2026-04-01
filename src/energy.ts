@@ -99,7 +99,7 @@ export interface EnergyCollection extends Collection<EnergyData> {
 
 export const getEnergyDataCollection = (
   hass: HomeAssistant,
-  key = '_energy'
+  key = '_energy_dashboard-energy'
 ): EnergyCollection | null => {
   if ((hass.connection as any)[key]) {
     return (hass.connection as any)[key];
