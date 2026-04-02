@@ -119,10 +119,16 @@ export function renderSection(props: {
         if (box.config.secondary_entity) {
           const secEntity = props.states[box.config.secondary_entity];
           if (secEntity) {
-            const secStateNum = parseFloat(secEntity.state as string);
+            let secUnitRaw: string | undefined = secEntity.attributes.unit_of_measurement;
+            let secStateNum = parseFloat(secEntity.state as string);
+            if (!isNaN(secStateNum) && props.config.unit_prefix === 'auto') {
+              const normalized = normalizeStateValue(props.config.unit_prefix, secStateNum, secUnitRaw, true);
+              secStateNum = normalized.state;
+              secUnitRaw = normalized.unit_of_measurement;
+            }
             if (!isNaN(secStateNum)) {
-              secondaryFormattedState = formatState(secStateNum, props.config.round, props.locale);
-              secondaryUnit = secEntity.attributes.unit_of_measurement;
+              secondaryFormattedState = formatState(secStateNum, props.config.round, props.locale, props.config.monetary_unit);
+              secondaryUnit = secUnitRaw;
             }
           }
         }
@@ -141,7 +147,7 @@ export function renderSection(props: {
               @dblclick=${() => props.onDoubleTap(box)}
               @mouseenter=${() => props.onMouseEnter(box)}
               @mouseleave=${props.onMouseLeave}
-              title=${formattedState + box.unit_of_measurement + ' ' + name}
+              title=${formattedState + box.unit_of_measurement + (secondaryFormattedState !== undefined ? ' / ' + secondaryFormattedState + (secondaryUnit || '') : '') + ' ' + name}
               class=${props.highlightedEntities.includes(box.config) ? 'hl' : ''}
             >
               ${show_icons && isNotPassthrough

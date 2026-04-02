@@ -45,7 +45,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
             </div>
             <div class="label" style="line-height:15px;">
     <span>
-          <span class="state">W</span>
+          <span class="state">
         </span>
     
   </div>
@@ -65,7 +65,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
             </div>
             <div class="label" style="line-height:15px;">
     <span>
-          <span class="state">W</span>
+          <span class="state">
         </span>
     
   </div>
@@ -80,7 +80,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
             </div>
             <div class="label" style="line-height:15px;">
     <span>
-          <span class="state">W</span>
+          <span class="state">
         </span>
     
   </div>
