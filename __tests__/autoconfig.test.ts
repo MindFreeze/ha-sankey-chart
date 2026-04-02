@@ -104,9 +104,9 @@ describe('SankeyChart autoconfig', () => {
     });
   });
 
-  it('removes subtract_entities with show_net_flows: false', async () => {
+  it('removes subtract_entities with net_flows: false', async () => {
     hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
-    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { show_net_flows: false } }, true);
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { net_flows: false } }, true);
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [
         { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_energy_to: 'sensor.grid_out' },
