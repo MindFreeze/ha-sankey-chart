@@ -47,6 +47,7 @@
       "color_limit": "Limit pro změnu barvy",
       "color_above": "Barva nad limitem",
       "color_below": "Barva pod limitem",
+      "secondary_entity": "Sekundární entita",
       "sort_by": "Třídit podle",
       "sort_dir": "Směr třídění",
       "section": {

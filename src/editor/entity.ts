@@ -40,6 +40,7 @@ const computeSchema = (entityConf: EntityConfig, icon: string) => [
       { name: 'color', selector: { text: {} } },
     ],
   },
+  { name: 'secondary_entity', selector: { entity: {} } },
   { name: 'tap_action', selector: { 'ui-action': {} } },
   { name: 'color_on_state', selector: { boolean: {} } },
   ...(entityConf.color_on_state

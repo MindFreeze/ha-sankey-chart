@@ -92,6 +92,7 @@ export interface EntityConfig {
   hold_action?: ActionConfigExtended;
   children_sum?: ReconcileConfig;
   parents_sum?: ReconcileConfig;
+  secondary_entity?: string;
 }
 
 export type EntityConfigInternal = EntityConfig & {

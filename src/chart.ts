@@ -96,6 +96,9 @@ export class Chart extends LitElement {
           } else if (ent.type === 'passthrough') {
             return;
           }
+          if (ent.secondary_entity) {
+            this.entityIds.push(ent.secondary_entity);
+          }
           ent.children.forEach(childConf => {
             const passthroughs: EntityConfigInternal[] = [];
             const childId = getEntityId(childConf);
@@ -669,6 +672,7 @@ export class Chart extends LitElement {
                 connectionsByParent: this.connectionsByParent,
                 connectionsByChild: this.connectionsByChild,
                 allConnections: this.connections,
+                states: this.states,
                 onTap: this._handleBoxTap.bind(this),
                 onDoubleTap: this._handleBoxDoubleTap.bind(this),
                 onMouseEnter: this._handleMouseEnter.bind(this),

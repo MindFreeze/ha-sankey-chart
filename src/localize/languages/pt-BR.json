@@ -47,6 +47,7 @@
       "color_limit": "Limite de estado para mudança de cor",
       "color_above": "Cor acima do limite",
       "color_below": "Cor abaixo do limite",
+      "secondary_entity": "Entidade secundária",
       "sort_by": "Ordenar por",
       "sort_dir": "Direção de ordenação",
       "section": {

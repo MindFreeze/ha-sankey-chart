@@ -4,7 +4,7 @@ import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
 import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
 import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
-import { HassEntity } from 'home-assistant-js-websocket';
+import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { renderLabel } from './label';
 
 export function renderBranchConnectors(props: {
@@ -79,6 +79,7 @@ export function renderSection(props: {
   connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
   allConnections: ConnectionState[];
   vertical: boolean;
+  states: HassEntities;
   onTap: (config: Box) => void;
   onDoubleTap: (config: Box) => void;
   onMouseEnter: (config: Box) => void;
@@ -113,6 +114,19 @@ export function renderSection(props: {
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
 
+        let secondaryFormattedState: string | undefined;
+        let secondaryUnit: string | undefined;
+        if (box.config.secondary_entity) {
+          const secEntity = props.states[box.config.secondary_entity];
+          if (secEntity) {
+            const secStateNum = parseFloat(secEntity.state as string);
+            if (!isNaN(secStateNum)) {
+              secondaryFormattedState = formatState(secStateNum, props.config.round, props.locale);
+              secondaryUnit = secEntity.attributes.unit_of_measurement;
+            }
+          }
+        }
+
         const sizeProp = props.vertical ? 'width' : 'height';
 
         return html`
@@ -134,7 +148,7 @@ export function renderSection(props: {
                 ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
                 : null}
             </div>
-            ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical)}
+            ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical, secondaryFormattedState, secondaryUnit)}
           </div>
           ${extraSpacers ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>` : null}
         `;

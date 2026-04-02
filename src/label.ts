@@ -10,6 +10,8 @@ export function renderLabel(
   name: string,
   spacerSize: number,
   vertical: boolean,
+  secondaryFormattedState?: string,
+  secondaryUnit?: string,
 ) {
   const { show_names, show_states, show_units } = config;
   const shouldShowLabel = box.config.type !== 'passthrough' && (show_names || show_states);
@@ -23,7 +25,10 @@ export function renderLabel(
   if (vertical) {
     // count chars in the name and reduce font size if it doesn't fit maxLabelSize
     labelStyle.width = maxLabelSize + 'px';
-    const stateChars = (formattedState + (show_units ? box.unit_of_measurement : '')).length;
+    const secondarySuffix = secondaryFormattedState !== undefined
+      ? ' / ' + secondaryFormattedState + (show_units && secondaryUnit ? secondaryUnit : '')
+      : '';
+    const stateChars = (formattedState + (show_units ? box.unit_of_measurement : '') + secondarySuffix).length;
     const desiredWidth = stateChars * CHAR_WIDTH_RATIO;
     if (desiredWidth > maxLabelSize) {
       const fontSize = maxLabelSize / desiredWidth;
@@ -63,6 +68,10 @@ export function renderLabel(
       ? html`<span>
           <span class="state">${formattedState}</span>${show_units
             ? html`<span class="unit">${box.unit_of_measurement}</span>`
+            : null}${secondaryFormattedState !== undefined
+            ? html`<span class="secondary-separator"> / </span><span class="state">${secondaryFormattedState}</span>${show_units && secondaryUnit
+                ? html`<span class="unit">${secondaryUnit}</span>`
+                : null}`
             : null}
         </span>`
       : null}
