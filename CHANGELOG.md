@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.10.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.2...v3.10.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **#318:** find energy collection by prefix instead of fixed key ([6ac8a58](https://github.com/MindFreeze/ha-sankey-chart/commit/6ac8a585d166924dcee3b968deacccc4b0d8dc86))
+* **#318:** find energy collection by prefix instead of fixed key ([1ea179b](https://github.com/MindFreeze/ha-sankey-chart/commit/1ea179bf8464c560a47f02665f5fecd907062e39))
+
 ## [3.10.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.1...v3.10.2) (2026-03-30)
 
 
