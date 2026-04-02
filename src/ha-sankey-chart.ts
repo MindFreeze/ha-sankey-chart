@@ -213,7 +213,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     if (!prefs) {
       prefs = await getEnergyPreferences(this.hass);
     }
-    const showNetFlows = this.config.autoconfig?.show_net_flows === true;
+    const showNetFlows = this.config.autoconfig?.show_net_flows !== false;
     const sources: typeof prefs.energy_sources = [];
     (prefs?.energy_sources || []).forEach(s => {
       if (!ENERGY_SOURCE_TYPES.includes(s.type)) {

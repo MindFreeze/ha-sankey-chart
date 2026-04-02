@@ -61,7 +61,7 @@ describe('SankeyChart autoconfig', () => {
     const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
     const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
-    expect(gridExport.subtract_entities).toBeUndefined();
+    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
     // all source entities should have grid export as a child
     const sourceEntities = config.sections[0].entities;
     sourceEntities.forEach((e: { children: string[] }) => {
@@ -96,7 +96,7 @@ describe('SankeyChart autoconfig', () => {
     const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
     const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
-    expect(gridExport.subtract_entities).toBeUndefined();
+    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
     // all source entities should have grid export as a child
     const sourceEntities = config.sections[0].entities;
     sourceEntities.forEach((e: { children: string[] }) => {
@@ -104,9 +104,9 @@ describe('SankeyChart autoconfig', () => {
     });
   });
 
-  it('preserves subtract_entities with show_net_flows option', async () => {
+  it('removes subtract_entities with show_net_flows: false', async () => {
     hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
-    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { show_net_flows: true } }, true);
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { show_net_flows: false } }, true);
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [
         { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_energy_to: 'sensor.grid_out' },
@@ -128,9 +128,9 @@ describe('SankeyChart autoconfig', () => {
     const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
     const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
-    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
+    expect(gridExport.subtract_entities).toBeUndefined();
     const gridImport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_in');
-    expect(gridImport.subtract_entities).toEqual(['sensor.grid_out']);
+    expect(gridImport.subtract_entities).toBeUndefined();
   });
 
   it('creates sections from energy preferences', async () => {
