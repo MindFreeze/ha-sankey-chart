@@ -99,10 +99,14 @@ export interface EnergyCollection extends Collection<EnergyData> {
 
 export const getEnergyDataCollection = (
   hass: HomeAssistant,
-  key = '_energy'
 ): EnergyCollection | null => {
-  if ((hass.connection as any)[key]) {
-    return (hass.connection as any)[key];
+  if ((hass.connection as any)['_energy']) {
+    return (hass.connection as any)['_energy'];
+  }
+  for (const key of Object.keys(hass.connection)) {
+    if (key.startsWith('_energy') && typeof (hass.connection as any)[key]?.subscribe === 'function') {
+      return (hass.connection as any)[key];
+    }
   }
   // HA has not initialized the collection yet and we don't want to interfere with that if energy_date_selection is enabled
   return null;
