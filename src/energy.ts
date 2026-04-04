@@ -100,11 +100,18 @@ export interface EnergyCollection extends Collection<EnergyData> {
 export const getEnergyDataCollection = (
   hass: HomeAssistant,
 ): EnergyCollection | null => {
-  if ((hass.connection as any)['_energy']) {
-    return (hass.connection as any)['_energy'];
-  }
-  for (const key of Object.keys(hass.connection)) {
-    if (key.startsWith('_energy') && typeof (hass.connection as any)[key]?.subscribe === 'function') {
+  if (hass.config.version < '2026.4') {
+    if ((hass.connection as any)['_energy']) {
+      return (hass.connection as any)['_energy'];
+    }
+    for (const key of Object.keys(hass.connection)) {
+      if (key.startsWith('_energy') && typeof (hass.connection as any)[key]?.subscribe === 'function') {
+        return (hass.connection as any)[key];
+      }
+    }
+  } else {
+    const key = '_energy_' + hass.panelUrl;
+    if ((hass.connection as any)[key]) {
       return (hass.connection as any)[key];
     }
   }
