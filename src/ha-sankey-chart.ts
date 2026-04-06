@@ -76,11 +76,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         resolve: (value: EnergyCollection | PromiseLike<EnergyCollection>) => void,
         reject: (reason?: any) => void,
       ) => {
-        const energyCollection = getEnergyDataCollection(this.hass);
+        const energyCollection = getEnergyDataCollection(this.hass, this.config.energy_collection_key);
         if (energyCollection) {
           resolve(energyCollection);
         } else if (Date.now() - start > ENERGY_DATA_TIMEOUT) {
-          console.debug(getEnergyDataCollection(this.hass));
+          console.debug(getEnergyDataCollection(this.hass, this.config.energy_collection_key));
           reject(
             new Error('No energy data received. Make sure to add a `type: energy-date-selection` card to this screen.'),
           );
@@ -92,7 +92,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       setTimeout(() => {
         if (!this.error && !Object.keys(this.states).length) {
           this.error = new Error('Something went wrong. No energy data received.');
-          console.debug(getEnergyDataCollection(this.hass));
+          console.debug(getEnergyDataCollection(this.hass, this.config.energy_collection_key));
         }
       }, ENERGY_DATA_TIMEOUT * 2);
       energyPromise.catch(err => {

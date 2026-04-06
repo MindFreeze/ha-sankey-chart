@@ -99,15 +99,34 @@ export interface EnergyCollection extends Collection<EnergyData> {
 
 export const getEnergyDataCollection = (
   hass: HomeAssistant,
+  collectionKey?: string,
 ): EnergyCollection | null => {
-  if ((hass.connection as any)['_energy']) {
-    return (hass.connection as any)['_energy'];
+  const conn = hass.connection as any;
+  const isCollection = (obj: any) => obj && typeof obj.subscribe === 'function';
+
+  // If an explicit key is provided, use only that key
+  if (collectionKey) {
+    return isCollection(conn[collectionKey]) ? conn[collectionKey] : null;
   }
-  for (const key of Object.keys(hass.connection)) {
-    if (key.startsWith('_energy') && typeof (hass.connection as any)[key]?.subscribe === 'function') {
-      return (hass.connection as any)[key];
+
+  // Smart auto-detection: try panel-specific key first (HA 2026.4+)
+  const panelKey = `_energy_${hass.panelUrl}`;
+  if (isCollection(conn[panelKey])) {
+    return conn[panelKey];
+  }
+
+  // Legacy key (HA < 2026.4)
+  if (isCollection(conn['_energy'])) {
+    return conn['_energy'];
+  }
+
+  // Fallback: prefix scan for any _energy* collection
+  for (const key of Object.keys(conn)) {
+    if (key.startsWith('_energy') && isCollection(conn[key])) {
+      return conn[key];
     }
   }
+
   // HA has not initialized the collection yet and we don't want to interfere with that if energy_date_selection is enabled
   return null;
 };
