@@ -175,6 +175,7 @@ or like this:
 | print_yaml        | boolean | **Optional** | false               | Prints the auto generated configuration after the card so you can use it as a starting point for customization. It shows up like an error. Don't worry about it.
 | group_by_floor    | boolean | **Optional** | true                | Display data per floor
 | group_by_area     | boolean | **Optional** | true                | Display data per area
+| net_flows         | boolean | **Optional** | true                | Show net energy flows. Set to `false` to show gross energy flows instead, making grid export and battery charge/discharge visible even for net importers
 
 ### Time Period
 
