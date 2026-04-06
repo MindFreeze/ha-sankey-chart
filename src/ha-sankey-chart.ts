@@ -213,6 +213,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     if (!prefs) {
       prefs = await getEnergyPreferences(this.hass);
     }
+    const netFlows = this.config.autoconfig?.net_flows !== false;
     const sources: typeof prefs.energy_sources = [];
     (prefs?.energy_sources || []).forEach(s => {
       if (!ENERGY_SOURCE_TYPES.includes(s.type)) {
@@ -270,9 +271,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const sections = [
       {
         entities: sources.map(source => {
-          const subtract = source.stat_energy_to
-            ? [source.stat_energy_to]
-            : source.flow_to?.map(e => e.stat_energy_to) || undefined;
+          const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
+            ? undefined
+            : source.stat_energy_to
+              ? [source.stat_energy_to]
+              : source.flow_to?.map(e => e.stat_energy_to) || undefined;
           return {
             entity_id: source.stat_energy_from,
             subtract_entities: subtract,
@@ -301,7 +304,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           seenFlowTo.add(stat_energy_to);
           sections[1].entities.unshift({
             entity_id: stat_energy_to,
-            subtract_entities: importEntities,
+            subtract_entities: netFlows ? importEntities : undefined,
             type: 'entity',
             color: getEnergySourceColor(grid.type),
             children: [],
@@ -318,7 +321,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       // battery charging
       sections[1].entities.unshift({
         entity_id: battery.stat_energy_to,
-        subtract_entities: [battery.stat_energy_from],
+        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
         type: 'entity',
         color: getEnergySourceColor(battery.type),
         children: [],
