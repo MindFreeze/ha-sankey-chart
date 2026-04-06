@@ -46,7 +46,7 @@ console.info(
 
 const ENERGY_DATA_TIMEOUT = 10000;
 
-type DeviceNode = { id: string; name?: string; parent?: string };
+type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
@@ -245,6 +245,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         id: device.stat_consumption,
         name: device.name,
         parent: device.included_in_stat,
+        color: `var(--color-${(idx % 54) + 1})`,
       };
       if (node.parent) {
         parentLinks[node.id] = node.parent;
@@ -433,6 +434,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             section: currentSection,
             type: 'entity',
             name: d.name || '',
+            color: d.color,
           });
           const children = deviceSections[i + 1]?.filter(c => c.parent === d.id);
           children?.forEach(c => {
