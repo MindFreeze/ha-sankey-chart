@@ -58,14 +58,14 @@ describe('SankeyChart autoconfig', () => {
     await (sankeyChart as any)['autoconfig']();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = (sankeyChart as any).config;
-    const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
-    const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
     expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
-    // all source entities should have grid export as a child
-    const sourceEntities = config.sections[0].entities;
-    sourceEntities.forEach((e: { children: string[] }) => {
-      expect(e.children).toContain('sensor.grid_out');
+    // all source entities should link to grid export
+    const sourceNodes = config.nodes.filter((n: { id: string }) => ['sensor.grid_in', 'sensor.solar'].includes(n.id));
+    sourceNodes.forEach((n: { id: string }) => {
+      const link = config.links.find((l: { source: string; target: string }) => l.source === n.id && l.target === 'sensor.grid_out');
+      expect(link).toBeDefined();
     });
   });
 
@@ -93,14 +93,14 @@ describe('SankeyChart autoconfig', () => {
     await (sankeyChart as any)['autoconfig']();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = (sankeyChart as any).config;
-    const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
-    const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
     expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
-    // all source entities should have grid export as a child
-    const sourceEntities = config.sections[0].entities;
-    sourceEntities.forEach((e: { children: string[] }) => {
-      expect(e.children).toContain('sensor.grid_out');
+    // all source entities should link to grid export
+    const sourceNodes = config.nodes.filter((n: { id: string }) => ['sensor.grid_in', 'sensor.solar'].includes(n.id));
+    sourceNodes.forEach((n: { id: string }) => {
+      const link = config.links.find((l: { source: string; target: string }) => l.source === n.id && l.target === 'sensor.grid_out');
+      expect(link).toBeDefined();
     });
   });
 
@@ -125,11 +125,10 @@ describe('SankeyChart autoconfig', () => {
     await (sankeyChart as any)['autoconfig']();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = (sankeyChart as any).config;
-    const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities);
-    const gridExport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_out');
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
     expect(gridExport).toBeDefined();
     expect(gridExport.subtract_entities).toBeUndefined();
-    const gridImport = allEntities.find((e: { entity_id: string }) => e.entity_id === 'sensor.grid_in');
+    const gridImport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_in');
     expect(gridImport.subtract_entities).toBeUndefined();
   });
 
@@ -153,9 +152,24 @@ describe('SankeyChart autoconfig', () => {
     await (sankeyChart as any)['autoconfig']();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = (sankeyChart as any).config;
+
+    // Check V4 format (nodes and links)
+    expect(Array.isArray(config.nodes)).toBe(true);
+    expect(config.nodes.length).toBeGreaterThan(0);
+    expect(Array.isArray(config.links)).toBe(true);
+    expect(config.links.length).toBeGreaterThan(0);
+
+    // Check nodes contain expected entities
+    const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+    expect(allNodeIds).toContain('sensor.grid_in');
+    expect(allNodeIds).toContain('sensor.solar');
+    expect(allNodeIds).toContain('sensor.battery_in');
+    expect(allNodeIds).toContain('sensor.device1');
+
+    // Check sections are calculated from nodes
     expect(Array.isArray(config.sections)).toBe(true);
     expect(config.sections.length).toBeGreaterThan(0);
-    const allEntities = config.sections.flatMap((s: { entities: { entity_id: string }[] }) => s.entities.map((e: { entity_id: string }) => e.entity_id));
+    const allEntities = config.sections.flatMap((s: { entities: { id: string }[] }) => s.entities.map((e: { id: string }) => e.id));
     expect(allEntities).toContain('sensor.grid_in');
     expect(allEntities).toContain('sensor.solar');
     expect(allEntities).toContain('sensor.battery_in');

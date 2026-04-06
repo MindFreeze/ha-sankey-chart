@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LitElement, html, TemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { customElement, property, query, state } from 'lit/decorators';
+import { customElement, property, state } from 'lit/decorators';
 
-import type { Config, EntityConfigInternal, SankeyChartConfig, Section } from './types';
+import type { Config, SankeyChartConfig, SectionConfig } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
-import { createPassthroughs, normalizeConfig, renderError } from './utils';
+import { convertNodesToSections, normalizeConfig, renderError } from './utils';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import './print-config';
@@ -100,7 +100,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
       return [
         energyPromise.then(async collection => {
-          if (isAutoconfig && !this.config.sections.length) {
+          if (isAutoconfig && !this.config.nodes.length) {
             try {
               await this.autoconfig(collection.prefs);
             } catch (err: any) {
@@ -108,7 +108,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           return collection.subscribe(async data => {
-            if (isAutoconfig && !this.config.sections.length) {
+            if (isAutoconfig && !this.config.nodes.length) {
               try {
                 await this.autoconfig(collection.prefs);
               } catch (err: any) {
@@ -185,27 +185,23 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     this.resetSubscriptions();
   }
 
-  private setNormalizedConfig(config: Config): void {
-    this.config = config;
+  private setNormalizedConfig(config: Config | (Omit<Config, 'sections'> & { sections?: SectionConfig[] })): void {
+    // Convert SectionConfig[] to Section[] using nodes/links
+    if (config.nodes && config.nodes.length) {
+      const sectionConfigs = config.sections as SectionConfig[] | undefined;
+      config = { ...config, sections: convertNodesToSections(config.nodes, config.links, sectionConfigs) };
+    }
+
+    this.config = config as Config;
 
     this.entityIds = [];
-    this.config.sections.forEach(({ entities }) => {
-      entities.forEach(ent => {
-        if (ent.type === 'entity') {
-          this.entityIds.push(ent.entity_id);
-        }
-        ent.children.forEach(childConf => {
-          if (typeof childConf === 'object' && childConf.connection_entity_id) {
-            this.entityIds.push(childConf.connection_entity_id);
-          }
-        });
-        if (ent.add_entities) {
-          ent.add_entities.forEach(e => this.entityIds.push(e));
-        }
-        if (ent.subtract_entities) {
-          ent.subtract_entities.forEach(e => this.entityIds.push(e));
-        }
-      });
+    this.config.nodes.forEach(({ id }) => {
+      this.entityIds.push(id);
+    });
+    this.config.links.forEach(({ value }) => {
+      if (value) {
+        this.entityIds.push(value);
+      }
     });
   }
 
@@ -257,39 +253,48 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
     const devicesWithoutParent = deviceNodes.filter(node => !parentLinks[node.id]);
 
-    const totalNode: EntityConfigInternal = {
-      entity_id: 'total',
+    const nodes: Config['nodes'] = [];
+    const links: Config['links'] = [];
+    const sections: SectionConfig[] = [];
+
+    let currentSection = 0;
+
+    // Add source nodes (section 0)
+    sources.forEach(source => {
+      if (!source.stat_energy_from) return;
+      const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
+        ? undefined
+        : source.stat_energy_to
+          ? [source.stat_energy_to]
+          : source.flow_to?.map(e => e.stat_energy_to).filter(Boolean) as string[] | undefined;
+      nodes.push({
+        id: source.stat_energy_from,
+        section: currentSection,
+        type: 'entity',
+        name: '',
+        subtract_entities: subtract,
+        color: getEnergySourceColor(source.type),
+      });
+      links.push({ source: source.stat_energy_from, target: 'total' });
+    });
+    sections.push({}); // section 0 config
+
+    currentSection++;
+
+    // Add total node (section 1)
+    nodes.push({
+      id: 'total',
+      section: currentSection,
       type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
       name: 'Total Consumption',
-      children: ['unknown'],
       children_sum: {
         should_be: 'equal_or_less',
         reconcile_to: 'max',
       },
-    };
+    });
+    links.push({ source: 'total', target: 'unknown' });
 
-    const sections = [
-      {
-        entities: sources.map(source => {
-          const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
-            ? undefined
-            : source.stat_energy_to
-              ? [source.stat_energy_to]
-              : source.flow_to?.map(e => e.stat_energy_to) || undefined;
-          return {
-            entity_id: source.stat_energy_from,
-            subtract_entities: subtract,
-            type: 'entity',
-            color: getEnergySourceColor(source.type),
-            children: ['total'],
-          };
-        }),
-      },
-      {
-        entities: [totalNode],
-      },
-    ].filter(s => s.entities.length > 0) as Section[];
-
+    // Handle grid export
     const gridSources = sources.filter(s => s.type === 'grid');
     const seenFlowTo = new Set<string>();
     gridSources.forEach(grid => {
@@ -298,38 +303,44 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       const importEntities = grid.flow_from?.map(e => e.stat_energy_from) ??
         (grid.stat_energy_from ? [grid.stat_energy_from] : []);
       if (exportEntities.length) {
-        // grid export
         exportEntities.forEach(stat_energy_to => {
-          if (seenFlowTo.has(stat_energy_to)) return;
+          if (!stat_energy_to || seenFlowTo.has(stat_energy_to)) return;
           seenFlowTo.add(stat_energy_to);
-          sections[1].entities.unshift({
-            entity_id: stat_energy_to,
-            subtract_entities: netFlows ? importEntities : undefined,
+          nodes.push({
+            id: stat_energy_to,
+            section: currentSection,
             type: 'entity',
+            name: '',
+            subtract_entities: netFlows ? importEntities : undefined,
             color: getEnergySourceColor(grid.type),
-            children: [],
           });
-          sections[0].entities.forEach(entity => {
-            entity.children.unshift(stat_energy_to);
+          sources.forEach(source => {
+            if (!source.stat_energy_from) return;
+            links.push({ source: source.stat_energy_from, target: stat_energy_to });
           });
         });
       }
     });
 
+    // Handle battery charging
     const battery = sources.find(s => s.type === 'battery');
     if (battery && battery.stat_energy_from && battery.stat_energy_to) {
-      // battery charging
-      sections[1].entities.unshift({
-        entity_id: battery.stat_energy_to,
-        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
+      nodes.push({
+        id: battery.stat_energy_to,
+        section: currentSection,
         type: 'entity',
+        name: '',
+        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
         color: getEnergySourceColor(battery.type),
-        children: [],
       });
-      sections[0].entities.forEach(entity => {
-        entity.children.unshift(battery.stat_energy_to!);
+      sources.forEach(source => {
+        if (!source.stat_energy_from) return;
+        links.push({ source: source.stat_energy_from, target: battery.stat_energy_to! });
       });
     }
+    sections.push({}); // section 1 config
+
+    currentSection++;
 
     const groupByFloor = this.config.autoconfig?.group_by_floor !== false;
     const groupByArea = this.config.autoconfig?.group_by_area !== false;
@@ -340,85 +351,112 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         devicesWithoutParent.map(d => d.id),
       );
       const areas = Object.values(areasResult)
-        // put 'No area' last
         .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
 
       const floors = await fetchFloorRegistry(this.hass);
       const orphanAreas = areas.filter(a => !a.area.floor_id);
+
       if (groupByFloor && orphanAreas.length !== areas.length) {
-        totalNode.children = [
-          ...totalNode.children,
-          ...floors.map(f => f.floor_id),
-          ...(groupByArea ? orphanAreas.map(a => a.area.area_id) : orphanAreas.map(a => a.entities).flat()),
-        ];
-        sections.push({
-          entities: [
-            ...floors.map(
-              (f): EntityConfigInternal => ({
-                entity_id: f.floor_id,
-                type: 'remaining_child_state',
-                name: f.name,
-                children: groupByArea
-                  ? areas.filter(a => a.area.floor_id === f.floor_id).map(a => a.area.area_id)
-                  : areas
-                      .filter(a => a.area.floor_id === f.floor_id)
-                      .map(a => a.entities)
-                      .flat(),
-              }),
-            ),
-          ],
-          sort_by: 'state',
+        // Add floor nodes
+        floors.forEach(f => {
+          nodes.push({
+            id: f.floor_id,
+            section: currentSection,
+            type: 'remaining_child_state',
+            name: f.name,
+          });
+          links.push({ source: 'total', target: f.floor_id });
+
+          const floorAreas = areas.filter(a => a.area.floor_id === f.floor_id);
+          if (groupByArea) {
+            floorAreas.forEach(a => {
+              links.push({ source: f.floor_id, target: a.area.area_id });
+            });
+          } else {
+            floorAreas.forEach(a => {
+              a.entities.forEach(entityId => {
+                links.push({ source: f.floor_id, target: entityId });
+              });
+            });
+          }
         });
+
+        // Add orphan areas
+        if (groupByArea) {
+          orphanAreas.forEach(a => {
+            links.push({ source: 'total', target: a.area.area_id });
+          });
+        } else {
+          orphanAreas.forEach(a => {
+            a.entities.forEach(entityId => {
+              links.push({ source: 'total', target: entityId });
+            });
+          });
+        }
+
+        sections.push({ sort_by: 'state' }); // floor section with sorting
+        currentSection++;
       } else {
-        totalNode.children = [...totalNode.children, ...areas.map(a => a.area.area_id)];
-      }
-      if (groupByArea) {
-        sections.push({
-          entities: areas.map(
-            ({ area, entities }): EntityConfigInternal => ({
-              entity_id: area.area_id,
-              type: 'remaining_child_state',
-              name: area.name,
-              children: entities,
-            }),
-          ),
-          sort_by: 'state',
-          sort_group_by_parent: true,
+        areas.forEach(a => {
+          links.push({ source: 'total', target: a.area.area_id });
         });
+      }
+
+      if (groupByArea) {
+        areas.forEach(({ area, entities }) => {
+          nodes.push({
+            id: area.area_id,
+            section: currentSection,
+            type: 'remaining_child_state',
+            name: area.name,
+          });
+          entities.forEach(entityId => {
+            links.push({ source: area.area_id, target: entityId });
+          });
+        });
+        sections.push({ sort_by: 'state', sort_group_by_parent: true }); // area section with sorting
+        currentSection++;
       }
     } else {
-      totalNode.children = [...totalNode.children, ...devicesWithoutParent.map(d => d.id)];
-    }
-
-    const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
-    deviceSections.forEach((section, i) => {
-      if (section.length) {
-        sections.push({
-          entities: section.map(d => ({
-            entity_id: d.id,
-            type: 'entity',
-            name: d.name,
-            children: deviceSections[i + 1]?.filter(c => c.parent === d.id).map(c => c.id) || [],
-          })),
-          sort_by: 'state',
-          sort_group_by_parent: true,
-        });
-      }
-    });
-
-    // add unknown section after total node
-    const totalIndex = sections.findIndex(s => s.entities.find(e => e.entity_id === 'total'));
-    if (totalIndex !== -1 && sections[totalIndex + 1]) {
-      sections[totalIndex + 1]?.entities.push({
-        entity_id: 'unknown',
-        type: 'remaining_parent_state',
-        name: 'Unknown',
-        children: [],
+      devicesWithoutParent.forEach(d => {
+        links.push({ source: 'total', target: d.id });
       });
     }
 
-    createPassthroughs(sections);
-    this.setNormalizedConfig({ ...this.config, sections });
+    // Add device nodes
+    const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
+    deviceSections.forEach((section, i) => {
+      if (section.length) {
+        section.forEach(d => {
+          nodes.push({
+            id: d.id,
+            section: currentSection,
+            type: 'entity',
+            name: d.name || '',
+          });
+          const children = deviceSections[i + 1]?.filter(c => c.parent === d.id);
+          children?.forEach(c => {
+            links.push({ source: d.id, target: c.id });
+          });
+        });
+        sections.push({ sort_by: 'state', sort_group_by_parent: true }); // device section with sorting
+        currentSection++;
+      }
+    });
+
+    // Add unknown node
+    const totalSection = nodes.find(n => n.id === 'total')?.section;
+    if (totalSection !== undefined) {
+      nodes.push({
+        id: 'unknown',
+        section: totalSection + 1,
+        type: 'remaining_parent_state',
+        name: 'Unknown',
+      });
+    }
+
+    // setNormalizedConfig will convert sections (SectionConfig[]) to internal sections (Section[])
+    this.setNormalizedConfig({ ...this.config, nodes, links, sections } as any);
   }
 
   private getDeviceSections(parentLinks: Record<string, string>, deviceNodes: DeviceNode[]): DeviceNode[][] {

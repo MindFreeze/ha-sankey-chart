@@ -30,78 +30,81 @@ describe('SankeyChart with remaining type entities', () => {
       min_state: 0.1,
       unit_prefix: 'k',
       round: 1,
-      sections: [
+      nodes: [
         {
-          entities: [
-            {
-              entity_id: 'sensor.test_power',
-              name: 'Total',
-              color: 'var(--warning-color)',
-              children: ['tt', 'sensor.test_power3', 'Annet'],
-            },
-          ],
+          id: 'sensor.test_power',
+          section: 0,
+          type: 'entity',
+          name: 'Total',
+          color: 'var(--warning-color)',
         },
         {
-          entities: [
-            {
-              entity_id: 'tt',
-              type: 'remaining_child_state',
-              name: 'Total\nAll\nAll\nAll\nAll\nAll\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK',
-              color: 'var(--warning-color)',
-              children: ['sensor.test_power1', 'sensor.test_power2', 'sensor.test_power4'],
-              color_on_state: true,
-              color_limit: 10.1,
-              color_below: 'darkslateblue',
-            },
-          ],
+          id: 'tt',
+          section: 1,
+          type: 'remaining_child_state',
+          name: 'Total\nAll\nAll\nAll\nAll\nAll\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK\nIDK',
+          color: {
+            'darkslateblue': { to: 10.1 },
+            'var(--warning-color)': { from: 10.1 },
+          },
         },
         {
-          entities: [
-            {
-              entity_id: 'sensor.test_power1',
-              name: 'Varmtvann\nBlaa',
-              children: ['sensor.test_power3'],
-            },
-            {
-              entity_id: 'sensor.test_power2',
-              name: 'Avfukter',
-              unit_of_measurement: 'В',
-              children: ['sensor.test_power3'],
-            },
-            {
-              entity_id: 'sensor.test_power4',
-              children: ['sensor.test_power3'],
-            },
-            {
-              entity_id: 'Annet',
-              type: 'remaining_child_state',
-              name: 'Annet',
-              children: ['sensor.test_power3'],
-            },
-          ],
+          id: 'sensor.test_power1',
+          section: 2,
+          type: 'entity',
+          name: 'Varmtvann\nBlaa',
         },
         {
-          entities: [
-            {
-              entity_id: 'switch.plug_158d00022adfd9',
-              attribute: 'load_power',
-              unit_of_measurement: 'Wh',
-              tap_action: {
-                action: 'toggle',
-              },
-            },
-          ],
+          id: 'sensor.test_power2',
+          section: 2,
+          type: 'entity',
+          name: 'Avfukter',
+          unit_of_measurement: 'В',
         },
         {
-          entities: [
-            {
-              entity_id: 'sensor.test_power3',
-              color_below: 'red',
-              color: 'red',
-              color_limit: 14000,
-            },
-          ],
+          id: 'sensor.test_power4',
+          section: 2,
+          type: 'entity',
+          name: '',
         },
+        {
+          id: 'Annet',
+          section: 2,
+          type: 'remaining_child_state',
+          name: 'Annet',
+        },
+        {
+          id: 'switch.plug_158d00022adfd9',
+          section: 3,
+          type: 'entity',
+          name: '',
+          attribute: 'load_power',
+          unit_of_measurement: 'Wh',
+          tap_action: {
+            action: 'toggle',
+          },
+        },
+        {
+          id: 'sensor.test_power3',
+          section: 4,
+          type: 'entity',
+          name: '',
+          color: {
+            'red': { to: 14000 },
+          },
+        },
+      ],
+      links: [
+        { source: 'sensor.test_power', target: 'tt' },
+        { source: 'sensor.test_power', target: 'sensor.test_power3' },
+        { source: 'sensor.test_power', target: 'Annet' },
+        { source: 'tt', target: 'sensor.test_power1' },
+        { source: 'tt', target: 'sensor.test_power2' },
+        { source: 'tt', target: 'sensor.test_power4' },
+        { source: 'sensor.test_power1', target: 'sensor.test_power3' },
+        { source: 'sensor.test_power2', target: 'sensor.test_power3' },
+        { source: 'sensor.test_power4', target: 'sensor.test_power3' },
+        { source: 'Annet', target: 'sensor.test_power3' },
       ],
     };
     sankeyChart.setConfig(config, true);

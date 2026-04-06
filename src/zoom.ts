@@ -7,7 +7,7 @@ export function filterConfigByZoomEntity(config: Config, zoomEntity?: EntityConf
     }
     let children: string[] = [];
     const newSections = config.sections.map(section => {
-        const newEntities = section.entities.filter(entity => entity === zoomEntity || children.includes(entity.entity_id));
+        const newEntities = section.entities.filter(entity => entity === zoomEntity || children.includes(entity.id));
         children = newEntities.flatMap(entity => entity.children.map(getEntityId));
         return {
             ...section,

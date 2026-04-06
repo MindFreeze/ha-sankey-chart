@@ -2,9 +2,7 @@ import {
   ActionConfig,
   BaseActionConfig,
   HapticType,
-  LovelaceCard,
   LovelaceCardConfig,
-  LovelaceCardEditor,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
 import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
@@ -22,11 +20,16 @@ export const DEFAULT_CONFIG: Config = {
   min_state: 0,
   show_states: true,
   show_units: true,
+  nodes: [],
+  links: [],
   sections: [],
 };
 
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
+  nodes?: Node[];
+  links?: Link[];
+  sections?: SectionConfig[];
   autoconfig?: {
     print_yaml?: boolean;
     group_by_floor?: boolean;
@@ -34,7 +37,6 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
     net_flows?: boolean;
   };
   title?: string;
-  sections?: SectionConfig[];
   convert_units_to?: '' | CONVERSION_UNITS;
   co2_intensity_entity?: string;
   gas_co2_intensity?: number;
@@ -63,31 +65,27 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   ignore_missing_entities?: boolean;
 }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'sankey-chart-editor': LovelaceCardEditor;
-    'hui-error-card': LovelaceCard;
-  }
-}
-
-export type BoxType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
-
-export interface EntityConfig {
-  entity_id: string;
-  add_entities?: string[];
-  subtract_entities?: string[];
-  attribute?: string;
-  type?: BoxType;
-  children?: ChildConfigOrStr[];
-  unit_of_measurement?: string; // for attribute
-  color?: string;
+export interface Node {
+  id: string;
+  section?: number; // index in sections array
+  type: NodeType
   name?: string;
+  attribute?: string;
+  unit_of_measurement?: string; // for attribute
+  add_entities?: string[]; // temporary - will be replaced
+  subtract_entities?: string[]; // temporary - will be replaced
+  color?: string | {
+    [color: string]: {
+      from?: number;
+      to?: number;
+    }
+  };
   icon?: string;
-  color_on_state?: boolean;
-  color_above?: string;
-  color_below?: string;
-  color_limit?: number;
-  url?: string;
+  // color_on_state?: boolean; // @depracated. use color instead
+  // color_above?: string; // @depracated. use color instead
+  // color_below?: string; // @depracated. use color instead
+  // color_limit?: number; // @depracated. use color instead
+  // url?: string; // @depracated. use tap_action instead
   tap_action?: ActionConfigExtended;
   double_tap_action?: ActionConfigExtended;
   hold_action?: ActionConfigExtended;
@@ -95,13 +93,29 @@ export interface EntityConfig {
   parents_sum?: ReconcileConfig;
 }
 
-export type EntityConfigInternal = EntityConfig & {
+export interface Link {
+  source: string;
+  target: string;
+  value?: string; // optional connection entity
+}
+
+export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+
+export interface NodeInternal extends Node {
   children: ChildConfigOrStr[];
   accountedState?: number;
   foundChildren?: string[];
-};
+}
 
-export type EntityConfigOrStr = string | EntityConfig;
+// Backward compatibility alias
+export type EntityConfigInternal = NodeInternal;
+
+// Editor-specific types - working with nodes that have temporary children array
+export interface NodeConfigForEditor extends Node {
+  children?: ChildConfigOrStr[]; // temporary UI property, synced with links
+}
+
+export type NodeConfigOrStr = string | NodeConfigForEditor;
 
 export type ChildConfig = {
   entity_id: string;
@@ -142,7 +156,6 @@ export interface ReconcileConfig {
 }
 
 export interface SectionConfig {
-  entities: EntityConfigOrStr[];
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
@@ -150,7 +163,7 @@ export interface SectionConfig {
 }
 
 export interface Section {
-  entities: EntityConfigInternal[];
+  entities: NodeInternal[];
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
   sort_group_by_parent?: boolean;
@@ -165,7 +178,9 @@ export interface Config extends SankeyChartConfig {
   min_box_size: number;
   min_box_distance: number;
   min_state: number;
-  sections: Section[];
+  nodes: Node[];
+  links: Link[];
+  sections: Section[]; // calculated from nodes/links by depth
 }
 
 export interface Connection {
@@ -180,11 +195,11 @@ export interface Connection {
 }
 
 export interface Box {
-  config: EntityConfigInternal;
+  config: NodeInternal;
   entity: Omit<HassEntity, 'state'> & {
     state: string | number;
   };
-  entity_id: string;
+  id: string;
   state: number;
   unit_of_measurement?: string;
   children: ChildConfigOrStr[];
@@ -208,15 +223,15 @@ export interface SectionState {
 }
 
 export interface ConnectionState {
-  parent: EntityConfigInternal;
-  child: EntityConfigInternal;
+  parent: NodeInternal;
+  child: NodeInternal;
   state: number;
   prevParentState: number;
   prevChildState: number;
   ready: boolean;
   calculating?: boolean;
   highlighted?: boolean;
-  passthroughs: EntityConfigInternal[];
+  passthroughs: NodeInternal[];
 }
 
 export interface NormalizedState {

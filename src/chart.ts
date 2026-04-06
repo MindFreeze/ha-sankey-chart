@@ -92,7 +92,7 @@ export class Chart extends LitElement {
       this.config.sections.forEach(({ entities }, sectionIndex) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
-            this.entityIds.push(ent.entity_id);
+            this.entityIds.push(ent.id);
           } else if (ent.type === 'passthrough') {
             return;
           }
@@ -101,7 +101,7 @@ export class Chart extends LitElement {
             const childId = getEntityId(childConf);
             let child: EntityConfigInternal | undefined = ent;
             for (let i = sectionIndex + 1; i < this.config.sections.length; i++) {
-              child = this.config.sections[i]?.entities.find(e => e.entity_id === childId);
+              child = this.config.sections[i]?.entities.find(e => e.id === childId);
               if (!child) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
                 throw this.error;
@@ -195,7 +195,7 @@ export class Chart extends LitElement {
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
-      const connConfig = parent.children.find(c => getEntityId(c) === child.entity_id);
+      const connConfig = parent.children.find(c => getEntityId(c) === child.id);
       if (typeof connConfig === 'object' && connConfig.connection_entity_id) {
         const connectionState = this._getMemoizedState(connConfig.connection_entity_id).state ?? 0;
         connection.state = Math.min(parentState, childState, connectionState);
@@ -225,7 +225,7 @@ export class Chart extends LitElement {
   private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
     if (!this.entityStates.has(entityConfOrStr)) {
       const entityConf =
-        typeof entityConfOrStr === 'string' ? { entity_id: entityConfOrStr, children: [] } : entityConfOrStr;
+        typeof entityConfOrStr === 'string' ? { id: entityConfOrStr, type: 'entity' as const, children: [] } : entityConfOrStr;
       const entity = this._getEntityState(entityConf);
       const unit_of_measurement = this._getUnitOfMeasurement(
         entityConf.unit_of_measurement || entity.attributes.unit_of_measurement,
@@ -239,7 +239,7 @@ export class Chart extends LitElement {
       }
       if (entityConf.add_entities) {
         entityConf.add_entities.forEach(subId => {
-          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
@@ -250,7 +250,7 @@ export class Chart extends LitElement {
       }
       if (entityConf.subtract_entities) {
         entityConf.subtract_entities.forEach(subId => {
-          const subEntity = this._getEntityState({ entity_id: subId, children: [] });
+          const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
             this.config.unit_prefix,
             Number(subEntity.state),
@@ -347,30 +347,40 @@ export class Chart extends LitElement {
               this.randomColors.set(entityId, generateRandomRGBColor());
             }
             finalColor = this.randomColors.get(entityId)!;
-          } else if (entityConf.color_on_state) {
+          } else if (typeof entityConf.color === 'object') {
+            // Handle complex color format (range-based)
             let state4color = state;
             if (entityConf.type === 'passthrough') {
               // passthrough color is based on the child state
               const childState = this._getMemoizedState(this._findRelatedRealEntity(entityConf, 'children'));
               state4color = childState.state;
             }
-            const colorLimit = entityConf.color_limit ?? 1;
-            const colorBelow = entityConf.color_below ?? 'var(--primary-color)';
-            const colorAbove = entityConf.color_above ?? 'var(--state-icon-color)';
-            if (state4color > colorLimit) {
-              finalColor = colorAbove;
-            } else if (state4color < colorLimit) {
-              finalColor = colorBelow;
+            const colorRanges = entityConf.color as { [color: string]: { from?: number; to?: number } };
+            // Find matching color range
+            for (const [color, range] of Object.entries(colorRanges)) {
+              const { from, to } = range;
+              if (from !== undefined && to !== undefined) {
+                if (state4color >= from && state4color <= to) {
+                  finalColor = color;
+                  break;
+                }
+              } else if (from !== undefined && state4color >= from) {
+                finalColor = color;
+                break;
+              } else if (to !== undefined && state4color <= to) {
+                finalColor = color;
+                break;
+              }
             }
           }
 
           return {
             config: entityConf,
             entity: this._getEntityState(entityConf),
-            entity_id: getEntityId(entityConf),
+            id: getEntityId(entityConf),
             state,
             unit_of_measurement,
-            color: finalColor,
+            color: finalColor as string,
             children: entityConf.children,
             connections: { parents: [] },
             top: 0,
