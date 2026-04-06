@@ -209,6 +209,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     if (!prefs) {
       prefs = await getEnergyPreferences(this.hass);
     }
+    const netFlows = this.config.autoconfig?.net_flows !== false;
     const sources: typeof prefs.energy_sources = [];
     (prefs?.energy_sources || []).forEach(s => {
       if (!ENERGY_SOURCE_TYPES.includes(s.type)) {
@@ -261,9 +262,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     // Add source nodes (section 0)
     sources.forEach(source => {
       if (!source.stat_energy_from) return;
-      const subtract = source.stat_energy_to
-        ? [source.stat_energy_to]
-        : source.flow_to?.map(e => e.stat_energy_to).filter(Boolean) as string[] | undefined;
+      const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
+        ? undefined
+        : source.stat_energy_to
+          ? [source.stat_energy_to]
+          : source.flow_to?.map(e => e.stat_energy_to).filter(Boolean) as string[] | undefined;
       nodes.push({
         id: source.stat_energy_from,
         section: currentSection,
@@ -292,24 +295,32 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     links.push({ source: 'total', target: 'unknown' });
 
     // Handle grid export
-    const grid = sources.find(s => s.type === 'grid');
-    if (grid && grid?.flow_to?.length) {
-      grid?.flow_to.forEach(({ stat_energy_to }) => {
-        if (!stat_energy_to) return;
-        nodes.push({
-          id: stat_energy_to,
-          section: currentSection,
-          type: 'entity',
-          name: '',
-          subtract_entities: (grid.flow_from || []).map(e => e.stat_energy_from).filter(Boolean) as string[],
-          color: getEnergySourceColor(grid.type),
+    const gridSources = sources.filter(s => s.type === 'grid');
+    const seenFlowTo = new Set<string>();
+    gridSources.forEach(grid => {
+      const exportEntities = grid.flow_to?.map(e => e.stat_energy_to) ??
+        (grid.stat_energy_to ? [grid.stat_energy_to] : []);
+      const importEntities = grid.flow_from?.map(e => e.stat_energy_from) ??
+        (grid.stat_energy_from ? [grid.stat_energy_from] : []);
+      if (exportEntities.length) {
+        exportEntities.forEach(stat_energy_to => {
+          if (!stat_energy_to || seenFlowTo.has(stat_energy_to)) return;
+          seenFlowTo.add(stat_energy_to);
+          nodes.push({
+            id: stat_energy_to,
+            section: currentSection,
+            type: 'entity',
+            name: '',
+            subtract_entities: netFlows ? importEntities : undefined,
+            color: getEnergySourceColor(grid.type),
+          });
+          sources.forEach(source => {
+            if (!source.stat_energy_from) return;
+            links.push({ source: source.stat_energy_from, target: stat_energy_to });
+          });
         });
-        sources.forEach(source => {
-          if (!source.stat_energy_from) return;
-          links.push({ source: source.stat_energy_from, target: stat_energy_to });
-        });
-      });
-    }
+      }
+    });
 
     // Handle battery charging
     const battery = sources.find(s => s.type === 'battery');
@@ -319,7 +330,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         section: currentSection,
         type: 'entity',
         name: '',
-        subtract_entities: [battery.stat_energy_from],
+        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
         color: getEnergySourceColor(battery.type),
       });
       sources.forEach(source => {

@@ -1,5 +1,47 @@
 # Changelog
 
+## [3.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.3...v3.11.0) (2026-04-06)
+
+
+### Features
+
+* `net_flows` option to show gross energy flows in autoconfig ([0b1a5f4](https://github.com/MindFreeze/ha-sankey-chart/commit/0b1a5f46f9999ec7a9feb5a988fbb72839009176))
+
+
+### Bug Fixes
+
+* default show_net_flows to true for backward compatibility ([02797ca](https://github.com/MindFreeze/ha-sankey-chart/commit/02797ca2d16e573426c53a18fe8b5fb0a6298a1d))
+
+## [3.10.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.2...v3.10.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **#318:** find energy collection by prefix instead of fixed key ([6ac8a58](https://github.com/MindFreeze/ha-sankey-chart/commit/6ac8a585d166924dcee3b968deacccc4b0d8dc86))
+* **#318:** find energy collection by prefix instead of fixed key ([1ea179b](https://github.com/MindFreeze/ha-sankey-chart/commit/1ea179bf8464c560a47f02665f5fecd907062e39))
+
+## [3.10.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.1...v3.10.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **#314:** handle grid export in new energy format without flow_to ([f69a0b5](https://github.com/MindFreeze/ha-sankey-chart/commit/f69a0b586a96049b6d072f0a0f90981e9082913b))
+* **#314:** handle grid export in new energy format without flow_to ([5333d1b](https://github.com/MindFreeze/ha-sankey-chart/commit/5333d1b950ae1655841db22e4df308c50ca27411))
+
+## [3.10.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.0...v3.10.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* handle new grid format ([3ef6c2b](https://github.com/MindFreeze/ha-sankey-chart/commit/3ef6c2b83bd562cac6d3182c135ff7afe1644134))
+
+## [3.10.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.4...v3.10.0) (2025-10-11)
+
+
+### Features
+
+* Ukrainian translation ([44ac796](https://github.com/MindFreeze/ha-sankey-chart/commit/44ac796ac8c11b8e17e41fdbbde9cb648ca68b9c))
+
 ## [3.9.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.9.3...v3.9.4) (2025-07-28)
 
 

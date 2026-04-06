@@ -38,6 +38,100 @@ describe('SankeyChart autoconfig', () => {
     sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: {} }, true);
   });
 
+  it('creates grid export entity for new format with stat_energy_to', async () => {
+    hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_energy_to: 'sensor.grid_out' },
+        { type: 'solar', stat_energy_from: 'sensor.solar' },
+      ],
+      device_consumption: [
+        { stat_consumption: 'sensor.device1', name: 'Device 1' },
+      ],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({
+      area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1'] },
+    });
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
+    expect(gridExport).toBeDefined();
+    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
+    // all source entities should link to grid export
+    const sourceNodes = config.nodes.filter((n: { id: string }) => ['sensor.grid_in', 'sensor.solar'].includes(n.id));
+    sourceNodes.forEach((n: { id: string }) => {
+      const link = config.links.find((l: { source: string; target: string }) => l.source === n.id && l.target === 'sensor.grid_out');
+      expect(link).toBeDefined();
+    });
+  });
+
+  it('creates grid export entity for old format with flow_to', async () => {
+    hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        {
+          type: 'grid',
+          flow_from: [{ stat_energy_from: 'sensor.grid_in' }],
+          flow_to: [{ stat_energy_to: 'sensor.grid_out' }],
+        },
+        { type: 'solar', stat_energy_from: 'sensor.solar' },
+      ],
+      device_consumption: [
+        { stat_consumption: 'sensor.device1', name: 'Device 1' },
+      ],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({
+      area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1'] },
+    });
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
+    expect(gridExport).toBeDefined();
+    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
+    // all source entities should link to grid export
+    const sourceNodes = config.nodes.filter((n: { id: string }) => ['sensor.grid_in', 'sensor.solar'].includes(n.id));
+    sourceNodes.forEach((n: { id: string }) => {
+      const link = config.links.find((l: { source: string; target: string }) => l.source === n.id && l.target === 'sensor.grid_out');
+      expect(link).toBeDefined();
+    });
+  });
+
+  it('removes subtract_entities with net_flows: false', async () => {
+    hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { net_flows: false } }, true);
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_energy_to: 'sensor.grid_out' },
+        { type: 'solar', stat_energy_from: 'sensor.solar' },
+      ],
+      device_consumption: [
+        { stat_consumption: 'sensor.device1', name: 'Device 1' },
+      ],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({
+      area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1'] },
+    });
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
+    expect(gridExport).toBeDefined();
+    expect(gridExport.subtract_entities).toBeUndefined();
+    const gridImport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_in');
+    expect(gridImport.subtract_entities).toBeUndefined();
+  });
+
   it('creates sections from energy preferences', async () => {
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [

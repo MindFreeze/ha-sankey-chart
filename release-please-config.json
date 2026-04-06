@@ -1,0 +1,9 @@
+{
+    "release-type": "node",
+    "include-component-in-tag": false,
+    "packages": {
+        ".": {
+            "package-name": "ha-sankey-chart"
+        }
+    }
+}

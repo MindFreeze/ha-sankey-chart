@@ -1,0 +1,82 @@
+{
+  "common": {
+    "version": "Версія",
+    "invalid_configuration": "Неправильна конфігурація",
+    "show_warning": "Показати попередження",
+    "entity_not_found": "Стан сутності не знайдено",
+    "missing_child": "Відсутня дочірня сутність",
+    "loading": "Завантаження..."
+  },
+  "editor": {
+    "yaml_disclaimer": "Для інших параметрів скористайтеся режимом YAML",
+    "docs": "Документація",
+    "sections": "Секції",
+    "section": "Секція",
+    "add_section": "+ Додати секцію",
+    "add_entity": "+ Додати сутність",
+    "entity_editor": "Редактор сутності",
+    "decimals": "Десяткові знаки",
+    "section_options": "Параметри",
+    "fields": {
+      "title": "Заголовок",
+      "time_period_from": "Період з",
+      "time_period_to": "Період до",
+      "autoconfig": "Автоконфігурація",
+      "print_yaml": "Показати автоматично згенерований YAML",
+      "layout": "Макет",
+      "show_names": "Показувати назви",
+      "show_icons": "Показувати іконки",
+      "show_states": "Показувати стани",
+      "show_units": "Показувати одиниці вимірювання",
+      "energy_date_selection": "Синхронізувати з компонентом energy_date_selection",
+      "height": "Висота",
+      "wide": "Ширина",
+      "min_box_size": "Мінімальний розмір блоку",
+      "min_box_distance": "Мінімальна відстань між блоками",
+      "min_state": "Мінімальний стан",
+      "static_scale": "Статичний масштаб",
+      "round": "Округлення",
+      "throttle": "Частота оновлення",
+      "unit_prefix": "Префікс одиниць",
+      "entity": "Сутність",
+      "type": "Тип",
+      "children": "Дочірні сутності",
+      "name": "Назва",
+      "icon": "Іконка",
+      "color": "Колір",
+      "unit_of_measurement": "Одиниця вимірювання",
+      "tap_action": "Дія при натисканні",
+      "color_on_state": "Змінювати колір за станом",
+      "color_limit": "Поріг стану для зміни кольору",
+      "color_above": "Колір вище порогу",
+      "color_below": "Колір нижче порогу",
+      "sort_by": "Сортувати за",
+      "sort_dir": "Напрямок сортування",
+      "section": {
+        "min_width": "Мінімальна ширина",
+        "sort_by": "Сортувати за",
+        "sort_dir": "Напрямок сортування",
+        "sort_group_by_parent": "Групувати за батьківською сутністю"
+      }
+    },
+    "entity_types": {
+      "entity": "Сутність",
+      "remaining_parent_state": "Залишковий стан батька",
+      "remaining_child_state": "Залишковий стан дитини",
+      "passthrough": "Пропускний"
+    },
+    "sort_by": {
+      "none": "Без сортування",
+      "state": "Стан"
+    },
+    "sort_dir": {
+      "desc": "За спаданням",
+      "asc": "За зростанням"
+    },
+    "layout": {
+      "auto": "Автоматично",
+      "vertical": "Вертикально",
+      "horizontal": "Горизонтально"
+    }
+  }
+}
