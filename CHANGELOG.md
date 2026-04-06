@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.3...v3.11.0) (2026-04-06)
+
+
+### Features
+
+* `net_flows` option to show gross energy flows in autoconfig ([0b1a5f4](https://github.com/MindFreeze/ha-sankey-chart/commit/0b1a5f46f9999ec7a9feb5a988fbb72839009176))
+
+
+### Bug Fixes
+
+* default show_net_flows to true for backward compatibility ([02797ca](https://github.com/MindFreeze/ha-sankey-chart/commit/02797ca2d16e573426c53a18fe8b5fb0a6298a1d))
+
 ## [3.10.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.2...v3.10.3) (2026-04-02)
 
 
