@@ -215,6 +215,9 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
   const time_variant_data = {};
   if (conversions.convert_units_to == 'gCO2' || conversions.convert_units_to == "gCO2eq") {
     for (const id of devices) {
+      if (!hass.states[id]) {
+        continue;
+      }
       if (hass.states[id].attributes.unit_of_measurement == "Wh" ||
           hass.states[id].attributes.unit_of_measurement == "kWh" ||
           hass.states[id].attributes.unit_of_measurement == "MWh") {

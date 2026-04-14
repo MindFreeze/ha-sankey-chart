@@ -195,8 +195,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     this.config = config as Config;
 
     this.entityIds = [];
-    this.config.nodes.forEach(({ id }) => {
-      this.entityIds.push(id);
+    this.config.nodes.forEach(node => {
+      if (node.type === 'entity') {
+        this.entityIds.push(node.id);
+        node.add_entities?.forEach(id => this.entityIds.push(id));
+        node.subtract_entities?.forEach(id => this.entityIds.push(id));
+      }
     });
     this.config.links.forEach(({ value }) => {
       if (value) {
