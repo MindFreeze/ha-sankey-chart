@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.0...v4.0.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* **#332:** exclude non-entity node IDs from statistics fetching ([003cff1](https://github.com/MindFreeze/ha-sankey-chart/commit/003cff14c923bd14266a42e9ba19726a071f2f05))
+* hide attribute and unit_of_measurement in editor for non entity nodes ([9ab9e66](https://github.com/MindFreeze/ha-sankey-chart/commit/9ab9e66e92236592a73f58c66c0a6c4f4cd9a22a))
+
 ## [4.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.11.0...v4.0.0) (2026-04-14)
 
 
