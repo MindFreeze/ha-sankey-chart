@@ -111,7 +111,7 @@ export function migrateV3Config(config: V3Config): SankeyChartConfig {
         add_entities: entityConf.add_entities,
         subtract_entities: entityConf.subtract_entities,
         icon: entityConf.icon,
-        tap_action: entityConf.tap_action,
+        tap_action: entityConf.tap_action || (entityConf.url ? { action: 'url' as const, url_path: entityConf.url } : undefined),
         double_tap_action: entityConf.double_tap_action,
         hold_action: entityConf.hold_action,
         children_sum: entityConf.children_sum,
