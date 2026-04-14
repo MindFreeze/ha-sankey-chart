@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.11.0...v4.0.0) (2026-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* new Configuration structure ([#305](https://github.com/MindFreeze/ha-sankey-chart/issues/305))
+
+### Features
+
+* **#303:** reuse energy dashboard colors for device nodes in autoconfig ([325abfc](https://github.com/MindFreeze/ha-sankey-chart/commit/325abfc0594bc8d101cae18f38de2524f256fb9b))
+* **#327:** add energy_collection_key option and improve collection auto-detection ([03c6b60](https://github.com/MindFreeze/ha-sankey-chart/commit/03c6b605a91aed7604613bb92f4a1f3dcfaa3cce))
+* new Configuration structure ([#305](https://github.com/MindFreeze/ha-sankey-chart/issues/305)) ([8443df4](https://github.com/MindFreeze/ha-sankey-chart/commit/8443df4b2ab882a4fcb45c3974043d92bdc9b960))
+
 ## [3.11.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v3.10.3...v3.11.0) (2026-04-06)
 
 
