@@ -36,6 +36,7 @@
       "throttle": "Acelerador",
       "unit_prefix": "Prefixo da unidade",
       "entity": "Entidade",
+      "id": "ID",
       "type": "Tipo",
       "children": "Filho",
       "name": "Nome",

@@ -39,6 +39,7 @@
       "throttle": "Throttle",
       "unit_prefix": "Unit prefix",
       "entity": "Entity",
+      "id": "ID",
       "type": "Type",
       "children": "Children",
       "name": "Name",

@@ -36,6 +36,7 @@
       "throttle": "Plyn",
       "unit_prefix": "Predpona jednotky",
       "entity": "Entita",
+      "id": "ID",
       "type": "Typ",
       "children": "Podriadený",
       "name": "Názov",

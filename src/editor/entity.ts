@@ -22,15 +22,19 @@ const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
       },
     },
   },
-  { name: 'id', selector: { entity: {} } },
-  {
-    type: 'grid',
-    name: '',
-    schema: [
-      { name: 'attribute', selector: { attribute: { entity_id: nodeConf.id } } },
-      { name: 'unit_of_measurement', selector: { text: {} } },
-    ],
-  },
+  { name: 'id', selector: nodeConf.type === 'entity' ? { entity: {} } : { text: {} } },
+  ...(nodeConf.type === 'entity'
+    ? [
+        {
+          type: 'grid',
+          name: '',
+          schema: [
+            { name: 'attribute', selector: { attribute: { entity_id: nodeConf.id } } },
+            { name: 'unit_of_measurement', selector: { text: {} } },
+          ],
+        },
+      ]
+    : []),
   { name: 'name', selector: { text: {} } },
   {
     type: 'grid',
