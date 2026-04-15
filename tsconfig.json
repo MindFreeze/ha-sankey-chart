@@ -4,6 +4,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "lib": ["es2017", "dom", "dom.iterable"],
+    "types": ["jest", "node"],
     "noEmit": true,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
@@ -15,5 +16,6 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowJs": true
-  }
+  },
+  "include": ["src/**/*", "__tests__/**/*"]
 }
