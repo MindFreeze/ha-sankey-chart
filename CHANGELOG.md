@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.1...v4.0.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* **#334:** passthroughs are first-class link-graph nodes with unique ids ([2415480](https://github.com/MindFreeze/ha-sankey-chart/commit/2415480f7830f0eba7e817ac777311d1a7d64a61))
+* **#335:** default v4 node type to entity so statistics are fetched ([3833841](https://github.com/MindFreeze/ha-sankey-chart/commit/38338417aacf210191fabee1968934d6011fbd18))
+
 ## [4.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.0...v4.0.1) (2026-04-14)
 
 
