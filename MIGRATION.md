@@ -137,7 +137,52 @@ color:
     to: 20        # green when < 20
 ```
 
-### Step 5: Move section config (if any)
+### Step 5: Update passthrough nodes
+
+In v3, `passthrough` entities reused the `entity_id` of the entity they passed flow to — the card inferred the chain by matching ids. v4 requires every node id to be unique, and passthroughs are ordinary nodes in the `links` graph. Give each passthrough a unique id and connect it with explicit links.
+
+**v3:**
+```yaml
+sections:
+  - entities:
+      - entity_id: sensor.grid
+        children:
+          - sensor.house
+  - entities:
+      - entity_id: sensor.house
+        type: passthrough
+  - entities:
+      - entity_id: sensor.house
+        children:
+          - sensor.kitchen
+  - entities:
+      - entity_id: sensor.kitchen
+```
+
+**v4:**
+```yaml
+nodes:
+  - id: sensor.grid
+    section: 0
+  - id: sensor.house__passthrough_1   # any unique id; this is the pattern the auto-migration uses
+    section: 1
+    type: passthrough
+  - id: sensor.house
+    section: 2
+  - id: sensor.kitchen
+    section: 3
+links:
+  - source: sensor.grid
+    target: sensor.house__passthrough_1   # parent links into the passthrough, not the distant entity
+  - source: sensor.house__passthrough_1
+    target: sensor.house                  # passthrough links out to the real entity
+  - source: sensor.house
+    target: sensor.kitchen
+```
+
+If you link across a section gap without declaring a passthrough, the card auto-inserts one (and rewrites the link into an explicit chain) so you don't have to do this manually for every hop.
+
+### Step 6: Move section config (if any)
 
 Section-level settings like `sort_by`, `sort_dir`, and `min_width` stay in the `sections[]` array, but without entities.
 
