@@ -1,6 +1,6 @@
 import { migrateV3Config } from '../src/migrate';
 import type { V3Config } from '../src/migrate';
-import { normalizeConfig } from '../src/utils';
+import { getEntityId, normalizeConfig } from '../src/utils';
 import type { SankeyChartConfig } from '../src/types';
 
 describe('migrateV3Config', () => {
@@ -403,6 +403,40 @@ describe('migrateV3Config', () => {
     expect(result.nodes).toEqual([]);
     expect(result.links).toEqual([]);
     expect(result.sections).toEqual([]);
+  });
+
+  it('migrates v3 passthroughs to unique-id nodes wired through explicit links (#334)', () => {
+    const v3Config: V3Config = {
+      type: 'custom:sankey-chart',
+      sections: [
+        { entities: [{ entity_id: 'parent', type: 'remaining_child_state', children: ['target'] }] },
+        { entities: [{ entity_id: 'target', type: 'passthrough' }] },
+        { entities: [{ entity_id: 'target', type: 'entity', children: ['grandchild'] }] },
+        { entities: ['grandchild'] },
+      ],
+    };
+
+    const result = migrateV3Config(v3Config);
+
+    // Unique ids — the crux of the fix
+    const ids = result.nodes!.map(n => n.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain('target__passthrough_1');
+    expect(ids).toContain('target');
+
+    // Parent routes through the renamed passthrough; the passthrough routes
+    // onward to the real entity; the entity keeps its link to the grandchild.
+    expect(result.links).toContainEqual({ source: 'parent', target: 'target__passthrough_1', value: undefined });
+    expect(result.links).toContainEqual({ source: 'target__passthrough_1', target: 'target' });
+    expect(result.links).toContainEqual({ source: 'target', target: 'grandchild', value: undefined });
+
+    // End-to-end: normalized sections carry the passthrough with a single
+    // child link to the real entity.
+    const normalized = normalizeConfig(result as SankeyChartConfig);
+    const pt = normalized.sections[1].entities.find(e => e.type === 'passthrough');
+    expect(pt).toBeDefined();
+    expect(pt!.id).toBe('target__passthrough_1');
+    expect(pt!.children.map(getEntityId)).toEqual(['target']);
   });
 
   it('preserves global config properties', () => {

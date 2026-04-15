@@ -11,21 +11,17 @@ export function renderBranchConnectors(props: {
   section: SectionState;
   nextSection?: SectionState;
   sectionIndex: number;
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
   allConnections: ConnectionState[];
   vertical: boolean;
 }): SVGTemplateResult[] {
   const { boxes, size } = props.section;
   return boxes
-    .filter(b => b.children.length > 0 || b.config.type === 'passthrough')
+    .filter(b => b.children.length > 0)
     .map((b, boxIndex) => {
-      const children = props.nextSection!.boxes.filter(
-        child =>
-          b.children.some(c => getEntityId(c) === child.id) ||
-          (b.config.type === 'passthrough' && b.id === child.id),
+      const children = props.nextSection!.boxes.filter(child =>
+        b.children.some(c => getEntityId(c) === child.id),
       );
-      const connections = getChildConnections(b, children, props.allConnections, props.connectionsByParent).filter(
+      const connections = getChildConnections(b, children, props.allConnections).filter(
         c => {
           return c.state > 0;
         },
@@ -75,8 +71,6 @@ export function renderSection(props: {
   nextSection?: SectionState;
   sectionIndex: number;
   highlightedEntities: EntityConfigInternal[];
-  connectionsByParent: Map<EntityConfigInternal, ConnectionState[]>;
-  connectionsByChild: Map<EntityConfigInternal, ConnectionState[]>;
   allConnections: ConnectionState[];
   vertical: boolean;
   onTap: (config: Box) => void;
@@ -91,7 +85,7 @@ export function renderSection(props: {
     config: { min_width },
     size,
   } = props.section;
-  const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0 || b.config.type === 'passthrough');
+  const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
 
   const viewBox = props.vertical ? `0 0 ${size} 100` : `0 0 100 ${size}`;
   const minWidth = min_width && !props.vertical ? min_width + 'px' : undefined;

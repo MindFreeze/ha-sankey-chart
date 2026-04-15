@@ -118,13 +118,22 @@ nodes:
 ### Entity types
 
 - `entity` - The default value, representing an entity from HA
-- `passthrough` - Used for connecting entities across sections, passing through intermediate sections. The card creates such passtroughs automatically when needed but you can create them manually in order to have the connection pass through a specific place. See issue [#9](https://github.com/MindFreeze/ha-sankey-chart/issues/9). Here is an example passthrough config:
+- `passthrough` - A visual pass-through box in an intermediate section. Passthroughs are ordinary nodes in the link graph — you connect them with explicit `links` like any other node. Node ids must be unique, so a passthrough cannot reuse the id of the entity it represents. If you link across a section gap without declaring a passthrough, the card auto-inserts one (or more) in the intermediate sections. V3 configs are migrated on load; v3 passthroughs are renamed to `{entity_id}__passthrough_{section}` and wired with explicit links. See issue [#9](https://github.com/MindFreeze/ha-sankey-chart/issues/9). Example — a flow from `sensor.parent` to `sensor.child` that passes through a visual box in section 1:
 
 ```yaml
 nodes:
-  - id: sensor.child_sensor
+  - id: sensor.parent
+    section: 0
+  - id: child_passthrough
+    section: 1
     type: passthrough
-    # Note that passthrough entities have no children as they always connect to their own id in the next section
+  - id: sensor.child
+    section: 2
+links:
+  - source: sensor.parent
+    target: child_passthrough
+  - source: child_passthrough
+    target: sensor.child
 ```
 
 - `remaining_parent_state` - Used for representing the unaccounted state from this entity's parent. Formerly known as the `remaining` configuration. Useful for displaying the unmeasured state as "Other". See issue [#2](https://github.com/MindFreeze/ha-sankey-chart/issues/2) & [#28](https://github.com/MindFreeze/ha-sankey-chart/issues/28). Only 1 is allowed per group. If you add 2, the state will not be split between them but an error will appear. Obviously it must be listed as a target in some link. Example:

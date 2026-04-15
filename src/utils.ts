@@ -133,21 +133,22 @@ export function getChildConnections(
   parent: Box,
   children: Box[],
   allConnections: ConnectionState[],
-  connectionsByParent: Map<NodeInternal, ConnectionState[]>,
 ): Connection[] {
   // @NOTE don't take prevParentState from connection because it is different
   let prevParentState = 0;
   let state = 0;
-  const childConnections = connectionsByParent.get(parent.config);
   return children.map(child => {
-    let connections = childConnections?.filter(c => c.child.id === child.id);
-    if (!connections?.length) {
-      connections = allConnections.filter(
-        c => c.passthroughs.includes(child.config) || c.passthroughs.includes(parent.config),
-      );
-      if (!connections.length) {
-        throw new Error(`Missing connection: ${parent.id} - ${child.id}`);
-      }
+    // Match connections whose endpoints line up with this parent/child box
+    // pair. Either endpoint may be reached either directly (c.parent/c.child)
+    // or via a passthrough hop. Restricting to both ends avoids picking up
+    // unrelated flows that happen to share an intermediate passthrough — see
+    // #334, where multiple flows converge on the same synthetic passthrough.
+    const matches = (c: ConnectionState) =>
+      (c.parent === parent.config || c.passthroughs.includes(parent.config)) &&
+      (c.child === child.config || c.passthroughs.includes(child.config));
+    const connections = allConnections.filter(matches);
+    if (!connections.length) {
+      throw new Error(`Missing connection: ${parent.id} - ${child.id}`);
     }
     state = connections.reduce((sum, c) => sum + c.state, 0);
     if (state <= 0) {
@@ -231,7 +232,6 @@ export function convertNodesToSections(nodes: Node[], links: Link[], sectionConf
     };
   });
 
-  createPassthroughs(sections);
   return sections;
 }
 
@@ -261,8 +261,14 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
   const nodes = (config.nodes || []).map(node =>
     node.type ? node : { ...node, type: 'entity' as const },
   );
+  const links = [...(config.links || [])];
 
-  const sections: Section[] = convertNodesToSections(nodes, config.links || [], config.sections);
+  // Auto-insert passthroughs for cross-gap links. This mutates nodes/links
+  // in place before section conversion, so every flow is expressed as an
+  // explicit chain of links in the graph.
+  autoRouteCrossGapLinks(nodes, links);
+
+  const sections: Section[] = convertNodesToSections(nodes, links, config.sections);
 
   const default_co2_per_ft3 =
     55.0 + // gCO2e/ft3 tailpipe
@@ -273,44 +279,65 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
     ...config,
     min_state: config.min_state ? Math.abs(config.min_state) : 0,
     nodes,
-    links: config.links || [],
+    links,
     sections,
   };
 }
 
-export function createPassthroughs(sections: Section[]): void {
-  sections.forEach((section: Section, sectionIndex: number) => {
-    section.entities.forEach(entityConf => {
-      // handle passthrough
-      if (entityConf.children && entityConf.children.length) {
-        entityConf.children.forEach(child => {
-          for (let i = sectionIndex + 1; i < sections.length; i++) {
-            const childConf = sections[i].entities.find(entity => getEntityId(entity) === getEntityId(child));
-            if (childConf) {
-              if (i > sectionIndex + 1) {
-                for (let j = sectionIndex + 1; j < i; j++) {
-                  sections[j].entities.push({
-                    ...(typeof childConf === 'string' ? { id: childConf } : childConf),
-                    type: 'passthrough',
-                    children: [],
-                    section: j,
-                  });
-                }
-              }
-              break;
-            }
-          }
-        });
+/**
+ * When a link's source and target are not in adjacent sections, insert a chain
+ * of synthetic passthrough nodes in the intermediate sections and rewrite the
+ * link so the flow is expressed as explicit hops in the graph. Multiple flows
+ * converging on the same distant target share a single chain of synthetic
+ * passthroughs (one per intermediate section). Mutates `nodes` and `links`
+ * in place.
+ */
+export function autoRouteCrossGapLinks(nodes: Node[], links: Link[]): void {
+  const linkExists = (source: string, target: string) =>
+    links.some(l => l.source === source && l.target === target);
+
+  // Snapshot the initial length — we push new chain links but don't want to
+  // re-process them.
+  const initialLinkCount = links.length;
+  for (let idx = 0; idx < initialLinkCount; idx++) {
+    const link = links[idx];
+    const src = nodes.find(n => n.id === link.source);
+    const tgt = nodes.find(n => n.id === link.target);
+    if (!src || !tgt) continue;
+    const srcSec = src.section ?? 0;
+    const tgtSec = tgt.section ?? 0;
+    if (tgtSec - srcSec <= 1) continue;
+
+    const originalTarget = link.target;
+    const hopIds: string[] = [];
+    for (let i = srcSec + 1; i < tgtSec; i++) {
+      const pid = `${originalTarget}__passthrough_${i}__auto`;
+      // Reuse an existing synthetic passthrough for the same (target, section)
+      if (!nodes.some(n => n.id === pid)) {
+        // Inherit visual props (color, icon, name, etc.) from the target so
+        // the passthrough renders consistently with the flow it represents.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _id, section: _sec, type: _type, ...inherit } = tgt;
+        nodes.push({ ...inherit, id: pid, section: i, type: 'passthrough' });
       }
-    });
-  });
+      hopIds.push(pid);
+    }
+    link.target = hopIds[0];
+    for (let k = 0; k < hopIds.length - 1; k++) {
+      if (!linkExists(hopIds[k], hopIds[k + 1])) {
+        links.push({ source: hopIds[k], target: hopIds[k + 1] });
+      }
+    }
+    const lastHop = hopIds[hopIds.length - 1];
+    if (!linkExists(lastHop, originalTarget)) {
+      links.push({ source: lastHop, target: originalTarget });
+    }
+  }
 }
 
 export function sortBoxes(parentBoxes: Box[], boxes: Box[], sort?: string, dir = 'desc') {
   if (sort === 'state') {
-    const parentChildren = parentBoxes.map(p =>
-      p.config.type === 'passthrough' ? [p.id] : p.config.children.map(getEntityId),
-    );
+    const parentChildren = parentBoxes.map(p => p.config.children.map(getEntityId));
     const sortByParent = (a: Box, b: Box, realSort: (a: Box, b: Box) => number) => {
       let parentIndexA = parentChildren.findIndex(children => children.includes(a.id));
       let parentIndexB = parentChildren.findIndex(children => children.includes(b.id));

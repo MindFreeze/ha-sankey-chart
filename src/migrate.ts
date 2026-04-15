@@ -86,6 +86,29 @@ export function migrateV3Config(config: V3Config): SankeyChartConfig {
     };
   }
 
+  // First pass: for every v3 passthrough, compute a unique v4 id so that links
+  // referring to the passthrough's entity_id can be rewritten to route through
+  // it. v4 no longer allows multiple nodes to share an id (see #334).
+  const passthroughRename = new Map<string, string>();
+  const passthroughKey = (section: number, entityId: string) => `${section}:${entityId}`;
+  config.sections.forEach((section, sectionIndex) => {
+    section.entities.forEach(entity => {
+      const eConf = typeof entity === 'string' ? { entity_id: entity } : entity;
+      if (eConf.type === 'passthrough') {
+        passthroughRename.set(
+          passthroughKey(sectionIndex, eConf.entity_id),
+          `${eConf.entity_id}__passthrough_${sectionIndex}`,
+        );
+      }
+    });
+  });
+
+  // For a link originating in `sourceSection` whose v3 target was
+  // `targetEntityId`, return the id to actually link to — the renamed
+  // passthrough in the next section if one exists, else the target id itself.
+  const resolveLinkTarget = (sourceSection: number, targetEntityId: string): string =>
+    passthroughRename.get(passthroughKey(sourceSection + 1, targetEntityId)) ?? targetEntityId;
+
   // Convert sections to nodes with section index and extract section configs
   config.sections.forEach((section, sectionIndex) => {
     // Extract section config (without entities)
@@ -99,6 +122,35 @@ export function migrateV3Config(config: V3Config): SankeyChartConfig {
 
     section.entities.forEach(entity => {
       const entityConf = typeof entity === 'string' ? { entity_id: entity } : entity;
+
+      // v3 passthroughs become first-class v4 nodes with a unique id plus an
+      // explicit outgoing link to the next section's node with the same
+      // entity_id. They have no incoming `children` in v3 (see commit
+      // 094ac46), so there are no links to migrate off them.
+      if (entityConf.type === 'passthrough') {
+        const newId = passthroughRename.get(passthroughKey(sectionIndex, entityConf.entity_id))!;
+        const node: NonNullable<SankeyChartConfig['nodes']>[number] = {
+          id: newId,
+          section: sectionIndex,
+          type: 'passthrough',
+          name: entityConf.name || '',
+          icon: entityConf.icon,
+        };
+        if (entityConf.color_on_state && entityConf.color_limit !== undefined) {
+          const colors: any = {};
+          if (entityConf.color_below) colors[entityConf.color_below] = { to: entityConf.color_limit };
+          if (entityConf.color_above) colors[entityConf.color_above] = { from: entityConf.color_limit };
+          node.color = colors;
+        } else if (entityConf.color) {
+          node.color = entityConf.color;
+        }
+        nodes.push(node);
+        links.push({
+          source: newId,
+          target: resolveLinkTarget(sectionIndex, entityConf.entity_id),
+        });
+        return;
+      }
 
       // Create node
       const node: NonNullable<SankeyChartConfig['nodes']>[number] = {
@@ -135,13 +187,14 @@ export function migrateV3Config(config: V3Config): SankeyChartConfig {
 
       nodes.push(node);
 
-      // Create links from children
+      // Create links from children, routing each through the next section's
+      // renamed passthrough if there is one.
       if (entityConf.children) {
         entityConf.children.forEach(child => {
           const childConf = typeof child === 'string' ? { entity_id: child } : child;
           links.push({
             source: entityConf.entity_id,
-            target: childConf.entity_id,
+            target: resolveLinkTarget(sectionIndex, childConf.entity_id),
             value: 'connection_entity_id' in childConf ? childConf.connection_entity_id : undefined,
           });
         });

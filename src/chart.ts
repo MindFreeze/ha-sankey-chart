@@ -89,7 +89,14 @@ export class Chart extends LitElement {
       this.connectionsByParent.clear();
       this.connectionsByChild.clear();
       this.reconciledStates.clear();
-      this.config.sections.forEach(({ entities }, sectionIndex) => {
+      // Passthroughs have unique ids in v4 and carry an explicit outgoing link
+      // (children[0]). Follow that chain to the first non-passthrough node
+      // instead of matching by id across sections.
+      const byId = new Map<string, EntityConfigInternal>();
+      this.config.sections.forEach(({ entities }) =>
+        entities.forEach(e => byId.set(e.id, e)),
+      );
+      this.config.sections.forEach(({ entities }) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
             this.entityIds.push(ent.id);
@@ -98,19 +105,21 @@ export class Chart extends LitElement {
           }
           ent.children.forEach(childConf => {
             const passthroughs: EntityConfigInternal[] = [];
-            const childId = getEntityId(childConf);
-            let child: EntityConfigInternal | undefined = ent;
-            for (let i = sectionIndex + 1; i < this.config.sections.length; i++) {
-              child = this.config.sections[i]?.entities.find(e => e.id === childId);
-              if (!child) {
+            let next: EntityConfigInternal | undefined = byId.get(getEntityId(childConf));
+            while (next?.type === 'passthrough') {
+              passthroughs.push(next);
+              const onward = next.children[0];
+              if (!onward) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
                 throw this.error;
               }
-              if (child.type !== 'passthrough') {
-                break;
-              }
-              passthroughs.push(child);
+              next = byId.get(getEntityId(onward));
             }
+            if (!next) {
+              this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
+              throw this.error;
+            }
+            const child: EntityConfigInternal = next;
             const connection: ConnectionState = {
               parent: ent,
               child: child,
@@ -676,8 +685,6 @@ export class Chart extends LitElement {
                 nextSection: this.sections[i + 1],
                 sectionIndex: i,
                 highlightedEntities: this.highlightedEntities,
-                connectionsByParent: this.connectionsByParent,
-                connectionsByChild: this.connectionsByChild,
                 allConnections: this.connections,
                 onTap: this._handleBoxTap.bind(this),
                 onDoubleTap: this._handleBoxDoubleTap.bind(this),
