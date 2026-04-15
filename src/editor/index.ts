@@ -5,7 +5,7 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { SankeyChartConfig, Section, SectionConfig, Node } from '../types';
+import { SankeyChartConfig, Section, SectionConfig, Node, NodeConfigForEditor } from '../types';
 import { localize } from '../localize/localize';
 import { normalizeConfig, convertNodesToSections } from '../utils';
 import './section';
@@ -162,8 +162,14 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
       const updatedNodes = [...nodes];
       const existingNode = updatedNodes[nodeIndex];
 
+      // children is a UI-only property in v4 — connections live in links[].
+      // Strip it from both the incoming conf and the existing node so it never
+      // gets persisted onto the node.
+      const { children: newChildren, ...newConfWithoutChildren } = newConf;
+      const { children: _existingChildren, ...existingNodeWithoutChildren } = existingNode as NodeConfigForEditor;
+
       // Merge changes
-      updatedNodes[nodeIndex] = { ...existingNode, ...newConf };
+      updatedNodes[nodeIndex] = { ...existingNodeWithoutChildren, ...newConfWithoutChildren };
 
       // Handle children sync to links
       let updatedLinks = this._config!.links || [];
@@ -172,7 +178,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         updatedLinks = updatedLinks.filter(l => l.source !== nodeId);
 
         // Add new links from children
-        (newConf.children || []).forEach(child => {
+        (newChildren || []).forEach(child => {
           const childConf = typeof child === 'string'
             ? { entity_id: child }
             : child;
