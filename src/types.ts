@@ -69,7 +69,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
 export interface Node {
   id: string;
   section?: number; // index in sections array
-  type: NodeType
+  type?: NodeType;
   name?: string;
   attribute?: string;
   unit_of_measurement?: string; // for attribute

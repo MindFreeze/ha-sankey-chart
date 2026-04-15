@@ -253,7 +253,16 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
     };
   }
 
-  const sections: Section[] = convertNodesToSections(config.nodes || [], config.links || [], config.sections);
+  // Default node type to 'entity' for v4 configs. The migration guide
+  // instructs users to omit `type: entity` on regular nodes, but downstream
+  // code filters nodes by `type === 'entity'` (e.g. when collecting entity
+  // IDs for statistics queries), so nodes without a type would be silently
+  // excluded. See #335.
+  const nodes = (config.nodes || []).map(node =>
+    node.type ? node : { ...node, type: 'entity' as const },
+  );
+
+  const sections: Section[] = convertNodesToSections(nodes, config.links || [], config.sections);
 
   const default_co2_per_ft3 =
     55.0 + // gCO2e/ft3 tailpipe
@@ -263,7 +272,7 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
     gas_co2_intensity: isMetric ? default_co2_per_ft3 * FT3_PER_M3 : default_co2_per_ft3,
     ...config,
     min_state: config.min_state ? Math.abs(config.min_state) : 0,
-    nodes: config.nodes || [],
+    nodes,
     links: config.links || [],
     sections,
   };

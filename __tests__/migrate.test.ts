@@ -1,5 +1,7 @@
 import { migrateV3Config } from '../src/migrate';
 import type { V3Config } from '../src/migrate';
+import { normalizeConfig } from '../src/utils';
+import type { SankeyChartConfig } from '../src/types';
 
 describe('migrateV3Config', () => {
   it('migrates a simple V3 config to V4 format', () => {
@@ -428,5 +430,37 @@ describe('migrateV3Config', () => {
       round: 2,
       min_state: 0.1,
     });
+  });
+});
+
+describe('normalizeConfig', () => {
+  it('defaults node type to "entity" for v4 nodes without an explicit type', () => {
+    const config = normalizeConfig({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.grid', section: 0 },
+        { id: 'sensor.home', section: 1 },
+      ],
+      links: [{ source: 'sensor.grid', target: 'sensor.home' }],
+      sections: [{}, {}],
+    } as SankeyChartConfig);
+
+    expect(config.nodes[0].type).toBe('entity');
+    expect(config.nodes[1].type).toBe('entity');
+  });
+
+  it('preserves explicit node types', () => {
+    const config = normalizeConfig({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.grid', section: 0, type: 'remaining_parent_state' },
+        { id: 'sensor.home', section: 1 },
+      ],
+      links: [],
+      sections: [{}, {}],
+    } as SankeyChartConfig);
+
+    expect(config.nodes[0].type).toBe('remaining_parent_state');
+    expect(config.nodes[1].type).toBe('entity');
   });
 });
