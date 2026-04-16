@@ -64,6 +64,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   time_period_from?: string;
   time_period_to?: string;
   ignore_missing_entities?: boolean;
+  config_url?: string;
+  cache_bust?: boolean;
 }
 
 export interface Node {

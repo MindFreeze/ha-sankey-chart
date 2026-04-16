@@ -26,6 +26,7 @@ import { fetchFloorRegistry, getEntitiesByArea, HomeAssistantReal } from './hass
 import { LovelaceCardEditor } from 'custom-card-helpers';
 import './editor/index';
 import { calculateTimePeriod } from './utils';
+import yaml from 'js-yaml';
 
 /* eslint no-console: 0 */
 console.info(
@@ -67,6 +68,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private entityIds: string[] = [];
   @state() private error?: Error | unknown;
   @state() private forceUpdateTs?: number;
+
+  private _rawConfig?: SankeyChartConfig;
+  private _isMetric = true;
 
   public hassSubscribe() {
     const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
@@ -181,7 +185,57 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       throw new Error(localize('common.invalid_configuration'));
     }
 
-    this.setNormalizedConfig(normalizeConfig(config, isMetric));
+    this._rawConfig = config;
+    this._isMetric = isMetric;
+
+    this.setNormalizedConfig(normalizeConfig(this._stripLoaderKeys(config), isMetric));
+
+    if (config.config_url) {
+      this._loadExternalConfig().catch(err => {
+        console.error('config_url load failed', err);
+        this.error = err;
+      });
+    }
+
+    this.resetSubscriptions();
+  }
+
+  private _stripLoaderKeys(config: SankeyChartConfig): SankeyChartConfig {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { config_url, cache_bust, ...rest } = config;
+    return rest as SankeyChartConfig;
+  }
+
+  private _withCacheBust(url: string, enabled: boolean): string {
+    if (!enabled) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}_cb=${Date.now()}`;
+  }
+
+  private async _loadExternalConfig(): Promise<void> {
+    const raw = this._rawConfig;
+    if (!raw?.config_url) return;
+
+    const url = this._withCacheBust(raw.config_url, !!raw.cache_bust);
+    const hass = this.hass as HomeAssistantReal & { fetchWithAuth?: typeof fetch };
+    const doFetch = hass?.fetchWithAuth?.bind(hass) ?? fetch.bind(window);
+    const resp = await doFetch(url);
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch ${raw.config_url}: HTTP ${resp.status}`);
+    }
+    const text = await resp.text();
+    const loaded = yaml.load(text);
+    if (!loaded || typeof loaded !== 'object') {
+      throw new Error(`config_url YAML did not produce an object: ${raw.config_url}`);
+    }
+
+    const merged: SankeyChartConfig = {
+      ...raw,
+      ...(loaded as Partial<SankeyChartConfig>),
+      config_url: raw.config_url,
+      cache_bust: raw.cache_bust,
+    };
+    this.setNormalizedConfig(normalizeConfig(this._stripLoaderKeys(merged), this._isMetric));
     this.resetSubscriptions();
   }
 
