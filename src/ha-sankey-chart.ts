@@ -6,7 +6,7 @@ import { customElement, property, state } from 'lit/decorators';
 import type { Config, SankeyChartConfig, SectionConfig } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
-import { convertNodesToSections, normalizeConfig, renderError } from './utils';
+import { autoRouteCrossGapLinks, convertNodesToSections, normalizeConfig, renderError } from './utils';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import './print-config';
@@ -22,7 +22,7 @@ import {
   EnergyPreferences,
 } from './energy';
 import { until } from 'lit/directives/until';
-import { fetchFloorRegistry, getEntitiesByArea, HomeAssistantReal } from './hass';
+import { fetchFloorRegistry, FloorRegistryEntry, getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
 import './editor/index';
 import { calculateTimePeriod } from './utils';
@@ -244,6 +244,10 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
     const deviceNodes: DeviceNode[] = [];
     const parentLinks: Record<string, string> = {};
+    const nodes: Config['nodes'] = [];
+    const links: Config['links'] = [];
+    const sections: SectionConfig[] = [];
+
     prefs.device_consumption.forEach((device, idx) => {
       const node = {
         id: device.stat_consumption,
@@ -253,14 +257,16 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       };
       if (node.parent) {
         parentLinks[node.id] = node.parent;
+        // Emit the parent→child link upfront. getDeviceSections may place the
+        // parent and child more than one section apart (e.g. a shallow 2-level
+        // hierarchy sharing a device section with the leaves of a deeper
+        // hierarchy), and autoRouteCrossGapLinks handles the column-span.
+        links.push({ source: node.parent, target: node.id });
       }
       deviceNodes.push(node);
     });
     const devicesWithoutParent = deviceNodes.filter(node => !parentLinks[node.id]);
 
-    const nodes: Config['nodes'] = [];
-    const links: Config['links'] = [];
-    const sections: SectionConfig[] = [];
 
     let currentSection = 0;
 
@@ -355,72 +361,149 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         this.hass,
         devicesWithoutParent.map(d => d.id),
       );
-      const areas = Object.values(areasResult)
-        .sort((a, b) => (a.area.name === 'No area' ? 1 : b.area.name === 'No area' ? -1 : 0));
 
-      const floors = await fetchFloorRegistry(this.hass);
-      const orphanAreas = areas.filter(a => !a.area.floor_id);
-
-      if (groupByFloor && orphanAreas.length !== areas.length) {
-        // Add floor nodes
-        floors.forEach(f => {
-          nodes.push({
-            id: f.floor_id,
-            section: currentSection,
-            type: 'remaining_child_state',
-            name: f.name,
-          });
-          links.push({ source: 'total', target: f.floor_id });
-
-          const floorAreas = areas.filter(a => a.area.floor_id === f.floor_id);
-          if (groupByArea) {
-            floorAreas.forEach(a => {
-              links.push({ source: f.floor_id, target: a.area.area_id });
-            });
-          } else {
-            floorAreas.forEach(a => {
-              a.entities.forEach(entityId => {
-                links.push({ source: f.floor_id, target: entityId });
-              });
-            });
-          }
+      // Build a reverse lookup from device id -> area id so we can walk
+      // devicesWithoutParent in prefs.device_consumption order and fill the
+      // floor/area structure in the order we actually encounter devices.
+      const areaByDeviceId: Record<string, string> = {};
+      Object.values(areasResult).forEach(({ area, entities }) => {
+        entities.forEach(entityId => {
+          areaByDeviceId[entityId] = area.area_id;
         });
+      });
 
-        // Add orphan areas
-        if (groupByArea) {
-          orphanAreas.forEach(a => {
-            links.push({ source: 'total', target: a.area.area_id });
+      // floorsMap: insertion-ordered areas per floor, mirroring HA's
+      // _groupByFloorAndArea. 'no_floor' is seeded with 'no_area' so the
+      // fallback path produces a stable ordering even without real floors.
+      const floorsMap: Record<string, { areas: string[] }> = {
+        no_floor: { areas: ['no_area'] },
+      };
+      devicesWithoutParent.forEach(d => {
+        const areaId = areaByDeviceId[d.id] ?? 'no_area';
+        if (areaId === 'no_area') return;
+        const floorId = this.hass.areas[areaId]?.floor_id ?? null;
+        if (floorId) {
+          if (!floorsMap[floorId]) floorsMap[floorId] = { areas: [] };
+          if (!floorsMap[floorId].areas.includes(areaId)) {
+            floorsMap[floorId].areas.push(areaId);
+          }
+        } else if (!floorsMap.no_floor.areas.includes(areaId)) {
+          // Match HA: unshift no-floor areas so they land at the top of the
+          // no_floor bucket in reverse-encounter order.
+          floorsMap.no_floor.areas.unshift(areaId);
+        }
+      });
+
+      const floorRegistry = await fetchFloorRegistry(this.hass);
+      const floorsById: Record<string, FloorRegistryEntry> = {};
+      floorRegistry.forEach(f => {
+        floorsById[f.floor_id] = f;
+      });
+
+      // Sort floors by level DESC, like HA (hui-energy-sankey-card.ts:314-319).
+      // 'no_floor' has no registry entry, so it naturally sorts to the bottom.
+      const sortedFloorIds = Object.keys(floorsMap).sort(
+        (a, b) => (floorsById[b]?.level ?? -Infinity) - (floorsById[a]?.level ?? -Infinity),
+      );
+
+      const hasAnyRealFloor = sortedFloorIds.some(
+        id => id !== 'no_floor' && floorsMap[id].areas.length > 0,
+      );
+
+      // Link an area into its parent (floor or 'total'). If the area is
+      // 'no_area' or grouping by area is disabled, bypass the intermediate
+      // area node and link the entities straight to the parent — matching
+      // HA's hui-energy-sankey-card, which never creates a "No area" node.
+      const linkAreaOrEntities = (parentId: string, areaId: string) => {
+        const a = areasResult[areaId];
+        if (!a) return;
+        if (areaId === 'no_area' || !groupByArea) {
+          a.entities.forEach(entityId => {
+            links.push({ source: parentId, target: entityId });
           });
         } else {
-          orphanAreas.forEach(a => {
-            a.entities.forEach(entityId => {
-              links.push({ source: 'total', target: entityId });
-            });
-          });
+          links.push({ source: parentId, target: areaId });
         }
+      };
 
-        sections.push({ sort_by: 'state' }); // floor section with sorting
+      if (groupByFloor && hasAnyRealFloor) {
+        sortedFloorIds.forEach(floorId => {
+          if (floorId === 'no_floor') {
+            floorsMap.no_floor.areas.forEach(areaId => {
+              linkAreaOrEntities('total', areaId);
+            });
+            return;
+          }
+
+          const floor = floorsById[floorId];
+          nodes.push({
+            id: floorId,
+            section: currentSection,
+            type: 'remaining_child_state',
+            name: floor?.name ?? floorId,
+          });
+          links.push({ source: 'total', target: floorId });
+
+          floorsMap[floorId].areas.forEach(areaId => {
+            linkAreaOrEntities(floorId, areaId);
+          });
+        });
+
+        sections.push({ sort_by: 'none' });
         currentSection++;
+      } else if (!groupByArea) {
+        // No floor column and no area column — link every device directly
+        // to total in device_consumption order.
+        devicesWithoutParent.forEach(d => {
+          links.push({ source: 'total', target: d.id });
+        });
       } else {
-        areas.forEach(a => {
-          links.push({ source: 'total', target: a.area.area_id });
+        // Orphan-only path: no real floors, but we are still grouping by area.
+        // Walk areas in the same insertion order we built (no_floor first,
+        // then any leftovers from areasResult that weren't captured).
+        const emitted = new Set<string>();
+        floorsMap.no_floor.areas.forEach(areaId => {
+          if (!areasResult[areaId]) return;
+          linkAreaOrEntities('total', areaId);
+          emitted.add(areaId);
+        });
+        Object.keys(areasResult).forEach(areaId => {
+          if (emitted.has(areaId)) return;
+          linkAreaOrEntities('total', areaId);
         });
       }
 
       if (groupByArea) {
-        areas.forEach(({ area, entities }) => {
-          nodes.push({
-            id: area.area_id,
-            section: currentSection,
-            type: 'remaining_child_state',
-            name: area.name,
-          });
-          entities.forEach(entityId => {
-            links.push({ source: area.area_id, target: entityId });
+        // Emit area nodes grouped by their floor (sorted order). 'no_area' is
+        // never emitted as a node — its entities are wired directly to the
+        // parent (floor or total) by linkAreaOrEntities above.
+        const areaOrder: string[] = [];
+        sortedFloorIds.forEach(fId => {
+          floorsMap[fId].areas.forEach(aId => {
+            if (aId === 'no_area') return;
+            if (!areaOrder.includes(aId) && areasResult[aId]) {
+              areaOrder.push(aId);
+            }
           });
         });
-        sections.push({ sort_by: 'state', sort_group_by_parent: true }); // area section with sorting
-        currentSection++;
+
+        if (areaOrder.length) {
+          areaOrder.forEach(areaId => {
+            const a = areasResult[areaId];
+            if (!a) return;
+            nodes.push({
+              id: a.area.area_id,
+              section: currentSection,
+              type: 'remaining_child_state',
+              name: a.area.name,
+            });
+            a.entities.forEach(entityId => {
+              links.push({ source: a.area.area_id, target: entityId });
+            });
+          });
+          sections.push({ sort_by: 'none', sort_group_by_parent: true });
+          currentSection++;
+        }
       }
     } else {
       devicesWithoutParent.forEach(d => {
@@ -428,9 +511,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
     }
 
-    // Add device nodes
+    // Add device nodes. Parent→child links were already emitted above while
+    // iterating prefs.device_consumption, so this loop only has to place each
+    // device into the right section; autoRouteCrossGapLinks takes care of any
+    // cross-gap routing.
     const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
-    deviceSections.forEach((section, i) => {
+    deviceSections.forEach(section => {
       if (section.length) {
         section.forEach(d => {
           nodes.push({
@@ -440,12 +526,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             name: d.name || '',
             color: d.color,
           });
-          const children = deviceSections[i + 1]?.filter(c => c.parent === d.id);
-          children?.forEach(c => {
-            links.push({ source: d.id, target: c.id });
-          });
         });
-        sections.push({ sort_by: 'state', sort_group_by_parent: true }); // device section with sorting
+        sections.push({ sort_by: 'state', sort_group_by_parent: true });
         currentSection++;
       }
     });
@@ -461,25 +543,47 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       });
     }
 
+    // Insert passthrough nodes for any link whose source/target span more
+    // than one section. normalizeConfig() normally handles this, but
+    // setNormalizedConfig bypasses it — so do it here.
+    autoRouteCrossGapLinks(nodes, links);
+
     // setNormalizedConfig will convert sections (SectionConfig[]) to internal sections (Section[])
     this.setNormalizedConfig({ ...this.config, nodes, links, sections } as any);
   }
 
+  // Organize device nodes into hierarchical sections based on parent-child
+   // relationships. Top-level parents (have children, no parent themselves)
+   // land in the leftmost device column regardless of how deep their subtree
+   // is; middle-layer parents are pushed one column to the right, and so on.
+   // Mirrors HA's hui-energy-sankey-card._getDeviceSections so shallow and
+   // deep hierarchies stay aligned.
   private getDeviceSections(parentLinks: Record<string, string>, deviceNodes: DeviceNode[]): DeviceNode[][] {
     const parentSection: DeviceNode[] = [];
     const childSection: DeviceNode[] = [];
     const parentIds = Object.values(parentLinks);
-    const remainingLinks: typeof parentLinks = {};
+
     deviceNodes.forEach(deviceNode => {
-      if (parentIds.includes(deviceNode.id)) {
+      const isChild = deviceNode.id in parentLinks;
+      const isParent = parentIds.includes(deviceNode.id);
+      if (isParent && !isChild) {
         parentSection.push(deviceNode);
-        remainingLinks[deviceNode.id] = parentLinks[deviceNode.id];
       } else {
         childSection.push(deviceNode);
       }
     });
+
+    // Drop links whose parent is already placed in this layer; the remaining
+    // links feed the next recursion on the child section.
+    const remainingLinks: typeof parentLinks = {};
+    Object.entries(parentLinks).forEach(([child, parent]) => {
+      if (!parentSection.some(node => node.id === parent)) {
+        remainingLinks[child] = parent;
+      }
+    });
+
     if (parentSection.length > 0) {
-      return [...this.getDeviceSections(remainingLinks, parentSection), childSection];
+      return [parentSection, ...this.getDeviceSections(remainingLinks, childSection)];
     }
     return [deviceNodes];
   }

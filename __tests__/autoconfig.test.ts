@@ -175,4 +175,454 @@ describe('SankeyChart autoconfig', () => {
     expect(allEntities).toContain('sensor.battery_in');
     expect(allEntities).toContain('sensor.device1');
   });
-}); 
+
+  describe('floor/area ordering (issue #341)', () => {
+    const setupFloorAreaFixture = () => {
+      hass.states['sensor.device2'] = { entity_id: 'sensor.device2', state: '4' } as any;
+      hass.states['sensor.device3'] = { entity_id: 'sensor.device3', state: '5' } as any;
+      hass.areas = {
+        kitchen: { area_id: 'kitchen', name: 'Kitchen', floor_id: 'ground' },
+        bedroom: { area_id: 'bedroom', name: 'Bedroom', floor_id: 'first' },
+        attic_room: { area_id: 'attic_room', name: 'Attic Room', floor_id: 'top' },
+      };
+    };
+
+    it('sorts floors by level DESC', async () => {
+      setupFloorAreaFixture();
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.device2' },
+          { stat_consumption: 'sensor.device3' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+        bedroom: { area: hass.areas.bedroom, entities: ['sensor.device2'] },
+        attic_room: { area: hass.areas.attic_room, entities: ['sensor.device3'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+        { floor_id: 'first', name: 'First', level: 1 },
+        { floor_id: 'top', name: 'Top', level: 3 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const floorNodes = config.nodes.filter((n: { id: string }) => ['ground', 'first', 'top'].includes(n.id));
+      expect(floorNodes.map((n: { id: string }) => n.id)).toEqual(['top', 'first', 'ground']);
+    });
+
+    it('skips floors with no devices', async () => {
+      setupFloorAreaFixture();
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [{ stat_consumption: 'sensor.device1' }],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+        { floor_id: 'first', name: 'First', level: 1 },
+        { floor_id: 'top', name: 'Top', level: 3 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const nodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(nodeIds).toContain('ground');
+      expect(nodeIds).not.toContain('first');
+      expect(nodeIds).not.toContain('top');
+    });
+
+    it('preserves device-encounter order for areas within a floor', async () => {
+      hass.states['sensor.device2'] = { entity_id: 'sensor.device2', state: '4' } as any;
+      hass.states['sensor.device3'] = { entity_id: 'sensor.device3', state: '5' } as any;
+      hass.areas = {
+        area_a: { area_id: 'area_a', name: 'Area A', floor_id: 'ground' },
+        area_b: { area_id: 'area_b', name: 'Area B', floor_id: 'ground' },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.device2' },
+          { stat_consumption: 'sensor.device3' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area_b: { area: hass.areas.area_b, entities: ['sensor.device2'] },
+        area_a: { area: hass.areas.area_a, entities: ['sensor.device1', 'sensor.device3'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const areaNodes = config.nodes.filter((n: { id: string }) => ['area_a', 'area_b'].includes(n.id));
+      // device1 (area_a) comes before device2 (area_b) in device_consumption,
+      // so area_a must render first.
+      expect(areaNodes.map((n: { id: string }) => n.id)).toEqual(['area_a', 'area_b']);
+    });
+
+    it('unshifts no-floor areas into reverse-encounter order', async () => {
+      hass.states['sensor.device2'] = { entity_id: 'sensor.device2', state: '4' } as any;
+      hass.states['sensor.device3'] = { entity_id: 'sensor.device3', state: '5' } as any;
+      hass.areas = {
+        area_x: { area_id: 'area_x', name: 'Area X', floor_id: null },
+        area_y: { area_id: 'area_y', name: 'Area Y', floor_id: null },
+        kitchen: { area_id: 'kitchen', name: 'Kitchen', floor_id: 'ground' },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.device2' },
+          { stat_consumption: 'sensor.device3' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area_x: { area: hass.areas.area_x, entities: ['sensor.device1'] },
+        area_y: { area: hass.areas.area_y, entities: ['sensor.device2'] },
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device3'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // area_x is encountered first, then area_y. Both are unshifted onto
+      // floorsMap.no_floor.areas, so area_y ends up first.
+      const areaNodes = config.nodes.filter((n: { id: string }) =>
+        ['area_x', 'area_y', 'kitchen'].includes(n.id),
+      );
+      // kitchen is under a real floor (ground); area_y / area_x are under no_floor
+      // and render after the real floor's areas.
+      expect(areaNodes.map((n: { id: string }) => n.id)).toEqual(['kitchen', 'area_y', 'area_x']);
+    });
+
+    it('links areas directly to total when no floor has devices', async () => {
+      hass.states['sensor.device2'] = { entity_id: 'sensor.device2', state: '4' } as any;
+      hass.areas = {
+        area1: { area_id: 'area1', name: 'Area 1', floor_id: null },
+        area2: { area_id: 'area2', name: 'Area 2', floor_id: null },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.device2' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: hass.areas.area1, entities: ['sensor.device1'] },
+        area2: { area: hass.areas.area2, entities: ['sensor.device2'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // No floor nodes when every area is orphan.
+      expect(config.nodes.find((n: { id: string }) => n.id === 'ground')).toBeUndefined();
+      const area1Link = config.links.find(
+        (l: { source: string; target: string }) => l.source === 'total' && l.target === 'area1',
+      );
+      const area2Link = config.links.find(
+        (l: { source: string; target: string }) => l.source === 'total' && l.target === 'area2',
+      );
+      expect(area1Link).toBeDefined();
+      expect(area2Link).toBeDefined();
+    });
+
+    it('does not emit a No area node and links its entities directly to the floor', async () => {
+      hass.states['sensor.orphan1'] = { entity_id: 'sensor.orphan1', state: '2' } as any;
+      hass.areas = {
+        kitchen: { area_id: 'kitchen', name: 'Kitchen', floor_id: 'ground' },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.orphan1' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+        no_area: {
+          area: { area_id: 'no_area', name: 'No area' },
+          entities: ['sensor.orphan1'],
+        },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // No "No area" node should exist.
+      expect(config.nodes.find((n: { id: string }) => n.id === 'no_area')).toBeUndefined();
+      // The orphan entity must be reachable via a chain starting at 'total'.
+      // autoRouteCrossGapLinks may have rewritten total -> orphan1 into a
+      // passthrough chain, so the final hop into the entity is what matters.
+      const orphanIncoming = config.links.find(
+        (l: { source: string; target: string }) => l.target === 'sensor.orphan1',
+      );
+      expect(orphanIncoming).toBeDefined();
+      // And no link should target an intermediate 'no_area' node.
+      const noAreaLinks = config.links.filter(
+        (l: { source: string; target: string }) => l.source === 'no_area' || l.target === 'no_area',
+      );
+      expect(noAreaLinks).toEqual([]);
+    });
+
+    it('links no_area entities to their floor, not an area node', async () => {
+      hass.states['sensor.device2'] = { entity_id: 'sensor.device2', state: '4' } as any;
+      hass.areas = {
+        kitchen: { area_id: 'kitchen', name: 'Kitchen', floor_id: 'ground' },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' }, // in kitchen on ground
+          { stat_consumption: 'sensor.device2' }, // no area, no floor
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+        no_area: {
+          area: { area_id: 'no_area', name: 'No area' },
+          entities: ['sensor.device2'],
+        },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // device2 (in no_area under no_floor) must be reachable from 'total'.
+      // The direct link may have been rewritten into a passthrough chain by
+      // autoRouteCrossGapLinks, so assert on the incoming hop into device2.
+      const device2Incoming = config.links.find(
+        (l: { source: string; target: string }) => l.target === 'sensor.device2',
+      );
+      expect(device2Incoming).toBeDefined();
+    });
+
+    it('emits parent→child links for every included_in_stat relationship, even in mixed-depth hierarchies', async () => {
+      // Same shape as the "top-level parents leftmost" test, but here we
+      // assert that every parent→child relationship appears as a link (or
+      // as a passthrough chain ending at the child), including the shallow
+      // hierarchy whose leaf lives two sections to the right of its parent.
+      hass.states['sensor.shallow_top'] = { entity_id: 'sensor.shallow_top', state: '2' } as any;
+      hass.states['sensor.shallow_leaf'] = { entity_id: 'sensor.shallow_leaf', state: '1' } as any;
+      hass.states['sensor.deep_top'] = { entity_id: 'sensor.deep_top', state: '4' } as any;
+      hass.states['sensor.deep_mid'] = { entity_id: 'sensor.deep_mid', state: '3' } as any;
+      hass.states['sensor.deep_leaf'] = { entity_id: 'sensor.deep_leaf', state: '2' } as any;
+      hass.areas = {};
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.shallow_top' },
+          { stat_consumption: 'sensor.shallow_leaf', included_in_stat: 'sensor.shallow_top' },
+          { stat_consumption: 'sensor.deep_top' },
+          { stat_consumption: 'sensor.deep_mid', included_in_stat: 'sensor.deep_top' },
+          { stat_consumption: 'sensor.deep_leaf', included_in_stat: 'sensor.deep_mid' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // shallow_top -> shallow_leaf: shallow_leaf sits in the last device
+      // section, but shallow_top is in the first, so the link may have been
+      // rewritten via a passthrough chain. Assert the chain exists by walking
+      // outgoing links from shallow_top until we reach shallow_leaf.
+      const nodeById: Record<string, { id: string; type?: string }> = Object.fromEntries(
+        config.nodes.map((n: { id: string; type?: string }) => [n.id, n]),
+      );
+      const reaches = (source: string, target: string): boolean => {
+        const seen = new Set<string>();
+        const stack = [source];
+        while (stack.length) {
+          const cur = stack.pop()!;
+          if (seen.has(cur)) continue;
+          seen.add(cur);
+          const outgoing = config.links.filter(
+            (l: { source: string; target: string }) => l.source === cur,
+          );
+          for (const l of outgoing) {
+            if (l.target === target) return true;
+            // follow passthroughs
+            if (nodeById[l.target]?.type === 'passthrough') stack.push(l.target);
+          }
+        }
+        return false;
+      };
+      expect(reaches('sensor.shallow_top', 'sensor.shallow_leaf')).toBe(true);
+      expect(reaches('sensor.deep_top', 'sensor.deep_mid')).toBe(true);
+      expect(reaches('sensor.deep_mid', 'sensor.deep_leaf')).toBe(true);
+    });
+
+    it('places all top-level parent devices in the leftmost device column regardless of subtree depth', async () => {
+      // Two hierarchies of different depth:
+      //   Shallow: shallow_top -> shallow_leaf
+      //   Deep:    deep_top -> deep_mid -> deep_leaf
+      // Both top-level parents (shallow_top, deep_top) must share the leftmost
+      // device section; deep_mid occupies the middle; the leaves share the
+      // rightmost. This matches HA's layout — our previous implementation
+      // pushed shallow_top one column to the right of deep_top.
+      hass.states['sensor.shallow_top'] = { entity_id: 'sensor.shallow_top', state: '2' } as any;
+      hass.states['sensor.shallow_leaf'] = { entity_id: 'sensor.shallow_leaf', state: '1' } as any;
+      hass.states['sensor.deep_top'] = { entity_id: 'sensor.deep_top', state: '4' } as any;
+      hass.states['sensor.deep_mid'] = { entity_id: 'sensor.deep_mid', state: '3' } as any;
+      hass.states['sensor.deep_leaf'] = { entity_id: 'sensor.deep_leaf', state: '2' } as any;
+      hass.areas = {};
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.shallow_top' },
+          { stat_consumption: 'sensor.shallow_leaf', included_in_stat: 'sensor.shallow_top' },
+          { stat_consumption: 'sensor.deep_top' },
+          { stat_consumption: 'sensor.deep_mid', included_in_stat: 'sensor.deep_top' },
+          { stat_consumption: 'sensor.deep_leaf', included_in_stat: 'sensor.deep_mid' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const sectionOf = (id: string) =>
+        config.nodes.find((n: { id: string }) => n.id === id)?.section;
+
+      const shallowTopSec = sectionOf('sensor.shallow_top');
+      const deepTopSec = sectionOf('sensor.deep_top');
+      const deepMidSec = sectionOf('sensor.deep_mid');
+      const shallowLeafSec = sectionOf('sensor.shallow_leaf');
+      const deepLeafSec = sectionOf('sensor.deep_leaf');
+
+      expect(shallowTopSec).toBe(deepTopSec);
+      expect(deepMidSec).toBe(deepTopSec + 1);
+      expect(deepLeafSec).toBe(deepMidSec + 1);
+      expect(shallowLeafSec).toBe(deepLeafSec);
+    });
+
+    it('inserts passthrough nodes for cross-gap links (no_area device jumping from total to device column)', async () => {
+      // A device with no area + no floor links 'total' (section 1) straight
+      // to the device (section 4 or 5). Without passthroughs the chart can't
+      // render the gradients between intermediate columns.
+      hass.states['sensor.orphan'] = { entity_id: 'sensor.orphan', state: '2' } as any;
+      hass.areas = {
+        kitchen: { area_id: 'kitchen', name: 'Kitchen', floor_id: 'ground' },
+      };
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.orphan' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+        no_area: {
+          area: { area_id: 'no_area', name: 'No area' },
+          entities: ['sensor.orphan'],
+        },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // A passthrough node should be inserted for the orphan device in each
+      // intermediate section between total (1) and the device section.
+      const passthroughs = config.nodes.filter(
+        (n: { type?: string; id: string }) => n.type === 'passthrough' && n.id.includes('sensor.orphan'),
+      );
+      expect(passthroughs.length).toBeGreaterThan(0);
+
+      // The original total -> sensor.orphan link must have been rewritten to
+      // hop through a passthrough; no direct link should jump more than one
+      // section.
+      const directOrphanLink = config.links.find(
+        (l: { source: string; target: string }) =>
+          l.source === 'total' && l.target === 'sensor.orphan',
+      );
+      expect(directOrphanLink).toBeUndefined();
+    });
+
+    it('sets floor/area section sort_by to none, devices keep state', async () => {
+      setupFloorAreaFixture();
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1' },
+          { stat_consumption: 'sensor.device2' },
+          { stat_consumption: 'sensor.device3' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        kitchen: { area: hass.areas.kitchen, entities: ['sensor.device1'] },
+        bedroom: { area: hass.areas.bedroom, entities: ['sensor.device2'] },
+        attic_room: { area: hass.areas.attic_room, entities: ['sensor.device3'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([
+        { floor_id: 'ground', name: 'Ground', level: 0 },
+        { floor_id: 'first', name: 'First', level: 1 },
+        { floor_id: 'top', name: 'Top', level: 3 },
+      ]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // sections: [0]=sources, [1]=total, [2]=floors, [3]=areas, [4]=devices.
+      expect(config.sections[2].sort_by).toBe('none');
+      expect(config.sections[3].sort_by).toBe('none');
+      expect(config.sections[3].sort_group_by_parent).toBe(true);
+      expect(config.sections[4].sort_by).toBe('state');
+      expect(config.sections[4].sort_group_by_parent).toBe(true);
+    });
+
+    it('state-sorts and groups by parent on every device section (all sections after areas)', async () => {
+      hass.states['sensor.parent'] = { entity_id: 'sensor.parent', state: '5' } as any;
+      hass.states['sensor.child'] = { entity_id: 'sensor.child', state: '2' } as any;
+      hass.areas = {};
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.parent' },
+          { stat_consumption: 'sensor.child', included_in_stat: 'sensor.parent' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // Two device sections: [sensor.parent] and [sensor.child].
+      // sections: [0]=sources, [1]=total, [2]=parents, [3]=leaves.
+      expect(config.sections[2].sort_by).toBe('state');
+      expect(config.sections[2].sort_group_by_parent).toBe(true);
+      expect(config.sections[3].sort_by).toBe('state');
+      expect(config.sections[3].sort_group_by_parent).toBe(true);
+    });
+  });
+});
