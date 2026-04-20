@@ -224,10 +224,14 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     const { sort_by, sort_dir, sort_group_by_parent, min_width } = sectionConf;
     const sectionConfigOnly: SectionConfig = { sort_by, sort_dir, sort_group_by_parent, min_width };
 
-    this._config = {
-      ...this._config!,
-      sections: this._config?.sections?.map((section, i) => (i === index ? sectionConfigOnly : section)),
-    };
+    // Sections can be rendered from node.section indices even when
+    // _config.sections is undefined or shorter than `index`, so pad the array
+    // up to the target index before assigning — otherwise the edit is lost.
+    const sections: SectionConfig[] = [...(this._config?.sections || [])];
+    while (sections.length <= index) sections.push({});
+    sections[index] = sectionConfigOnly;
+
+    this._config = { ...this._config!, sections };
     this._updateConfig();
   };
 
