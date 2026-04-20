@@ -66,7 +66,7 @@ class SankeyChartSectionEditor extends LitElement {
     return html`
       <ha-card class="section">
         <ha-expansion-panel
-          .header=${localize('editor.section') + ` ${this.index + 1}`}
+          .header=${localize('editor.section') + ` ${this.index}`}
           .secondary=${localize('editor.section_options')}
           .leftChevron=${true}
         >
