@@ -14,6 +14,7 @@ import { HassEntities } from 'home-assistant-js-websocket';
 import {
   Conversions,
   EnergyCollection,
+  EnergyData,
   ENERGY_SOURCE_TYPES,
   getEnergyDataCollection,
   getEnergySourceColor,
@@ -41,17 +42,22 @@ console.info(
   name: 'Sankey Chart',
   description: 'A card to display a sankey chart. For example for power or energy consumption',
   documentationURL: 'https://github.com/MindFreeze/ha-sankey-chart',
-  // preview: true, // requires energy data
 });
 
 const ENERGY_DATA_TIMEOUT = 10000;
+
+// Sentinel node IDs used by autoconfig. They're real keys in the rendered
+// graph (matched by id in links and tests), so the values must stay stable.
+const TOTAL_NODE_ID = 'total';
+const UNKNOWN_NODE_ID = 'unknown';
+const NO_FLOOR = 'no_floor';
+const NO_AREA = 'no_area';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    // await import('./editor');
     return document.createElement('sankey-chart-editor');
   }
 
@@ -65,8 +71,27 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private config!: Config;
   @state() private states: HassEntities = {};
   @state() private entityIds: string[] = [];
-  @state() private error?: Error | unknown;
+  @state() private error?: unknown;
   @state() private forceUpdateTs?: number;
+
+  private async _fetchStats(range: Pick<EnergyData, 'start' | 'end'>): Promise<void> {
+    if (!this.entityIds.length) return;
+    const conversions: Conversions = {
+      convert_units_to: this.config.convert_units_to!,
+      co2_intensity_entity: this.config.co2_intensity_entity!,
+      gas_co2_intensity: this.config.gas_co2_intensity!,
+      electricity_price: this.config.electricity_price,
+      gas_price: this.config.gas_price,
+    };
+    const stats = await getStatistics(this.hass, range, this.entityIds, conversions);
+    const states: HassEntities = {};
+    Object.keys(stats).forEach(id => {
+      if (this.hass.states[id]) {
+        states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+      }
+    });
+    this.states = states;
+  }
 
   public hassSubscribe() {
     const isAutoconfig = this.config.autoconfig || typeof this.config.autoconfig === 'object';
@@ -116,23 +141,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
                 return;
               }
             }
-            if (this.entityIds.length) {
-              const conversions: Conversions = {
-                convert_units_to: this.config.convert_units_to!,
-                co2_intensity_entity: this.config.co2_intensity_entity!,
-                gas_co2_intensity: this.config.gas_co2_intensity!,
-                electricity_price: this.config.electricity_price,
-                gas_price: this.config.gas_price,
-              };
-              const stats = await getStatistics(this.hass, data, this.entityIds, conversions);
-              const states: HassEntities = {};
-              Object.keys(stats).forEach(id => {
-                if (this.hass.states[id]) {
-                  states[id] = { ...this.hass.states[id], state: String(stats[id]) };
-                }
-              });
-              this.states = states;
-            }
+            await this._fetchStats(data);
             this.forceUpdateTs = Date.now();
           });
         }),
@@ -145,23 +154,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         if (this.config.time_period_from) {
           try {
             const { start, end } = calculateTimePeriod(this.config.time_period_from, this.config.time_period_to);
-            if (this.entityIds.length) {
-              const conversions: Conversions = {
-                convert_units_to: this.config.convert_units_to!,
-                co2_intensity_entity: this.config.co2_intensity_entity!,
-                gas_co2_intensity: this.config.gas_co2_intensity!,
-                electricity_price: this.config.electricity_price,
-                gas_price: this.config.gas_price,
-              };
-              const stats = await getStatistics(this.hass, { start, end }, this.entityIds, conversions);
-              const states: HassEntities = {};
-              Object.keys(stats).forEach(id => {
-                if (this.hass.states[id]) {
-                  states[id] = { ...this.hass.states[id], state: String(stats[id]) };
-                }
-              });
-              this.states = states;
-            }
+            await this._fetchStats({ start, end });
           } catch (err: any) {
             this.error = err;
           }
@@ -267,10 +260,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
     const devicesWithoutParent = deviceNodes.filter(node => !parentLinks[node.id]);
 
-
     let currentSection = 0;
 
-    // Add source nodes (section 0)
     sources.forEach(source => {
       if (!source.stat_energy_from) return;
       const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
@@ -286,15 +277,14 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         subtract_entities: subtract,
         color: getEnergySourceColor(source.type),
       });
-      links.push({ source: source.stat_energy_from, target: 'total' });
+      links.push({ source: source.stat_energy_from, target: TOTAL_NODE_ID });
     });
-    sections.push({}); // section 0 config
+    sections.push({});
 
     currentSection++;
 
-    // Add total node (section 1)
     nodes.push({
-      id: 'total',
+      id: TOTAL_NODE_ID,
       section: currentSection,
       type: sources.length ? 'remaining_parent_state' : 'remaining_child_state',
       name: 'Total Consumption',
@@ -303,9 +293,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         reconcile_to: 'max',
       },
     });
-    links.push({ source: 'total', target: 'unknown' });
+    links.push({ source: TOTAL_NODE_ID, target: UNKNOWN_NODE_ID });
 
-    // Handle grid export
     const gridSources = sources.filter(s => s.type === 'grid');
     const seenFlowTo = new Set<string>();
     gridSources.forEach(grid => {
@@ -333,7 +322,6 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       }
     });
 
-    // Handle battery charging
     const battery = sources.find(s => s.type === 'battery');
     if (battery && battery.stat_energy_from && battery.stat_energy_to) {
       nodes.push({
@@ -349,7 +337,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         links.push({ source: source.stat_energy_from, target: battery.stat_energy_to! });
       });
     }
-    sections.push({}); // section 1 config
+    sections.push({});
 
     currentSection++;
 
@@ -357,14 +345,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const groupByArea = this.config.autoconfig?.group_by_area !== false;
 
     if (groupByFloor || groupByArea) {
-      const areasResult = await getEntitiesByArea(
-        this.hass,
-        devicesWithoutParent.map(d => d.id),
-      );
+      const [areasResult, floorRegistry] = await Promise.all([
+        getEntitiesByArea(this.hass, devicesWithoutParent.map(d => d.id)),
+        fetchFloorRegistry(this.hass),
+      ]);
 
-      // Build a reverse lookup from device id -> area id so we can walk
-      // devicesWithoutParent in prefs.device_consumption order and fill the
-      // floor/area structure in the order we actually encounter devices.
       const areaByDeviceId: Record<string, string> = {};
       Object.values(areasResult).forEach(({ area, entities }) => {
         entities.forEach(entityId => {
@@ -372,52 +357,49 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         });
       });
 
-      // floorsMap: insertion-ordered areas per floor, mirroring HA's
-      // _groupByFloorAndArea. 'no_floor' is seeded with 'no_area' so the
-      // fallback path produces a stable ordering even without real floors.
+      // floorsMap mirrors HA's _groupByFloorAndArea. 'no_floor' is seeded
+      // with 'no_area' so the fallback path has stable ordering even without
+      // real floors.
       const floorsMap: Record<string, { areas: string[] }> = {
-        no_floor: { areas: ['no_area'] },
+        [NO_FLOOR]: { areas: [NO_AREA] },
       };
       devicesWithoutParent.forEach(d => {
-        const areaId = areaByDeviceId[d.id] ?? 'no_area';
-        if (areaId === 'no_area') return;
+        const areaId = areaByDeviceId[d.id] ?? NO_AREA;
+        if (areaId === NO_AREA) return;
         const floorId = this.hass.areas[areaId]?.floor_id ?? null;
         if (floorId) {
           if (!floorsMap[floorId]) floorsMap[floorId] = { areas: [] };
           if (!floorsMap[floorId].areas.includes(areaId)) {
             floorsMap[floorId].areas.push(areaId);
           }
-        } else if (!floorsMap.no_floor.areas.includes(areaId)) {
-          // Match HA: unshift no-floor areas so they land at the top of the
+        } else if (!floorsMap[NO_FLOOR].areas.includes(areaId)) {
+          // Match HA: unshift so no-floor areas land at the top of the
           // no_floor bucket in reverse-encounter order.
-          floorsMap.no_floor.areas.unshift(areaId);
+          floorsMap[NO_FLOOR].areas.unshift(areaId);
         }
       });
 
-      const floorRegistry = await fetchFloorRegistry(this.hass);
       const floorsById: Record<string, FloorRegistryEntry> = {};
       floorRegistry.forEach(f => {
         floorsById[f.floor_id] = f;
       });
 
-      // Sort floors by level DESC, like HA (hui-energy-sankey-card.ts:314-319).
-      // 'no_floor' has no registry entry, so it naturally sorts to the bottom.
+      // Sort by level DESC like HA (hui-energy-sankey-card.ts:314-319).
+      // NO_FLOOR has no registry entry so it naturally sorts to the bottom.
       const sortedFloorIds = Object.keys(floorsMap).sort(
         (a, b) => (floorsById[b]?.level ?? -Infinity) - (floorsById[a]?.level ?? -Infinity),
       );
 
       const hasAnyRealFloor = sortedFloorIds.some(
-        id => id !== 'no_floor' && floorsMap[id].areas.length > 0,
+        id => id !== NO_FLOOR && floorsMap[id].areas.length > 0,
       );
 
-      // Link an area into its parent (floor or 'total'). If the area is
-      // 'no_area' or grouping by area is disabled, bypass the intermediate
-      // area node and link the entities straight to the parent — matching
-      // HA's hui-energy-sankey-card, which never creates a "No area" node.
+      // HA never creates a "No area" node: no_area entities are wired
+      // straight to the parent (floor or total).
       const linkAreaOrEntities = (parentId: string, areaId: string) => {
         const a = areasResult[areaId];
         if (!a) return;
-        if (areaId === 'no_area' || !groupByArea) {
+        if (areaId === NO_AREA || !groupByArea) {
           a.entities.forEach(entityId => {
             links.push({ source: parentId, target: entityId });
           });
@@ -428,9 +410,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
       if (groupByFloor && hasAnyRealFloor) {
         sortedFloorIds.forEach(floorId => {
-          if (floorId === 'no_floor') {
-            floorsMap.no_floor.areas.forEach(areaId => {
-              linkAreaOrEntities('total', areaId);
+          if (floorId === NO_FLOOR) {
+            floorsMap[NO_FLOOR].areas.forEach(areaId => {
+              linkAreaOrEntities(TOTAL_NODE_ID, areaId);
             });
             return;
           }
@@ -442,7 +424,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             type: 'remaining_child_state',
             name: floor?.name ?? floorId,
           });
-          links.push({ source: 'total', target: floorId });
+          links.push({ source: TOTAL_NODE_ID, target: floorId });
 
           floorsMap[floorId].areas.forEach(areaId => {
             linkAreaOrEntities(floorId, areaId);
@@ -452,35 +434,30 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         sections.push({ sort_by: 'none' });
         currentSection++;
       } else if (!groupByArea) {
-        // No floor column and no area column — link every device directly
-        // to total in device_consumption order.
         devicesWithoutParent.forEach(d => {
-          links.push({ source: 'total', target: d.id });
+          links.push({ source: TOTAL_NODE_ID, target: d.id });
         });
       } else {
-        // Orphan-only path: no real floors, but we are still grouping by area.
-        // Walk areas in the same insertion order we built (no_floor first,
-        // then any leftovers from areasResult that weren't captured).
+        // Orphan-only path: no real floors, still grouping by area. Walk
+        // areas in the insertion order we built (no_floor first, then any
+        // leftovers from areasResult).
         const emitted = new Set<string>();
-        floorsMap.no_floor.areas.forEach(areaId => {
+        floorsMap[NO_FLOOR].areas.forEach(areaId => {
           if (!areasResult[areaId]) return;
-          linkAreaOrEntities('total', areaId);
+          linkAreaOrEntities(TOTAL_NODE_ID, areaId);
           emitted.add(areaId);
         });
         Object.keys(areasResult).forEach(areaId => {
           if (emitted.has(areaId)) return;
-          linkAreaOrEntities('total', areaId);
+          linkAreaOrEntities(TOTAL_NODE_ID, areaId);
         });
       }
 
       if (groupByArea) {
-        // Emit area nodes grouped by their floor (sorted order). 'no_area' is
-        // never emitted as a node — its entities are wired directly to the
-        // parent (floor or total) by linkAreaOrEntities above.
         const areaOrder: string[] = [];
         sortedFloorIds.forEach(fId => {
           floorsMap[fId].areas.forEach(aId => {
-            if (aId === 'no_area') return;
+            if (aId === NO_AREA) return;
             if (!areaOrder.includes(aId) && areasResult[aId]) {
               areaOrder.push(aId);
             }
@@ -507,14 +484,13 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       }
     } else {
       devicesWithoutParent.forEach(d => {
-        links.push({ source: 'total', target: d.id });
+        links.push({ source: TOTAL_NODE_ID, target: d.id });
       });
     }
 
-    // Add device nodes. Parent→child links were already emitted above while
-    // iterating prefs.device_consumption, so this loop only has to place each
-    // device into the right section; autoRouteCrossGapLinks takes care of any
-    // cross-gap routing.
+    // Parent→child links were emitted above while iterating device_consumption,
+    // so this loop only has to place each device into the right section;
+    // autoRouteCrossGapLinks takes care of any cross-gap routing.
     const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
     deviceSections.forEach(section => {
       if (section.length) {
@@ -532,32 +508,26 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       }
     });
 
-    // Add unknown node
-    const totalSection = nodes.find(n => n.id === 'total')?.section;
+    const totalSection = nodes.find(n => n.id === TOTAL_NODE_ID)?.section;
     if (totalSection !== undefined) {
       nodes.push({
-        id: 'unknown',
+        id: UNKNOWN_NODE_ID,
         section: totalSection + 1,
         type: 'remaining_parent_state',
         name: 'Unknown',
       });
     }
 
-    // Insert passthrough nodes for any link whose source/target span more
-    // than one section. normalizeConfig() normally handles this, but
-    // setNormalizedConfig bypasses it — so do it here.
+    // normalizeConfig() normally calls this, but setNormalizedConfig bypasses
+    // it — do it here so cross-gap links get their passthrough chain.
     autoRouteCrossGapLinks(nodes, links);
 
-    // setNormalizedConfig will convert sections (SectionConfig[]) to internal sections (Section[])
     this.setNormalizedConfig({ ...this.config, nodes, links, sections } as any);
   }
 
-  // Organize device nodes into hierarchical sections based on parent-child
-   // relationships. Top-level parents (have children, no parent themselves)
-   // land in the leftmost device column regardless of how deep their subtree
-   // is; middle-layer parents are pushed one column to the right, and so on.
-   // Mirrors HA's hui-energy-sankey-card._getDeviceSections so shallow and
-   // deep hierarchies stay aligned.
+  // Mirrors HA's hui-energy-sankey-card._getDeviceSections: top-level parents
+  // land in the leftmost device column regardless of subtree depth, so shallow
+  // and deep hierarchies stay aligned.
   private getDeviceSections(parentLinks: Record<string, string>, deviceNodes: DeviceNode[]): DeviceNode[][] {
     const parentSection: DeviceNode[] = [];
     const childSection: DeviceNode[] = [];
