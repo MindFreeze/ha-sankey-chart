@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.2...v4.1.0) (2026-04-20)
+
+
+### Features
+
+* **#341:** use HA order for floors and areas ([27ca9de](https://github.com/MindFreeze/ha-sankey-chart/commit/27ca9de108516d4995de68703b540665657e9fbf))
+
+
+### Bug Fixes
+
+* **#343:** align visual editor section numbering with 0-based config ([5eefe3e](https://github.com/MindFreeze/ha-sankey-chart/commit/5eefe3eb384c9bf003dff03a2d68151b2e15e7ee))
+* **#344:** preserve section sort_group_by_parent edits in visual editor ([f8e4270](https://github.com/MindFreeze/ha-sankey-chart/commit/f8e4270438ffad29bd10b6d804d2f47c5c9975ba))
+* remove `children` from the editor ([740cf35](https://github.com/MindFreeze/ha-sankey-chart/commit/740cf35d84e981a55a234226df1a3eb45a698fc3))
+
 ## [4.0.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.1...v4.0.2) (2026-04-15)
 
 
