@@ -369,7 +369,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                 .configValue=${(conf, val: boolean) => {
                   const newConf = { ...conf };
                   if (val && !conf.autoconfig) {
-                    newConf.autoconfig = { print_yaml: false };
+                    newConf.autoconfig = { print_yaml: false, power: false };
                     // Clear manual config when enabling autoconfig
                     newConf.nodes = [];
                     newConf.links = [];
@@ -383,13 +383,28 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
               ></ha-switch>
             </ha-formfield>
             ${autoconfig
-              ? html`<ha-formfield .label=${localize('editor.fields.print_yaml')}>
-                  <ha-switch
-                    .checked=${!!autoconfig?.print_yaml}
-                    .configValue=${(conf, print_yaml) => ({ ...conf, autoconfig: { print_yaml } })}
-                    @change=${this._valueChanged}
-                  ></ha-switch>
-                </ha-formfield>`
+              ? html`
+                  <ha-formfield .label=${localize('editor.fields.print_yaml')}>
+                    <ha-switch
+                      .checked=${!!autoconfig?.print_yaml}
+                      .configValue=${(conf, print_yaml) => ({
+                        ...conf,
+                        autoconfig: { ...conf.autoconfig, print_yaml },
+                      })}
+                      @change=${this._valueChanged}
+                    ></ha-switch>
+                  </ha-formfield>
+                  <ha-formfield .label=${localize('editor.fields.autoconfig_power')}>
+                    <ha-switch
+                      .checked=${!!autoconfig?.power}
+                      .configValue=${(conf, power) => ({
+                        ...conf,
+                        autoconfig: { ...conf.autoconfig, power },
+                      })}
+                      @change=${this._valueChanged}
+                    ></ha-switch>
+                  </ha-formfield>
+                `
               : nothing}
           </div>
 

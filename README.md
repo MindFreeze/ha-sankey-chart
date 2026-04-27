@@ -186,6 +186,7 @@ or like this:
 | group_by_floor    | boolean | **Optional** | true                | Display data per floor
 | group_by_area     | boolean | **Optional** | true                | Display data per area
 | net_flows         | boolean | **Optional** | true                | Show net energy flows. Set to `false` to show gross energy flows instead, making grid export and battery charge/discharge visible even for net importers
+| power             | boolean | **Optional** | false               | Use real-time power sensors if available (HA 2025.12+).
 
 ### Time Period
 

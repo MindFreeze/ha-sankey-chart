@@ -16,6 +16,7 @@ import {
   EnergyCollection,
   EnergyData,
   ENERGY_SOURCE_TYPES,
+  EnergySource,
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
@@ -164,6 +165,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       getTimePeriod();
       const interval = setInterval(getTimePeriod, this.config.throttle || 1000);
       return [() => clearInterval(interval)];
+    } else if (isAutoconfig && !this.config.sections.length) {
+      this.autoconfig();
     }
     return [];
   }
@@ -207,21 +210,32 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       prefs = await getEnergyPreferences(this.hass);
     }
     const netFlows = this.config.autoconfig?.net_flows !== false;
-    const sources: typeof prefs.energy_sources = [];
-    (prefs?.energy_sources || []).forEach(s => {
+    const usePower = this.config.autoconfig?.power === true;
+
+    const sources: (EnergySource & { _autoconfig_id: string; _real_entity_id: string })[] = [];
+    for (const s of (prefs?.energy_sources || [])) {
       if (!ENERGY_SOURCE_TYPES.includes(s.type)) {
-        return;
+        continue;
       }
-      [s, ...(s.flow_from || [])].forEach(f => {
-        if (f.stat_energy_from) {
-          if (!this.hass.states[f.stat_energy_from]) {
-            console.warn('Ignoring missing entity ' + f.stat_energy_from);
+      for (const f of [s, ...(s.flow_from || [])]) {
+        let entityId = usePower ? (f.stat_rate || s.power_config?.stat_rate_from || f.stat_energy_from) : f.stat_energy_from;
+        if (!entityId && f === s && s.power_config) {
+          entityId = s.power_config.stat_rate_from || s.power_config.stat_rate_to;
+        }
+
+        if (entityId) {
+          if (!this.hass.states[entityId]) {
+            console.warn('Ignoring missing entity ' + entityId);
           } else {
-            sources.push({ ...s, ...f });
+            // Suffix source ID if it might conflict with child nodes later
+            const sourceId = (s.stat_energy_to || s.stat_rate || s.power_config?.stat_rate_to) === entityId
+              ? `source_${entityId}`
+              : entityId;
+            sources.push({ ...s, ...f, _autoconfig_id: sourceId, _real_entity_id: entityId });
           }
         }
-      });
-    });
+      }
+    }
     sources.sort((s1, s2) => {
       // sort to solar, battery, grid
       if (s1.type === s2.type) {
@@ -241,11 +255,24 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const links: Config['links'] = [];
     const sections: SectionConfig[] = [];
 
-    prefs.device_consumption.forEach((device, idx) => {
+    const energyToPowerDeviceMap: Record<string, string> = {};
+    for (const device of prefs.device_consumption) {
+      if (usePower && device.stat_rate) {
+        energyToPowerDeviceMap[device.stat_consumption] = device.stat_rate;
+      }
+    }
+
+    for (let idx = 0; idx < prefs.device_consumption.length; idx++) {
+      const device = prefs.device_consumption[idx];
+      const entityId = usePower && device.stat_rate ? device.stat_rate : device.stat_consumption;
+      let parent = device.included_in_stat;
+      if (usePower && parent && energyToPowerDeviceMap[parent]) {
+        parent = energyToPowerDeviceMap[parent];
+      }
       const node = {
-        id: device.stat_consumption,
+        id: entityId,
         name: device.name,
-        parent: device.included_in_stat,
+        parent: parent,
         color: `var(--color-${(idx % 54) + 1})`,
       };
       if (node.parent) {
@@ -257,30 +284,33 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         links.push({ source: node.parent, target: node.id });
       }
       deviceNodes.push(node);
-    });
+    }
     const devicesWithoutParent = deviceNodes.filter(node => !parentLinks[node.id]);
 
     let currentSection = 0;
 
     sources.forEach(source => {
-      if (!source.stat_energy_from) return;
+      const statPowerTo = usePower && (source.stat_rate || source.power_config?.stat_rate_to);
       const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
         ? undefined
-        : source.stat_energy_to
-          ? [source.stat_energy_to]
-          : source.flow_to?.map(e => e.stat_energy_to).filter(Boolean) as string[] | undefined;
+        : statPowerTo
+          ? [statPowerTo]
+          : source.stat_energy_to
+            ? [source.stat_energy_to]
+            : source.flow_to?.map(e => (usePower ? e.stat_rate || e.stat_energy_to : e.stat_energy_to)).filter(Boolean) as
+                | string[]
+                | undefined;
       nodes.push({
-        id: source.stat_energy_from,
+        id: source._autoconfig_id,
+        entity_id: source._real_entity_id,
         section: currentSection,
         type: 'entity',
         name: '',
-        subtract_entities: subtract,
+        subtract_entities: subtract?.filter(id => id !== source._autoconfig_id && id !== source._real_entity_id),
         color: getEnergySourceColor(source.type),
       });
-      links.push({ source: source.stat_energy_from, target: TOTAL_NODE_ID });
     });
     sections.push({});
-
     currentSection++;
 
     nodes.push({
@@ -293,52 +323,77 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         reconcile_to: 'max',
       },
     });
-    links.push({ source: TOTAL_NODE_ID, target: UNKNOWN_NODE_ID });
 
     const gridSources = sources.filter(s => s.type === 'grid');
     const seenFlowTo = new Set<string>();
     gridSources.forEach(grid => {
-      const exportEntities = grid.flow_to?.map(e => e.stat_energy_to) ??
+      const exportEntities =
+        (usePower && (grid.stat_rate || grid.power_config?.stat_rate_to)
+          ? [grid.stat_rate || grid.power_config!.stat_rate_to!]
+          : undefined) ??
+        grid.flow_to?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_to)).filter(Boolean) ??
         (grid.stat_energy_to ? [grid.stat_energy_to] : []);
-      const importEntities = grid.flow_from?.map(e => e.stat_energy_from) ??
+      const importEntities =
+        (usePower && (grid.stat_rate || grid.power_config?.stat_rate_from)
+          ? [grid.stat_rate || grid.power_config!.stat_rate_from!]
+          : undefined) ??
+        grid.flow_from?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_from)).filter(Boolean) ??
         (grid.stat_energy_from ? [grid.stat_energy_from] : []);
       if (exportEntities.length) {
-        exportEntities.forEach(stat_energy_to => {
-          if (!stat_energy_to || seenFlowTo.has(stat_energy_to)) return;
-          seenFlowTo.add(stat_energy_to);
+        exportEntities.forEach(stat_to => {
+          if (!stat_to || seenFlowTo.has(stat_to)) return;
+          seenFlowTo.add(stat_to);
           nodes.push({
-            id: stat_energy_to,
+            id: stat_to,
             section: currentSection,
             type: 'entity',
             name: '',
-            subtract_entities: netFlows ? importEntities : undefined,
+            subtract_entities: netFlows ? importEntities.filter(id => id !== stat_to) : undefined,
             color: getEnergySourceColor(grid.type),
           });
+          // These are children of the source, same section as TOTAL_NODE_ID
           sources.forEach(source => {
-            if (!source.stat_energy_from) return;
-            links.push({ source: source.stat_energy_from, target: stat_energy_to });
+            if (source._autoconfig_id !== stat_to) {
+              links.push({ source: source._autoconfig_id, target: stat_to });
+            }
           });
         });
       }
     });
 
     const battery = sources.find(s => s.type === 'battery');
-    if (battery && battery.stat_energy_from && battery.stat_energy_to) {
-      nodes.push({
-        id: battery.stat_energy_to,
-        section: currentSection,
-        type: 'entity',
-        name: '',
-        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
-        color: getEnergySourceColor(battery.type),
-      });
-      sources.forEach(source => {
-        if (!source.stat_energy_from) return;
-        links.push({ source: source.stat_energy_from, target: battery.stat_energy_to! });
-      });
+    if (battery) {
+      const battery_to =
+        usePower && (battery.stat_rate || battery.power_config?.stat_rate_to)
+          ? battery.stat_rate || battery.power_config!.stat_rate_to!
+          : battery.stat_energy_to;
+      if (battery_to) {
+        nodes.push({
+          id: battery_to,
+          section: currentSection,
+          type: 'entity',
+          name: '',
+            subtract_entities: netFlows
+              ? sources.filter(s => s._autoconfig_id !== battery_to && s._real_entity_id !== battery_to).map(s => s._autoconfig_id)
+              : undefined,
+          color: getEnergySourceColor(battery.type),
+        });
+        sources.forEach(source => {
+          if (source._autoconfig_id !== battery_to) {
+            links.push({ source: source._autoconfig_id, target: battery_to });
+          }
+        });
+      }
     }
-    sections.push({});
 
+    // Now link sources to Total Consumption
+    sources.forEach(source => {
+      if (source._autoconfig_id !== TOTAL_NODE_ID) {
+        links.push({ source: source._autoconfig_id, target: TOTAL_NODE_ID });
+      }
+    });
+
+    sections.push({});
     currentSection++;
 
     const groupByFloor = this.config.autoconfig?.group_by_floor !== false;
@@ -355,6 +410,12 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         entities.forEach(entityId => {
           areaByDeviceId[entityId] = area.area_id;
         });
+      });
+      const devicesByArea: Record<string, string[]> = {};
+      devicesWithoutParent.forEach(d => {
+        const areaId = areaByDeviceId[d.id] ?? NO_AREA;
+        if (!devicesByArea[areaId]) devicesByArea[areaId] = [];
+        devicesByArea[areaId].push(d.id);
       });
 
       // floorsMap mirrors HA's _groupByFloorAndArea. 'no_floor' is seeded
@@ -396,27 +457,50 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
       // HA never creates a "No area" node: no_area entities are wired
       // straight to the parent (floor or total).
-      const linkAreaOrEntities = (parentId: string, areaId: string) => {
-        const a = areasResult[areaId];
-        if (!a) return;
-        if (areaId === NO_AREA || !groupByArea) {
+      const linkAreaOrEntities = (parentId: string, areaId: string, section: number) => {
+        let a = areasResult[areaId];
+        if (areaId === NO_AREA) {
+          a = { area: { area_id: NO_AREA, name: 'Other Devices' } as any, entities: devicesByArea[NO_AREA] || [] };
+        }
+        if (!a || !a.entities.length) return;
+        if (areaId === NO_AREA && groupByArea) {
+          // Group unassigned devices into an 'Other Devices' box
+          const otherId = `${parentId}_other_devices`;
+          if (!nodes.some(n => n.id === otherId)) {
+            nodes.push({
+              id: otherId,
+              section: section,
+              type: 'remaining_child_state',
+              name: 'Other Devices',
+            });
+            links.push({ source: parentId, target: otherId });
+          }
+          a.entities.forEach(entityId => {
+            links.push({ source: otherId, target: entityId });
+          });
+        } else if (!groupByArea) {
           a.entities.forEach(entityId => {
             links.push({ source: parentId, target: entityId });
           });
         } else {
-          links.push({ source: parentId, target: areaId });
+          const areaNodeId = `${parentId}_${areaId}`;
+          nodes.push({
+            id: areaNodeId,
+            section: section,
+            type: 'remaining_child_state',
+            name: a.area.name,
+          });
+          links.push({ source: parentId, target: areaNodeId });
+          a.entities.forEach(entityId => {
+            links.push({ source: areaNodeId, target: entityId });
+          });
         }
       };
 
       if (groupByFloor && hasAnyRealFloor) {
+        // Section: Floors
         sortedFloorIds.forEach(floorId => {
-          if (floorId === NO_FLOOR) {
-            floorsMap[NO_FLOOR].areas.forEach(areaId => {
-              linkAreaOrEntities(TOTAL_NODE_ID, areaId);
-            });
-            return;
-          }
-
+          if (floorId === NO_FLOOR) return;
           const floor = floorsById[floorId];
           nodes.push({
             id: floorId,
@@ -425,62 +509,31 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             name: floor?.name ?? floorId,
           });
           links.push({ source: TOTAL_NODE_ID, target: floorId });
+        });
+        sections.push({ sort_by: 'none', sort_group_by_parent: true });
+        currentSection++;
 
+        // Section: Areas
+        sortedFloorIds.forEach(floorId => {
+          const parentId = floorId === NO_FLOOR ? TOTAL_NODE_ID : floorId;
           floorsMap[floorId].areas.forEach(areaId => {
-            linkAreaOrEntities(floorId, areaId);
+            linkAreaOrEntities(parentId, areaId, currentSection);
           });
         });
-
-        sections.push({ sort_by: 'none' });
+        sections.push({ sort_by: 'none', sort_group_by_parent: true });
         currentSection++;
-      } else if (!groupByArea) {
+      } else if (groupByArea) {
+        // Section: Areas (no floors)
+        Object.keys(devicesByArea).forEach(areaId => {
+          linkAreaOrEntities(TOTAL_NODE_ID, areaId, currentSection);
+        });
+        sections.push({ sort_by: 'none', sort_group_by_parent: true });
+        currentSection++;
+      } else {
+        // No grouping
         devicesWithoutParent.forEach(d => {
           links.push({ source: TOTAL_NODE_ID, target: d.id });
         });
-      } else {
-        // Orphan-only path: no real floors, still grouping by area. Walk
-        // areas in the insertion order we built (no_floor first, then any
-        // leftovers from areasResult).
-        const emitted = new Set<string>();
-        floorsMap[NO_FLOOR].areas.forEach(areaId => {
-          if (!areasResult[areaId]) return;
-          linkAreaOrEntities(TOTAL_NODE_ID, areaId);
-          emitted.add(areaId);
-        });
-        Object.keys(areasResult).forEach(areaId => {
-          if (emitted.has(areaId)) return;
-          linkAreaOrEntities(TOTAL_NODE_ID, areaId);
-        });
-      }
-
-      if (groupByArea) {
-        const areaOrder: string[] = [];
-        sortedFloorIds.forEach(fId => {
-          floorsMap[fId].areas.forEach(aId => {
-            if (aId === NO_AREA) return;
-            if (!areaOrder.includes(aId) && areasResult[aId]) {
-              areaOrder.push(aId);
-            }
-          });
-        });
-
-        if (areaOrder.length) {
-          areaOrder.forEach(areaId => {
-            const a = areasResult[areaId];
-            if (!a) return;
-            nodes.push({
-              id: a.area.area_id,
-              section: currentSection,
-              type: 'remaining_child_state',
-              name: a.area.name,
-            });
-            a.entities.forEach(entityId => {
-              links.push({ source: a.area.area_id, target: entityId });
-            });
-          });
-          sections.push({ sort_by: 'none', sort_group_by_parent: true });
-          currentSection++;
-        }
       }
     } else {
       devicesWithoutParent.forEach(d => {
@@ -508,14 +561,16 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       }
     });
 
+    // Add the "Untracked" usage box as a sibling of floors
     const totalSection = nodes.find(n => n.id === TOTAL_NODE_ID)?.section;
     if (totalSection !== undefined) {
       nodes.push({
         id: UNKNOWN_NODE_ID,
         section: totalSection + 1,
         type: 'remaining_parent_state',
-        name: 'Unknown',
+        name: 'Untracked',
       });
+      links.push({ source: TOTAL_NODE_ID, target: UNKNOWN_NODE_ID });
     }
 
     // normalizeConfig() normally calls this, but setNormalizedConfig bypasses

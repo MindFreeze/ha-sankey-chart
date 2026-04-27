@@ -62,17 +62,25 @@ export interface EnergySource {
   type: string;
   stat_energy_from?: string;
   stat_energy_to?: string;
+  stat_rate?: string;
+  power_config?: {
+    stat_rate_from?: string;
+    stat_rate_to?: string;
+  };
   flow_from?: {
     stat_energy_from: string;
+    stat_rate?: string;
   }[];
   flow_to?: {
     stat_energy_to: string;
+    stat_rate?: string;
   }[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface DeviceConsumptionEnergyPreference {
   stat_consumption: string;
+  stat_rate?: string;
   name?: string;
   included_in_stat?: string;
 }

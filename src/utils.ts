@@ -126,7 +126,9 @@ function getUOMPrefix(unit_of_measurement: string): string {
 }
 
 export function getEntityId(entity: string | Node | Record<string, unknown>): string {
-  return typeof entity === 'string' ? entity : ((entity.id || (entity as Record<string, unknown>).entity_id) as string);
+  return typeof entity === 'string'
+    ? entity
+    : (((entity as Node).entity_id || (entity as Node).id || (entity as Record<string, unknown>).entity_id) as string);
 }
 
 export function getChildConnections(
@@ -243,11 +245,12 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
 
   const { autoconfig } = conf;
   if (autoconfig || typeof autoconfig === 'object') {
+    const isPower = typeof autoconfig === 'object' && autoconfig.power === true;
     config = {
-      energy_date_selection: !config.time_period_from,
-      unit_prefix: 'k',
-      round: 1,
       ...config,
+      energy_date_selection: config.energy_date_selection ?? (!config.time_period_from && !isPower && !config.energy_collection_key),
+      unit_prefix: config.unit_prefix ?? (isPower ? '' : 'k'),
+      round: config.round ?? 1,
       nodes: config.nodes || [],
       links: config.links || [],
     };

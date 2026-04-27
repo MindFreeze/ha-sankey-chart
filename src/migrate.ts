@@ -8,6 +8,8 @@ export interface V3Config extends LovelaceCardConfig {
     print_yaml?: boolean;
     group_by_floor?: boolean;
     group_by_area?: boolean;
+    net_flows?: boolean;
+    power?: boolean;
   };
   title?: string;
   sections?: V3SectionConfig[];

@@ -625,4 +625,77 @@ describe('SankeyChart autoconfig', () => {
       expect(config.sections[3].sort_group_by_parent).toBe(true);
     });
   });
+
+  it('prefers power sensors when available and in power mode', async () => {
+    hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+    hass.states['sensor.solar_power'] = { entity_id: 'sensor.solar_power', state: '500' } as any;
+    hass.states['sensor.device1_power'] = { entity_id: 'sensor.device1_power', state: '300' } as any;
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { power: true } }, true);
+
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        {
+          type: 'grid',
+          stat_energy_from: 'sensor.grid_in',
+          stat_power_from: 'sensor.grid_power_in',
+        },
+        {
+          type: 'solar',
+          stat_energy_from: 'sensor.solar',
+          stat_power_from: 'sensor.solar_power',
+        },
+      ],
+      device_consumption: [
+        {
+          stat_consumption: 'sensor.device1',
+          stat_power_consumption: 'sensor.device1_power',
+          name: 'Device 1',
+        },
+      ],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({
+      area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1_power'] },
+    });
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+
+    const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+    expect(allNodeIds).toContain('sensor.grid_power_in');
+    expect(allNodeIds).toContain('sensor.solar_power');
+    expect(allNodeIds).toContain('sensor.device1_power');
+    expect(allNodeIds).not.toContain('sensor.grid_in');
+    expect(allNodeIds).not.toContain('sensor.solar');
+    expect(allNodeIds).not.toContain('sensor.device1');
+  });
+
+  it('prefers energy sensors when power mode is disabled', async () => {
+    hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { power: false } }, true);
+
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        {
+          type: 'grid',
+          stat_energy_from: 'sensor.grid_in',
+          stat_power_from: 'sensor.grid_power_in',
+        },
+      ],
+      device_consumption: [],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+
+    const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+    expect(allNodeIds).toContain('sensor.grid_in');
+    expect(allNodeIds).not.toContain('sensor.grid_power_in');
+  });
 });
