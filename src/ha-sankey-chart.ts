@@ -228,7 +228,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             console.warn('Ignoring missing entity ' + entityId);
           } else {
             // Suffix source ID if it might conflict with child nodes later
-            const sourceId = (s.stat_energy_to || s.stat_rate || s.power_config?.stat_rate_to) === entityId
+            const sourceId = (s.stat_energy_to || s.power_config?.stat_rate_to) === entityId
               ? `source_${entityId}`
               : entityId;
             sources.push({ ...s, ...f, _autoconfig_id: sourceId, _real_entity_id: entityId });
@@ -328,14 +328,14 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const seenFlowTo = new Set<string>();
     gridSources.forEach(grid => {
       const exportEntities =
-        (usePower && (grid.stat_rate || grid.power_config?.stat_rate_to)
-          ? [grid.stat_rate || grid.power_config!.stat_rate_to!]
+        (usePower && grid.power_config?.stat_rate_to
+          ? [grid.power_config.stat_rate_to]
           : undefined) ??
         grid.flow_to?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_to)).filter(Boolean) ??
         (grid.stat_energy_to ? [grid.stat_energy_to] : []);
       const importEntities =
-        (usePower && (grid.stat_rate || grid.power_config?.stat_rate_from)
-          ? [grid.stat_rate || grid.power_config!.stat_rate_from!]
+        (usePower && grid.power_config?.stat_rate_from
+          ? [grid.power_config.stat_rate_from]
           : undefined) ??
         grid.flow_from?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_from)).filter(Boolean) ??
         (grid.stat_energy_from ? [grid.stat_energy_from] : []);
@@ -373,9 +373,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           section: currentSection,
           type: 'entity',
           name: '',
-            subtract_entities: netFlows
-              ? sources.filter(s => s._autoconfig_id !== battery_to && s._real_entity_id !== battery_to).map(s => s._autoconfig_id)
-              : undefined,
+          subtract_entities: netFlows
+            ? sources.filter(s => s._autoconfig_id !== battery_to && s._real_entity_id !== battery_to).map(s => s._autoconfig_id)
+            : undefined,
           color: getEnergySourceColor(battery.type),
         });
         sources.forEach(source => {
@@ -463,38 +463,30 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           a = { area: { area_id: NO_AREA, name: 'Other Devices' } as any, entities: devicesByArea[NO_AREA] || [] };
         }
         if (!a || !a.entities.length) return;
-        if (areaId === NO_AREA && groupByArea) {
-          // Group unassigned devices into an 'Other Devices' box
-          const otherId = `${parentId}_other_devices`;
-          if (!nodes.some(n => n.id === otherId)) {
-            nodes.push({
-              id: otherId,
-              section: section,
-              type: 'remaining_child_state',
-              name: 'Other Devices',
-            });
-            links.push({ source: parentId, target: otherId });
-          }
+        if (areaId === NO_AREA) {
+          // No area: wire entities directly to the parent (floor or total).
+          // autoRouteCrossGapLinks will insert passthrough nodes if needed.
           a.entities.forEach(entityId => {
-            links.push({ source: otherId, target: entityId });
+            links.push({ source: parentId, target: entityId });
           });
         } else if (!groupByArea) {
           a.entities.forEach(entityId => {
             links.push({ source: parentId, target: entityId });
           });
         } else {
-          const areaNodeId = `${parentId}_${areaId}`;
           nodes.push({
-            id: areaNodeId,
+            id: areaId,
             section: section,
             type: 'remaining_child_state',
             name: a.area.name,
           });
-          links.push({ source: parentId, target: areaNodeId });
+          links.push({ source: parentId, target: areaId });
           a.entities.forEach(entityId => {
-            links.push({ source: areaNodeId, target: entityId });
+            links.push({ source: areaId, target: entityId });
           });
+          return true; // signal that an area node was emitted
         }
+        return false;
       };
 
       if (groupByFloor && hasAnyRealFloor) {
@@ -524,11 +516,14 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         currentSection++;
       } else if (groupByArea) {
         // Section: Areas (no floors)
+        let anyArea = false;
         Object.keys(devicesByArea).forEach(areaId => {
-          linkAreaOrEntities(TOTAL_NODE_ID, areaId, currentSection);
+          if (linkAreaOrEntities(TOTAL_NODE_ID, areaId, currentSection)) anyArea = true;
         });
-        sections.push({ sort_by: 'none', sort_group_by_parent: true });
-        currentSection++;
+        if (anyArea) {
+          sections.push({ sort_by: 'none', sort_group_by_parent: true });
+          currentSection++;
+        }
       } else {
         // No grouping
         devicesWithoutParent.forEach(d => {

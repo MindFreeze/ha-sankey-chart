@@ -470,7 +470,8 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
         margin-bottom: 20px;
       }
       .autoconfig {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto auto;
         justify-content: space-between;
         margin-bottom: 16px;
       }

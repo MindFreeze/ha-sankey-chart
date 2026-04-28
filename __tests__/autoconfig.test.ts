@@ -626,7 +626,7 @@ describe('SankeyChart autoconfig', () => {
     });
   });
 
-  it('prefers power sensors when available and in power mode', async () => {
+  it('prefers power sensors when power mode is enabled', async () => {
     hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
     hass.states['sensor.solar_power'] = { entity_id: 'sensor.solar_power', state: '500' } as any;
     hass.states['sensor.device1_power'] = { entity_id: 'sensor.device1_power', state: '300' } as any;
@@ -637,18 +637,18 @@ describe('SankeyChart autoconfig', () => {
         {
           type: 'grid',
           stat_energy_from: 'sensor.grid_in',
-          stat_power_from: 'sensor.grid_power_in',
+          stat_rate: 'sensor.grid_power_in',
         },
         {
           type: 'solar',
           stat_energy_from: 'sensor.solar',
-          stat_power_from: 'sensor.solar_power',
+          stat_rate: 'sensor.solar_power',
         },
       ],
       device_consumption: [
         {
           stat_consumption: 'sensor.device1',
-          stat_power_consumption: 'sensor.device1_power',
+          stat_rate: 'sensor.device1_power',
           name: 'Device 1',
         },
       ],
@@ -681,7 +681,7 @@ describe('SankeyChart autoconfig', () => {
         {
           type: 'grid',
           stat_energy_from: 'sensor.grid_in',
-          stat_power_from: 'sensor.grid_power_in',
+          stat_rate: 'sensor.grid_power_in',
         },
       ],
       device_consumption: [],
