@@ -22,6 +22,7 @@
       "time_period_from": "Time period from",
       "time_period_to": "Time period to",
       "autoconfig": "Autoconfig",
+      "autoconfig_mode": "Mode",
       "print_yaml": "Print auto generated config yaml",
       "layout": "Layout",
       "show_names": "Show names",
@@ -78,6 +79,12 @@
       "auto": "Auto",
       "vertical": "Vertical",
       "horizontal": "Horizontal"
+    },
+    "autoconfig_mode": {
+      "energy": "Energy",
+      "power": "Power",
+      "water": "Water",
+      "water_flow": "Water flow"
     }
   }
 }

@@ -241,13 +241,15 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
     ? migrateV3Config(conf as V3Config)
     : cloneObj(conf);
 
-  const { autoconfig } = conf;
+  const { autoconfig } = config;
   if (autoconfig || typeof autoconfig === 'object') {
+    const mode = (typeof autoconfig === 'object' && autoconfig.mode) || 'energy';
+    const rateMode = mode === 'power' || mode === 'water_flow';
     config = {
-      energy_date_selection: !config.time_period_from,
-      unit_prefix: 'k',
-      round: 1,
       ...config,
+      energy_date_selection: config.energy_date_selection ?? (!config.time_period_from && !rateMode),
+      unit_prefix: config.unit_prefix ?? (mode === 'energy' ? 'k' : ''),
+      round: config.round ?? 1,
       nodes: config.nodes || [],
       links: config.links || [],
     };

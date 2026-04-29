@@ -4,8 +4,13 @@ import { HomeAssistant } from "custom-card-helpers";
 import { Collection } from "home-assistant-js-websocket";
 import { differenceInDays } from 'date-fns';
 import { FT3_PER_M3 } from './const';
+import type { AutoconfigMode } from './types';
 
-export const ENERGY_SOURCE_TYPES = ['grid', 'solar', 'battery'];
+export const sourceTypesForMode = (mode: AutoconfigMode): string[] =>
+  mode === 'water' || mode === 'water_flow' ? ['water'] : ['grid', 'solar', 'battery'];
+
+export const isRateMode = (mode: AutoconfigMode): boolean =>
+  mode === 'power' || mode === 'water_flow';
 
 export interface EnergyData {
   start: Date;
@@ -62,17 +67,12 @@ export interface EnergySource {
   type: string;
   stat_energy_from?: string;
   stat_energy_to?: string;
-  flow_from?: {
-    stat_energy_from: string;
-  }[];
-  flow_to?: {
-    stat_energy_to: string;
-  }[];
+  stat_rate?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface DeviceConsumptionEnergyPreference {
   stat_consumption: string;
+  stat_rate?: string;
   name?: string;
   included_in_stat?: string;
 }
@@ -80,6 +80,7 @@ export interface DeviceConsumptionEnergyPreference {
 export interface EnergyPreferences {
   energy_sources: EnergySource[];
   device_consumption: DeviceConsumptionEnergyPreference[];
+  device_consumption_water?: DeviceConsumptionEnergyPreference[];
 }
 
 export interface EnergyInfo {
@@ -357,6 +358,9 @@ export function getEnergySourceColor(type: string) {
   }
   if (type === 'battery') {
     return 'var(--success-color)';
+  }
+  if (type === 'water') {
+    return 'var(--info-color)';
   }
   return undefined;
 }
