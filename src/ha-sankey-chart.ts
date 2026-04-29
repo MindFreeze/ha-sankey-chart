@@ -348,7 +348,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           type: 'entity',
           name: '',
           subtract_entities: netFlows && importEntity ? [importEntity] : undefined,
-          color: getEnergySourceColor(grid.type),
+          color: getEnergySourceColor(grid.type, 'to'),
         });
         sources.forEach(source => {
           const sId = fromEntity(source);
@@ -365,7 +365,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           type: 'entity',
           name: '',
           subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
-          color: getEnergySourceColor(battery.type),
+          color: getEnergySourceColor(battery.type, 'to'),
         });
         sources.forEach(source => {
           const sId = fromEntity(source);

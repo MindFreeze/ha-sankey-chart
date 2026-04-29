@@ -352,15 +352,18 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
   return result;
 }
 
-export function getEnergySourceColor(type: string) {
+export function getEnergySourceColor(type: string, direction: 'from' | 'to' = 'from') {
   if (type === 'solar') {
-    return 'var(--warning-color)';
+    return 'var(--energy-solar-color)';
   }
   if (type === 'battery') {
-    return 'var(--success-color)';
+    return direction === 'to' ? 'var(--energy-battery-in-color)' : 'var(--energy-battery-out-color)';
+  }
+  if (type === 'grid') {
+    return direction === 'to' ? 'var(--energy-grid-return-color)' : 'var(--energy-grid-consumption-color)';
   }
   if (type === 'water') {
-    return 'var(--info-color)';
+    return 'var(--energy-water-color)';
   }
   return undefined;
 }
