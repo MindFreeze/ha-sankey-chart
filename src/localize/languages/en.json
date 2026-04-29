@@ -22,7 +22,7 @@
       "time_period_from": "Time period from",
       "time_period_to": "Time period to",
       "autoconfig": "Autoconfig",
-      "autoconfig_power": "Use real-time power if available (HA 2025.12+)",
+      "autoconfig_mode": "Tracking mode (HA 2025.12+ for power)",
       "print_yaml": "Print auto generated config yaml",
       "layout": "Layout",
       "show_names": "Show names",
@@ -79,6 +79,10 @@
       "auto": "Auto",
       "vertical": "Vertical",
       "horizontal": "Horizontal"
+    },
+    "mode": {
+      "energy": "Energy",
+      "power": "Power"
     }
   }
 }

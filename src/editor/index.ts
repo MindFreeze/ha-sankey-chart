@@ -74,15 +74,16 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
     const target = ev.target;
     if (target.configValue) {
       if (typeof target.configValue === 'function') {
-        this._config = target.configValue(this._config, target.checked !== undefined ? target.checked : target.value);
-      } else if (target.value === '') {
+        const val = target.tagName === 'HA-SWITCH' ? target.checked : (ev.detail?.value ?? target.value);
+        this._config = target.configValue(this._config, val);
+      } else if ((ev.detail?.value ?? target.value) === '') {
         const tmpConfig = { ...this._config };
         delete tmpConfig[target.configValue];
         this._config = tmpConfig;
       } else {
         this._config = {
           ...this._config,
-          [target.configValue]: target.checked !== undefined ? target.checked : target.value,
+          [target.configValue]: target.tagName === 'HA-SWITCH' ? target.checked : (ev.detail?.value ?? target.value),
         };
       }
     } else {
@@ -241,47 +242,53 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
   }
 
   private _computeSchema() {
-    return [
-      // {
-      //   type: 'grid',
-      //   name: '',
-      //   schema: [
-      //     { name: 'autoconfig', selector: { boolean: {} } },
-      //     { name: 'autoconfig.print_yaml', selector: { boolean: {} } },
-      //   ],
-      // },
-      { name: 'title', selector: { text: {} } },
-      { name: 'energy_date_selection', selector: { boolean: {} } },
+    const isPowerMode = this._config?.autoconfig?.mode === 'power';
+
+    const schema: any[] = [{ name: 'title', selector: { text: {} } }];
+
+    if (!isPowerMode) {
+      schema.push({ name: 'energy_date_selection', selector: { boolean: {} } });
+    }
+
+    const gridSchema: any[] = [];
+    if (!isPowerMode) {
+      gridSchema.push(
+        { name: 'time_period_from', selector: { text: {} } },
+        { name: 'time_period_to', selector: { text: {} } },
+      );
+    }
+    
+    gridSchema.push(
+      { name: 'show_names', selector: { boolean: {} } },
+      { name: 'show_icons', selector: { boolean: {} } },
+      { name: 'show_states', selector: { boolean: {} } },
+      { name: 'show_units', selector: { boolean: {} } },
       {
-        type: 'grid',
-        name: '',
-        schema: [
-          { name: 'time_period_from', selector: { text: {} } },
-          { name: 'time_period_to', selector: { text: {} } },
-          { name: 'show_names', selector: { boolean: {} } },
-          { name: 'show_icons', selector: { boolean: {} } },
-          { name: 'show_states', selector: { boolean: {} } },
-          { name: 'show_units', selector: { boolean: {} } },
-          {
-            name: 'layout',
-            selector: {
-              select: {
-                mode: 'dropdown',
-                options: [
-                  { value: 'auto', label: localize('editor.layout.auto') },
-                  { value: 'horizontal', label: localize('editor.layout.horizontal') },
-                  { value: 'vertical', label: localize('editor.layout.vertical') },
-                ],
-              },
-            },
+        name: 'layout',
+        selector: {
+          select: {
+            mode: 'dropdown',
+            options: [
+              { value: 'auto', label: localize('editor.layout.auto') },
+              { value: 'horizontal', label: localize('editor.layout.horizontal') },
+              { value: 'vertical', label: localize('editor.layout.vertical') },
+            ],
           },
-          { name: 'wide', selector: { boolean: {} } },
-          { name: 'height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
-          { name: 'min_box_size', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
-          { name: 'min_box_distance', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
-        ],
+        },
       },
-      {
+      { name: 'wide', selector: { boolean: {} } },
+      { name: 'height', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+      { name: 'min_box_size', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+      { name: 'min_box_distance', selector: { number: { mode: 'box', unit_of_measurement: 'px' } } },
+    );
+
+    schema.push({
+      type: 'grid',
+      name: '',
+      schema: gridSchema,
+    });
+
+    schema.push({
         type: 'grid',
         name: '',
         schema: [
@@ -328,8 +335,9 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
           },
           { name: 'throttle', selector: { number: { mode: 'box', unit_of_measurement: 'ms' } } },
         ],
-      },
-    ];
+      }
+    );
+    return schema;
   }
 
   private _computeLabel = (schema: { name: string }) => {
@@ -369,7 +377,7 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                 .configValue=${(conf, val: boolean) => {
                   const newConf = { ...conf };
                   if (val && !conf.autoconfig) {
-                    newConf.autoconfig = { print_yaml: false, power: false };
+                    newConf.autoconfig = { print_yaml: false };
                     // Clear manual config when enabling autoconfig
                     newConf.nodes = [];
                     newConf.links = [];
@@ -394,16 +402,32 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
                       @change=${this._valueChanged}
                     ></ha-switch>
                   </ha-formfield>
-                  <ha-formfield .label=${localize('editor.fields.autoconfig_power')}>
-                    <ha-switch
-                      .checked=${!!autoconfig?.power}
-                      .configValue=${(conf, power) => ({
-                        ...conf,
-                        autoconfig: { ...conf.autoconfig, power },
-                      })}
-                      @change=${this._valueChanged}
-                    ></ha-switch>
-                  </ha-formfield>
+                  <ha-form
+                    .hass=${this.hass}
+                    .data=${{ mode: autoconfig?.mode || 'energy' }}
+                    .configValue=${(conf, val) => ({
+                      ...conf,
+                      autoconfig: { ...conf.autoconfig, mode: val.mode }
+                    })}
+                    .schema=${[
+                      {
+                        name: 'mode',
+                        selector: {
+                          select: {
+                            mode: 'dropdown',
+                            options: [
+                              { value: 'energy', label: localize('editor.mode.energy') },
+                              { value: 'power', label: localize('editor.mode.power') },
+                            ],
+                          },
+                        },
+                      },
+                    ]}
+                    .computeLabel=${() => localize('editor.fields.autoconfig_mode')}
+                    @value-changed=${(ev: any) => {
+                      this._valueChanged(ev);
+                    }}
+                  ></ha-form>
                 `
               : nothing}
           </div>

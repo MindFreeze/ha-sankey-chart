@@ -245,7 +245,7 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
 
   const { autoconfig } = conf;
   if (autoconfig || typeof autoconfig === 'object') {
-    const isPower = typeof autoconfig === 'object' && autoconfig.power === true;
+    const isPower = typeof autoconfig === 'object' && autoconfig.mode === 'power';
     config = {
       ...config,
       energy_date_selection: config.energy_date_selection ?? (!config.time_period_from && !isPower && !config.energy_collection_key),

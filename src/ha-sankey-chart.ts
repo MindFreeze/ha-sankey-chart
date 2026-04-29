@@ -210,7 +210,29 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       prefs = await getEnergyPreferences(this.hass);
     }
     const netFlows = this.config.autoconfig?.net_flows !== false;
-    const usePower = this.config.autoconfig?.power === true;
+    const mode = this.config.autoconfig?.mode || 'energy';
+
+    const ext = {
+      energy: {
+        getSourceEntityId: (s: any, f: any) => f.stat_energy_from,
+        getDeviceEntityId: (d: any) => d.stat_consumption,
+        getSourceSubtract: (s: any) => s.stat_energy_to ? [s.stat_energy_to] : s.flow_to?.map((e: any) => e.stat_energy_to).filter(Boolean),
+        getGridExportEntities: (grid: any) => grid.flow_to?.map((e: any) => e.stat_energy_to).filter(Boolean) ?? (grid.stat_energy_to ? [grid.stat_energy_to] : []),
+        getGridImportEntities: (grid: any) => grid.flow_from?.map((e: any) => e.stat_energy_from).filter(Boolean) ?? (grid.stat_energy_from ? [grid.stat_energy_from] : []),
+        getBatteryToEntityId: (battery: any) => battery.stat_energy_to,
+      },
+      power: {
+        getSourceEntityId: (s: any, f: any) => f.stat_rate || s.power_config?.stat_rate_from || f.stat_energy_from || (f === s && s.power_config ? s.power_config.stat_rate_to : undefined),
+        getDeviceEntityId: (d: any) => d.stat_rate || d.stat_consumption,
+        getSourceSubtract: (s: any) => {
+          const statPowerTo = s.stat_rate || s.power_config?.stat_rate_to;
+          return statPowerTo ? [statPowerTo] : (s.stat_energy_to ? [s.stat_energy_to] : s.flow_to?.map((e: any) => e.stat_rate || e.stat_energy_to).filter(Boolean));
+        },
+        getGridExportEntities: (grid: any) => (grid.power_config?.stat_rate_to ? [grid.power_config.stat_rate_to] : undefined) ?? grid.flow_to?.map((e: any) => (e.stat_rate || e.stat_energy_to)).filter(Boolean) ?? (grid.stat_energy_to ? [grid.stat_energy_to] : []),
+        getGridImportEntities: (grid: any) => (grid.power_config?.stat_rate_from ? [grid.power_config.stat_rate_from] : undefined) ?? grid.flow_from?.map((e: any) => (e.stat_rate || e.stat_energy_from)).filter(Boolean) ?? (grid.stat_energy_from ? [grid.stat_energy_from] : []),
+        getBatteryToEntityId: (battery: any) => battery.stat_rate || battery.power_config?.stat_rate_to || battery.stat_energy_to,
+      }
+    }[mode];
 
     const sources: (EnergySource & { _autoconfig_id: string; _real_entity_id: string })[] = [];
     for (const s of (prefs?.energy_sources || [])) {
@@ -218,10 +240,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         continue;
       }
       for (const f of [s, ...(s.flow_from || [])]) {
-        let entityId = usePower ? (f.stat_rate || s.power_config?.stat_rate_from || f.stat_energy_from) : f.stat_energy_from;
-        if (!entityId && f === s && s.power_config) {
-          entityId = s.power_config.stat_rate_from || s.power_config.stat_rate_to;
-        }
+        const entityId = ext.getSourceEntityId(s, f);
 
         if (entityId) {
           if (!this.hass.states[entityId]) {
@@ -255,19 +274,20 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const links: Config['links'] = [];
     const sections: SectionConfig[] = [];
 
-    const energyToPowerDeviceMap: Record<string, string> = {};
+    const deviceEntityIdMap: Record<string, string> = {};
     for (const device of prefs.device_consumption) {
-      if (usePower && device.stat_rate) {
-        energyToPowerDeviceMap[device.stat_consumption] = device.stat_rate;
+      const entityId = ext.getDeviceEntityId(device);
+      if (entityId) {
+        deviceEntityIdMap[device.stat_consumption] = entityId;
       }
     }
 
     for (let idx = 0; idx < prefs.device_consumption.length; idx++) {
       const device = prefs.device_consumption[idx];
-      const entityId = usePower && device.stat_rate ? device.stat_rate : device.stat_consumption;
+      const entityId = ext.getDeviceEntityId(device);
       let parent = device.included_in_stat;
-      if (usePower && parent && energyToPowerDeviceMap[parent]) {
-        parent = energyToPowerDeviceMap[parent];
+      if (parent && deviceEntityIdMap[parent]) {
+        parent = deviceEntityIdMap[parent];
       }
       const node = {
         id: entityId,
@@ -290,16 +310,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     let currentSection = 0;
 
     sources.forEach(source => {
-      const statPowerTo = usePower && (source.stat_rate || source.power_config?.stat_rate_to);
       const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
         ? undefined
-        : statPowerTo
-          ? [statPowerTo]
-          : source.stat_energy_to
-            ? [source.stat_energy_to]
-            : source.flow_to?.map(e => (usePower ? e.stat_rate || e.stat_energy_to : e.stat_energy_to)).filter(Boolean) as
-                | string[]
-                | undefined;
+        : ext.getSourceSubtract(source) as string[] | undefined;
       nodes.push({
         id: source._autoconfig_id,
         entity_id: source._real_entity_id,
@@ -327,18 +340,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const gridSources = sources.filter(s => s.type === 'grid');
     const seenFlowTo = new Set<string>();
     gridSources.forEach(grid => {
-      const exportEntities =
-        (usePower && grid.power_config?.stat_rate_to
-          ? [grid.power_config.stat_rate_to]
-          : undefined) ??
-        grid.flow_to?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_to)).filter(Boolean) ??
-        (grid.stat_energy_to ? [grid.stat_energy_to] : []);
-      const importEntities =
-        (usePower && grid.power_config?.stat_rate_from
-          ? [grid.power_config.stat_rate_from]
-          : undefined) ??
-        grid.flow_from?.map(e => (usePower && e.stat_rate ? e.stat_rate : e.stat_energy_from)).filter(Boolean) ??
-        (grid.stat_energy_from ? [grid.stat_energy_from] : []);
+      const exportEntities = ext.getGridExportEntities(grid);
+      const importEntities = ext.getGridImportEntities(grid);
       if (exportEntities.length) {
         exportEntities.forEach(stat_to => {
           if (!stat_to || seenFlowTo.has(stat_to)) return;
@@ -363,10 +366,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
     const battery = sources.find(s => s.type === 'battery');
     if (battery) {
-      const battery_to =
-        usePower && (battery.stat_rate || battery.power_config?.stat_rate_to)
-          ? battery.stat_rate || battery.power_config!.stat_rate_to!
-          : battery.stat_energy_to;
+      const battery_to = ext.getBatteryToEntityId(battery);
       if (battery_to) {
         nodes.push({
           id: battery_to,

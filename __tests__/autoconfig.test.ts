@@ -630,7 +630,7 @@ describe('SankeyChart autoconfig', () => {
     hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
     hass.states['sensor.solar_power'] = { entity_id: 'sensor.solar_power', state: '500' } as any;
     hass.states['sensor.device1_power'] = { entity_id: 'sensor.device1_power', state: '300' } as any;
-    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { power: true } }, true);
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { mode: 'power' } }, true);
 
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [
@@ -674,7 +674,7 @@ describe('SankeyChart autoconfig', () => {
 
   it('prefers energy sensors when power mode is disabled', async () => {
     hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
-    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { power: false } }, true);
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { mode: 'energy' } }, true);
 
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [

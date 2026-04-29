@@ -35,7 +35,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
     group_by_floor?: boolean;
     group_by_area?: boolean;
     net_flows?: boolean;
-    power?: boolean;
+    mode?: 'energy' | 'power';
   };
   title?: string;
   convert_units_to?: '' | CONVERSION_UNITS;
