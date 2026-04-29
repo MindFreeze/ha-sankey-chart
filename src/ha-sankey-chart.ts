@@ -79,6 +79,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
   private async _fetchStats(range: Pick<EnergyData, 'start' | 'end'>): Promise<void> {
     if (!this.entityIds.length) return;
+    if (isRateMode(this.config.autoconfig?.mode || 'energy')) return;
     const conversions: Conversions = {
       convert_units_to: this.config.convert_units_to!,
       co2_intensity_entity: this.config.co2_intensity_entity!,
