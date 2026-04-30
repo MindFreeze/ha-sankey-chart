@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.1.0...v5.0.0) (2026-04-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* Align autoconfig colors with HA's energy colors
+
+### Features
+
+* add autoconfig mode option (energy/power/water/water_flow) - requires 2025.12 or later depending on the mode ([6edd6cf](https://github.com/MindFreeze/ha-sankey-chart/commit/6edd6cfae7f9e95f7d96067b7356c8e3a3e636df))
+* Align autoconfig colors with HA's energy colors ([6edd6cf](https://github.com/MindFreeze/ha-sankey-chart/commit/6edd6cfae7f9e95f7d96067b7356c8e3a3e636df))
+
+
+### Bug Fixes
+
+* **#347:** render box labels above section connectors ([c56e98b](https://github.com/MindFreeze/ha-sankey-chart/commit/c56e98bc584c622c8eddd0aef0dcb2a12bd554a9))
+
 ## [4.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.0.2...v4.1.0) (2026-04-20)
 
 
