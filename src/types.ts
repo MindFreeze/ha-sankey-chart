@@ -25,12 +25,15 @@ export const DEFAULT_CONFIG: Config = {
   sections: [],
 };
 
+export type AutoconfigMode = 'energy' | 'power' | 'water' | 'water_flow';
+
 export interface SankeyChartConfig extends LovelaceCardConfig {
   type: string;
   nodes?: Node[];
   links?: Link[];
   sections?: SectionConfig[];
   autoconfig?: {
+    mode?: AutoconfigMode;
     print_yaml?: boolean;
     group_by_floor?: boolean;
     group_by_area?: boolean;

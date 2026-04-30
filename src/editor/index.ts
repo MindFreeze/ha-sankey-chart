@@ -5,7 +5,7 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor, LovelaceConfig } from 'cu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 import { repeat } from 'lit/directives/repeat';
-import { SankeyChartConfig, Section, SectionConfig, Node, NodeConfigForEditor } from '../types';
+import { AutoconfigMode, SankeyChartConfig, Section, SectionConfig, Node, NodeConfigForEditor } from '../types';
 import { localize } from '../localize/localize';
 import { normalizeConfig, convertNodesToSections } from '../utils';
 import './section';
@@ -383,13 +383,35 @@ export class SankeyChartEditor extends LitElement implements LovelaceCardEditor 
               ></ha-switch>
             </ha-formfield>
             ${autoconfig
-              ? html`<ha-formfield .label=${localize('editor.fields.print_yaml')}>
-                  <ha-switch
-                    .checked=${!!autoconfig?.print_yaml}
-                    .configValue=${(conf, print_yaml) => ({ ...conf, autoconfig: { print_yaml } })}
-                    @change=${this._valueChanged}
-                  ></ha-switch>
-                </ha-formfield>`
+              ? html`
+                  <ha-select
+                    .label=${localize('editor.fields.autoconfig_mode')}
+                    .value=${autoconfig?.mode || 'energy'}
+                    .options=${[
+                      { value: 'energy', label: localize('editor.autoconfig_mode.energy') },
+                      { value: 'power', label: localize('editor.autoconfig_mode.power') },
+                      { value: 'water', label: localize('editor.autoconfig_mode.water') },
+                      { value: 'water_flow', label: localize('editor.autoconfig_mode.water_flow') },
+                    ]}
+                    @selected=${(ev: CustomEvent<{ value: AutoconfigMode }>) => {
+                      this._config = {
+                        ...this._config!,
+                        autoconfig: { ...this._config!.autoconfig, mode: ev.detail.value },
+                      };
+                      fireEvent(this, 'config-changed', { config: this._config });
+                    }}
+                  ></ha-select>
+                  <ha-formfield .label=${localize('editor.fields.print_yaml')}>
+                    <ha-switch
+                      .checked=${!!autoconfig?.print_yaml}
+                      .configValue=${(conf, print_yaml: boolean) => ({
+                        ...conf,
+                        autoconfig: { ...conf.autoconfig, print_yaml },
+                      })}
+                      @change=${this._valueChanged}
+                    ></ha-switch>
+                  </ha-formfield>
+                `
               : nothing}
           </div>
 

@@ -182,6 +182,7 @@ or like this:
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
+| mode              | string  | **Optional** | `energy`            | One of `energy`, `power`, `water`, `water_flow`. `power` and `water_flow` are real-time and require HA 2025.12+ (they use the `stat_rate` fields exposed by the energy dashboard).
 | print_yaml        | boolean | **Optional** | false               | Prints the auto generated configuration after the card so you can use it as a starting point for customization. It shows up like an error. Don't worry about it.
 | group_by_floor    | boolean | **Optional** | true                | Display data per floor
 | group_by_area     | boolean | **Optional** | true                | Display data per area

@@ -13,14 +13,17 @@ import './print-config';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
   Conversions,
+  DeviceConsumptionEnergyPreference,
   EnergyCollection,
   EnergyData,
-  ENERGY_SOURCE_TYPES,
+  EnergySource,
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
   getEnergyPreferences,
   EnergyPreferences,
+  isRateMode,
+  sourceTypesForMode,
 } from './energy';
 import { until } from 'lit/directives/until';
 import { fetchFloorRegistry, FloorRegistryEntry, getEntitiesByArea, HomeAssistantReal } from './hass';
@@ -76,6 +79,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
   private async _fetchStats(range: Pick<EnergyData, 'start' | 'end'>): Promise<void> {
     if (!this.entityIds.length) return;
+    if (isRateMode(this.config.autoconfig?.mode || 'energy')) return;
     const conversions: Conversions = {
       convert_units_to: this.config.convert_units_to!,
       co2_intensity_entity: this.config.co2_intensity_entity!,
@@ -114,7 +118,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         }
       };
       const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
-      setTimeout(() => {
+      const noDataTimeout = setTimeout(() => {
         if (!this.error && !Object.keys(this.states).length) {
           this.error = new Error('Something went wrong. No energy data received.');
           console.debug(getEnergyDataCollection(this.hass, this.config.energy_collection_key));
@@ -133,6 +137,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           return collection.subscribe(async data => {
+            clearTimeout(noDataTimeout);
             if (isAutoconfig && !this.config.nodes.length) {
               try {
                 await this.autoconfig(collection.prefs);
@@ -164,6 +169,13 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       getTimePeriod();
       const interval = setInterval(getTimePeriod, this.config.throttle || 1000);
       return [() => clearInterval(interval)];
+    } else if (isAutoconfig && !this.config.sections.length) {
+      // Rate-mode autoconfig (mode = 'power' | 'water_flow'): no date selection
+      // and no time_period_from. Build the graph once from energy preferences
+      // and let live hass.states drive subsequent renders.
+      this.autoconfig().catch((err: any) => {
+        this.error = new Error(err?.message || err);
+      });
     }
     return [];
   }
@@ -206,21 +218,28 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     if (!prefs) {
       prefs = await getEnergyPreferences(this.hass);
     }
+    const mode = this.config.autoconfig?.mode || 'energy';
+    const rateMode = isRateMode(mode);
+    const validTypes = sourceTypesForMode(mode);
     const netFlows = this.config.autoconfig?.net_flows !== false;
-    const sources: typeof prefs.energy_sources = [];
+
+    const fromEntity = (s: EnergySource): string | undefined =>
+      rateMode ? s.stat_rate : s.stat_energy_from;
+    const toEntity = (s: EnergySource): string | undefined =>
+      mode === 'energy' ? s.stat_energy_to : undefined;
+    const deviceEntity = (d: DeviceConsumptionEnergyPreference): string | undefined =>
+      rateMode ? d.stat_rate : d.stat_consumption;
+    const deviceList: DeviceConsumptionEnergyPreference[] =
+      mode === 'water' || mode === 'water_flow'
+        ? prefs.device_consumption_water || []
+        : prefs.device_consumption || [];
+
+    const sources: EnergySource[] = [];
     (prefs?.energy_sources || []).forEach(s => {
-      if (!ENERGY_SOURCE_TYPES.includes(s.type)) {
-        return;
-      }
-      [s, ...(s.flow_from || [])].forEach(f => {
-        if (f.stat_energy_from) {
-          if (!this.hass.states[f.stat_energy_from]) {
-            console.warn('Ignoring missing entity ' + f.stat_energy_from);
-          } else {
-            sources.push({ ...s, ...f });
-          }
-        }
-      });
+      if (!validTypes.includes(s.type)) return;
+      const id = fromEntity(s);
+      if (!id || !this.hass.states[id]) return;
+      sources.push(s);
     });
     sources.sort((s1, s2) => {
       // sort to solar, battery, grid
@@ -241,11 +260,28 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const links: Config['links'] = [];
     const sections: SectionConfig[] = [];
 
-    prefs.device_consumption.forEach((device, idx) => {
+    // `included_in_stat` always references a parent device's `stat_consumption`.
+    // In rate modes the parent's node id is its `stat_rate`, so we need a
+    // stat_consumption → resolved-node-id map to rewrite child.parent into
+    // something that actually exists in the graph. In energy/water modes the
+    // map is identity. Parents whose entity is missing for the current mode
+    // are absent from the map, and their children fall back to no-parent.
+    const consumptionToNodeId: Record<string, string> = {};
+    deviceList.forEach(device => {
+      const id = deviceEntity(device);
+      if (id) consumptionToNodeId[device.stat_consumption] = id;
+    });
+
+    deviceList.forEach((device, idx) => {
+      const id = deviceEntity(device);
+      if (!id) return;
+      const parent = device.included_in_stat
+        ? consumptionToNodeId[device.included_in_stat]
+        : undefined;
       const node = {
-        id: device.stat_consumption,
+        id,
         name: device.name,
-        parent: device.included_in_stat,
+        parent,
         color: `var(--color-${(idx % 54) + 1})`,
       };
       if (node.parent) {
@@ -263,21 +299,22 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     let currentSection = 0;
 
     sources.forEach(source => {
-      if (!source.stat_energy_from) return;
+      const id = fromEntity(source)!;
+      const exportId = toEntity(source);
       const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
         ? undefined
-        : source.stat_energy_to
-          ? [source.stat_energy_to]
-          : source.flow_to?.map(e => e.stat_energy_to).filter(Boolean) as string[] | undefined;
+        : exportId
+          ? [exportId]
+          : undefined;
       nodes.push({
-        id: source.stat_energy_from,
+        id,
         section: currentSection,
         type: 'entity',
         name: '',
         subtract_entities: subtract,
         color: getEnergySourceColor(source.type),
       });
-      links.push({ source: source.stat_energy_from, target: TOTAL_NODE_ID });
+      links.push({ source: id, target: TOTAL_NODE_ID });
     });
     sections.push({});
 
@@ -295,47 +332,48 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
     links.push({ source: TOTAL_NODE_ID, target: UNKNOWN_NODE_ID });
 
-    const gridSources = sources.filter(s => s.type === 'grid');
-    const seenFlowTo = new Set<string>();
-    gridSources.forEach(grid => {
-      const exportEntities = grid.flow_to?.map(e => e.stat_energy_to) ??
-        (grid.stat_energy_to ? [grid.stat_energy_to] : []);
-      const importEntities = grid.flow_from?.map(e => e.stat_energy_from) ??
-        (grid.stat_energy_from ? [grid.stat_energy_from] : []);
-      if (exportEntities.length) {
-        exportEntities.forEach(stat_energy_to => {
-          if (!stat_energy_to || seenFlowTo.has(stat_energy_to)) return;
-          seenFlowTo.add(stat_energy_to);
-          nodes.push({
-            id: stat_energy_to,
-            section: currentSection,
-            type: 'entity',
-            name: '',
-            subtract_entities: netFlows ? importEntities : undefined,
-            color: getEnergySourceColor(grid.type),
-          });
-          sources.forEach(source => {
-            if (!source.stat_energy_from) return;
-            links.push({ source: source.stat_energy_from, target: stat_energy_to });
-          });
+    // Grid export and battery charge nodes only exist in energy mode. In rate
+    // and water modes the source is a single signed/unidirectional sensor, so
+    // there is no separate to-side node.
+    if (mode === 'energy') {
+      const gridSources = sources.filter(s => s.type === 'grid');
+      const seenFlowTo = new Set<string>();
+      gridSources.forEach(grid => {
+        const exportEntity = grid.stat_energy_to;
+        const importEntity = grid.stat_energy_from;
+        if (!exportEntity || seenFlowTo.has(exportEntity)) return;
+        seenFlowTo.add(exportEntity);
+        nodes.push({
+          id: exportEntity,
+          section: currentSection,
+          type: 'entity',
+          name: '',
+          subtract_entities: netFlows && importEntity ? [importEntity] : undefined,
+          color: getEnergySourceColor(grid.type, 'to'),
+        });
+        sources.forEach(source => {
+          const sId = fromEntity(source);
+          if (!sId) return;
+          links.push({ source: sId, target: exportEntity });
+        });
+      });
+
+      const battery = sources.find(s => s.type === 'battery');
+      if (battery && battery.stat_energy_from && battery.stat_energy_to) {
+        nodes.push({
+          id: battery.stat_energy_to,
+          section: currentSection,
+          type: 'entity',
+          name: '',
+          subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
+          color: getEnergySourceColor(battery.type, 'to'),
+        });
+        sources.forEach(source => {
+          const sId = fromEntity(source);
+          if (!sId) return;
+          links.push({ source: sId, target: battery.stat_energy_to! });
         });
       }
-    });
-
-    const battery = sources.find(s => s.type === 'battery');
-    if (battery && battery.stat_energy_from && battery.stat_energy_to) {
-      nodes.push({
-        id: battery.stat_energy_to,
-        section: currentSection,
-        type: 'entity',
-        name: '',
-        subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
-        color: getEnergySourceColor(battery.type),
-      });
-      sources.forEach(source => {
-        if (!source.stat_energy_from) return;
-        links.push({ source: source.stat_energy_from, target: battery.stat_energy_to! });
-      });
     }
     sections.push({});
 

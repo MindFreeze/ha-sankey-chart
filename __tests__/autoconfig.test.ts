@@ -69,41 +69,6 @@ describe('SankeyChart autoconfig', () => {
     });
   });
 
-  it('creates grid export entity for old format with flow_to', async () => {
-    hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
-    (getEnergyPreferences as jest.Mock).mockResolvedValue({
-      energy_sources: [
-        {
-          type: 'grid',
-          flow_from: [{ stat_energy_from: 'sensor.grid_in' }],
-          flow_to: [{ stat_energy_to: 'sensor.grid_out' }],
-        },
-        { type: 'solar', stat_energy_from: 'sensor.solar' },
-      ],
-      device_consumption: [
-        { stat_consumption: 'sensor.device1', name: 'Device 1' },
-      ],
-    });
-    (getEntitiesByArea as jest.Mock).mockResolvedValue({
-      area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1'] },
-    });
-    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (sankeyChart as any)['autoconfig']();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config = (sankeyChart as any).config;
-    const gridExport = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out');
-    expect(gridExport).toBeDefined();
-    expect(gridExport.subtract_entities).toEqual(['sensor.grid_in']);
-    // all source entities should link to grid export
-    const sourceNodes = config.nodes.filter((n: { id: string }) => ['sensor.grid_in', 'sensor.solar'].includes(n.id));
-    sourceNodes.forEach((n: { id: string }) => {
-      const link = config.links.find((l: { source: string; target: string }) => l.source === n.id && l.target === 'sensor.grid_out');
-      expect(link).toBeDefined();
-    });
-  });
-
   it('removes subtract_entities with net_flows: false', async () => {
     hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
     sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { net_flows: false } }, true);
@@ -623,6 +588,249 @@ describe('SankeyChart autoconfig', () => {
       expect(config.sections[2].sort_group_by_parent).toBe(true);
       expect(config.sections[3].sort_by).toBe('state');
       expect(config.sections[3].sort_group_by_parent).toBe(true);
+    });
+  });
+
+  describe('autoconfig.mode', () => {
+    // setConfig defaults: skip the DEFAULT_CONFIG spread so the
+    // mode-aware defaults actually apply (DEFAULT_CONFIG hardcodes unit_prefix='').
+    const setConfigMode = (mode?: 'energy' | 'power' | 'water' | 'water_flow') => {
+      sankeyChart.setConfig({ type: 'custom:ha-sankey-chart', autoconfig: mode ? { mode } : {} } as any, true);
+    };
+
+    it('mode=energy (default): unit_prefix=k and energy_date_selection=true', () => {
+      setConfigMode();
+      const config = (sankeyChart as any).config;
+      expect(config.unit_prefix).toBe('k');
+      expect(config.energy_date_selection).toBe(true);
+    });
+
+    it('mode=power: uses stat_rate for sources and devices, sets unit_prefix= and energy_date_selection=false', async () => {
+      hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+      hass.states['sensor.solar_power'] = { entity_id: 'sensor.solar_power', state: '500' } as any;
+      hass.states['sensor.device1_power'] = { entity_id: 'sensor.device1_power', state: '300' } as any;
+      setConfigMode('power');
+
+      let config = (sankeyChart as any).config;
+      expect(config.unit_prefix).toBe('');
+      expect(config.energy_date_selection).toBe(false);
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_rate: 'sensor.grid_power_in' },
+          { type: 'solar', stat_energy_from: 'sensor.solar', stat_rate: 'sensor.solar_power' },
+        ],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1', stat_rate: 'sensor.device1_power', name: 'Device 1' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1_power'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      config = (sankeyChart as any).config;
+
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.grid_power_in');
+      expect(allNodeIds).toContain('sensor.solar_power');
+      expect(allNodeIds).toContain('sensor.device1_power');
+      expect(allNodeIds).not.toContain('sensor.grid_in');
+      expect(allNodeIds).not.toContain('sensor.solar');
+      expect(allNodeIds).not.toContain('sensor.device1');
+      // No separate to-side export node in rate mode (signed stat_rate covers both directions).
+      expect(allNodeIds).not.toContain('sensor.grid_out');
+    });
+
+    it('mode=power: remaps included_in_stat (parent stat_consumption) to parent stat_rate', async () => {
+      hass.states['sensor.basement_power'] = { entity_id: 'sensor.basement_power', state: '200' } as any;
+      hass.states['sensor.aux_charger_power'] = { entity_id: 'sensor.aux_charger_power', state: '50' } as any;
+      hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+      setConfigMode('power');
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_rate: 'sensor.grid_power_in' },
+        ],
+        device_consumption: [
+          { stat_consumption: 'sensor.basement_energy', stat_rate: 'sensor.basement_power', name: 'Basement' },
+          {
+            stat_consumption: 'sensor.aux_charger_energy',
+            stat_rate: 'sensor.aux_charger_power',
+            included_in_stat: 'sensor.basement_energy',
+            name: 'Aux Charger',
+          },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // The parent→child link must reference the parent's stat_rate (its node id
+      // in power mode), not its stat_consumption (which is not a node).
+      const parentLink = config.links.find(
+        (l: { source: string; target: string }) =>
+          l.source === 'sensor.basement_power' && l.target === 'sensor.aux_charger_power',
+      );
+      expect(parentLink).toBeDefined();
+      const orphanLink = config.links.find(
+        (l: { source: string; target: string }) => l.source === 'sensor.basement_energy',
+      );
+      expect(orphanLink).toBeUndefined();
+    });
+
+    it('mode=power: orphans children when parent device has no stat_rate', async () => {
+      hass.states['sensor.tile_power'] = { entity_id: 'sensor.tile_power', state: '50' } as any;
+      hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+      setConfigMode('power');
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_rate: 'sensor.grid_power_in' },
+        ],
+        device_consumption: [
+          // Parent has no stat_rate → skipped in power mode.
+          { stat_consumption: 'sensor.1st_floor_energy', name: '1st Floor' },
+          // Child references the skipped parent → must orphan, not dangle.
+          {
+            stat_consumption: 'sensor.tile_energy',
+            stat_rate: 'sensor.tile_power',
+            included_in_stat: 'sensor.1st_floor_energy',
+            name: 'Tile',
+          },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.tile_power'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      // No link should reference the (skipped) parent's stat_consumption.
+      const danglingLink = config.links.find(
+        (l: { source: string; target: string }) => l.source === 'sensor.1st_floor_energy',
+      );
+      expect(danglingLink).toBeUndefined();
+      // The child still appears as a node; floor/area routing wires it to TOTAL.
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.tile_power');
+      expect(allNodeIds).not.toContain('sensor.1st_floor_energy');
+    });
+
+    it('mode=power: silently skips devices/sources missing stat_rate', async () => {
+      hass.states['sensor.solar_power'] = { entity_id: 'sensor.solar_power', state: '500' } as any;
+      hass.states['sensor.device1_power'] = { entity_id: 'sensor.device1_power', state: '300' } as any;
+      setConfigMode('power');
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          // grid has no stat_rate — skipped
+          { type: 'grid', stat_energy_from: 'sensor.grid_in' },
+          { type: 'solar', stat_energy_from: 'sensor.solar', stat_rate: 'sensor.solar_power' },
+        ],
+        device_consumption: [
+          // device2 has no stat_rate — skipped
+          { stat_consumption: 'sensor.device2', name: 'Device 2' },
+          { stat_consumption: 'sensor.device1', stat_rate: 'sensor.device1_power', name: 'Device 1' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.device1_power'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.solar_power');
+      expect(allNodeIds).toContain('sensor.device1_power');
+      expect(allNodeIds).not.toContain('sensor.grid_in');
+      expect(allNodeIds).not.toContain('sensor.device2');
+    });
+
+    it('mode=water: filters type=water sources and pulls devices from device_consumption_water', async () => {
+      hass.states['sensor.water_meter'] = { entity_id: 'sensor.water_meter', state: '120' } as any;
+      hass.states['sensor.shower'] = { entity_id: 'sensor.shower', state: '15' } as any;
+      setConfigMode('water');
+
+      let config = (sankeyChart as any).config;
+      expect(config.unit_prefix).toBe('');
+      expect(config.energy_date_selection).toBe(true);
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'grid', stat_energy_from: 'sensor.grid_in' },
+          { type: 'water', stat_energy_from: 'sensor.water_meter' },
+        ],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1', name: 'Device 1' },
+        ],
+        device_consumption_water: [
+          { stat_consumption: 'sensor.shower', name: 'Shower' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.shower'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      config = (sankeyChart as any).config;
+
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.water_meter');
+      expect(allNodeIds).toContain('sensor.shower');
+      // grid source ignored — wrong type for water mode
+      expect(allNodeIds).not.toContain('sensor.grid_in');
+      // device_consumption ignored — water mode reads device_consumption_water only
+      expect(allNodeIds).not.toContain('sensor.device1');
+    });
+
+    it('mode=water_flow: requires stat_rate on water source and device_consumption_water', async () => {
+      hass.states['sensor.water_flow_rate'] = { entity_id: 'sensor.water_flow_rate', state: '5' } as any;
+      hass.states['sensor.shower_rate'] = { entity_id: 'sensor.shower_rate', state: '2' } as any;
+      setConfigMode('water_flow');
+
+      let config = (sankeyChart as any).config;
+      expect(config.unit_prefix).toBe('');
+      expect(config.energy_date_selection).toBe(false);
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          // No stat_rate — skipped
+          { type: 'water', stat_energy_from: 'sensor.water_meter_2' },
+          { type: 'water', stat_energy_from: 'sensor.water_meter', stat_rate: 'sensor.water_flow_rate' },
+        ],
+        device_consumption: [
+          { stat_consumption: 'sensor.device1', stat_rate: 'sensor.device1_power', name: 'Device 1' },
+        ],
+        device_consumption_water: [
+          // No stat_rate — skipped
+          { stat_consumption: 'sensor.toilet', name: 'Toilet' },
+          { stat_consumption: 'sensor.shower', stat_rate: 'sensor.shower_rate', name: 'Shower' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({
+        area1: { area: { area_id: 'area1', name: 'Area 1' }, entities: ['sensor.shower_rate'] },
+      });
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      config = (sankeyChart as any).config;
+
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.water_flow_rate');
+      expect(allNodeIds).toContain('sensor.shower_rate');
+      expect(allNodeIds).not.toContain('sensor.water_meter');
+      expect(allNodeIds).not.toContain('sensor.water_meter_2');
+      expect(allNodeIds).not.toContain('sensor.toilet');
+      expect(allNodeIds).not.toContain('sensor.device1_power');
     });
   });
 });
