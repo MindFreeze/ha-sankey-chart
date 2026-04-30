@@ -97,6 +97,8 @@ export default css`
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        position: relative;
+        z-index: 1;
     }
     .vertical .box .label {
         padding: 5px 0 0;
