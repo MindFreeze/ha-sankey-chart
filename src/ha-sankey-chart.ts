@@ -118,7 +118,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         }
       };
       const energyPromise = new Promise<EnergyCollection>(getEnergyDataCollectionPoll);
-      setTimeout(() => {
+      const noDataTimeout = setTimeout(() => {
         if (!this.error && !Object.keys(this.states).length) {
           this.error = new Error('Something went wrong. No energy data received.');
           console.debug(getEnergyDataCollection(this.hass, this.config.energy_collection_key));
@@ -137,6 +137,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
             }
           }
           return collection.subscribe(async data => {
+            clearTimeout(noDataTimeout);
             if (isAutoconfig && !this.config.nodes.length) {
               try {
                 await this.autoconfig(collection.prefs);
