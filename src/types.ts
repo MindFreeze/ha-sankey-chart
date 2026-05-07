@@ -236,6 +236,7 @@ export interface ConnectionState {
   calculating?: boolean;
   highlighted?: boolean;
   passthroughs: NodeInternal[];
+  connection_entity_id?: string;
 }
 
 export interface NormalizedState {

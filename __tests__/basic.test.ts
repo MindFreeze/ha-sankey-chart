@@ -132,3 +132,135 @@ describe('Missing entities', () => {
     expect(() => element.requestUpdate()).not.toThrow();
   });
 });
+
+describe('Link value (connection entity)', () => {
+  const valueHass = mockHass({
+    'sensor.parent': {
+      entity_id: 'sensor.parent',
+      state: '100',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.child': {
+      entity_id: 'sensor.child',
+      state: '100',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.cap': {
+      entity_id: 'sensor.cap',
+      state: '30',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.parent_a': {
+      entity_id: 'sensor.parent_a',
+      state: '100',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.parent_b': {
+      entity_id: 'sensor.parent_b',
+      state: '100',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.target': {
+      entity_id: 'sensor.target',
+      state: '200',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.cap_a': {
+      entity_id: 'sensor.cap_a',
+      state: '10',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.cap_b': {
+      entity_id: 'sensor.cap_b',
+      state: '20',
+      attributes: { unit_of_measurement: 'W' },
+    },
+  });
+
+  async function renderChart(config: SankeyChartConfig) {
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = valueHass as HomeAssistant;
+    element.setConfig(config, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { element, base, connections: (base as any).connections as Array<any> };
+  }
+
+  it('caps a cross-section link by its value sensor', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.parent', section: 0, type: 'entity', name: '' },
+        { id: 'sensor.child', section: 2, type: 'entity', name: '' },
+      ],
+      links: [
+        { source: 'sensor.parent', target: 'sensor.child', value: 'sensor.cap' },
+      ],
+      sections: [{}, {}, {}],
+    };
+    const { connections, element } = await renderChart(config);
+    const conn = connections.find(
+      c => c.parent.id === 'sensor.parent' && c.child.id === 'sensor.child',
+    );
+    expect(conn).toBeDefined();
+    expect(conn.connection_entity_id).toBe('sensor.cap');
+    expect(conn.state).toBe(30);
+    element.remove();
+  });
+
+  it('caps an adjacent-section link by its value sensor (regression guard)', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.parent', section: 0, type: 'entity', name: '' },
+        { id: 'sensor.child', section: 1, type: 'entity', name: '' },
+      ],
+      links: [
+        { source: 'sensor.parent', target: 'sensor.child', value: 'sensor.cap' },
+      ],
+      sections: [{}, {}],
+    };
+    const { connections, element } = await renderChart(config);
+    const conn = connections.find(
+      c => c.parent.id === 'sensor.parent' && c.child.id === 'sensor.child',
+    );
+    expect(conn).toBeDefined();
+    expect(conn.connection_entity_id).toBe('sensor.cap');
+    expect(conn.state).toBe(30);
+    element.remove();
+  });
+
+  it('caps two parallel cross-gap flows independently when sharing a passthrough chain', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.parent_a', section: 0, type: 'entity', name: '' },
+        { id: 'sensor.parent_b', section: 0, type: 'entity', name: '' },
+        { id: 'sensor.target', section: 2, type: 'entity', name: '' },
+      ],
+      links: [
+        { source: 'sensor.parent_a', target: 'sensor.target', value: 'sensor.cap_a' },
+        { source: 'sensor.parent_b', target: 'sensor.target', value: 'sensor.cap_b' },
+      ],
+      sections: [{}, {}, {}],
+    };
+    const { connections, element } = await renderChart(config);
+    const connA = connections.find(
+      c => c.parent.id === 'sensor.parent_a' && c.child.id === 'sensor.target',
+    );
+    const connB = connections.find(
+      c => c.parent.id === 'sensor.parent_b' && c.child.id === 'sensor.target',
+    );
+    expect(connA).toBeDefined();
+    expect(connB).toBeDefined();
+    expect(connA.connection_entity_id).toBe('sensor.cap_a');
+    expect(connB.connection_entity_id).toBe('sensor.cap_b');
+    expect(connA.state).toBe(10);
+    expect(connB.state).toBe(20);
+    element.remove();
+  });
+});

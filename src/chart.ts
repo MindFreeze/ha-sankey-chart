@@ -128,6 +128,7 @@ export class Chart extends LitElement {
               prevChildState: 0,
               ready: false,
               passthroughs,
+              connection_entity_id: typeof childConf === 'object' ? childConf.connection_entity_id : undefined,
             };
             this.connections.push(connection);
             if (!this.connectionsByParent.has(ent)) {
@@ -204,9 +205,8 @@ export class Chart extends LitElement {
     if (!parentState || !childState) {
       connection.state = 0;
     } else {
-      const connConfig = parent.children.find(c => getEntityId(c) === child.id);
-      if (typeof connConfig === 'object' && connConfig.connection_entity_id) {
-        const connectionState = this._getMemoizedState(connConfig.connection_entity_id).state ?? 0;
+      if (connection.connection_entity_id) {
+        const connectionState = this._getMemoizedState(connection.connection_entity_id).state ?? 0;
         connection.state = Math.min(parentState, childState, connectionState);
       } else {
         connection.state = Math.min(parentState, childState);
