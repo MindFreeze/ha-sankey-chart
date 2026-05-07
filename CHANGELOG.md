@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.0.0...v5.0.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* **#352:** honor link value on cross-section connections ([#353](https://github.com/MindFreeze/ha-sankey-chart/issues/353)) ([3f13ca3](https://github.com/MindFreeze/ha-sankey-chart/commit/3f13ca36ff1f1cebd998391115c8fab1f3ae54f6))
+
 ## [5.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v4.1.0...v5.0.0) (2026-04-30)
 
 
