@@ -241,10 +241,12 @@ export class Chart extends LitElement {
       );
       // Filters run before normalizeStateValue clamps negatives to 0, so a
       // signed sensor splits cleanly: the plain node sees max(state, 0);
-      // a sibling with filters: [{ type: 'negate' }] sees max(-state, 0). See #357.
+      // a sibling with filters: [{ multiply: -1 }] sees max(-state, 0). See #357.
       let rawState = Number(entity.state);
       entityConf.filters?.forEach(f => {
-        if (f.type === 'negate') rawState = -rawState;
+        if ('multiply' in f) rawState *= f.multiply;
+        else if ('divide' in f) rawState /= f.divide;
+        else if ('offset' in f) rawState += f.offset;
       });
       const normalized = {...normalizeStateValue(this.config.unit_prefix, rawState, unit_of_measurement), last_updated: entity.last_updated};
 

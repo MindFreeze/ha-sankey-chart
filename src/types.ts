@@ -107,9 +107,12 @@ export interface Link {
 
 export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
 
-// Discriminated union to keep future transforms (clamp, scale, abs, …) additive.
+// ESPHome/Plotly-style filter shape: each entry is `{ <name>: <arg> }`. Future
+// transforms (e.g. `abs`, `clamp`) slot in as additional union members.
 export type NodeFilter =
-  | { type: 'negate' };
+  | { multiply: number }
+  | { divide: number }
+  | { offset: number };
 
 export interface NodeInternal extends Node {
   children: ChildConfigOrStr[];

@@ -86,24 +86,28 @@ Install through [HACS](https://hacs.xyz/)
 
 ### Filters
 
-Filters transform a node's raw state before the chart's automatic clamp to ≥ 0. Each filter is an object with a `type` discriminator.
+Filters transform a node's raw state before the chart's automatic clamp to ≥ 0. Each entry is a single-key object naming the transform (ESPHome/Plotly style).
 
-| type     | Effect                                                                                                                              |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `negate` | Negates the raw value. Combined with the positive clamp, isolates the negative half of a signed sensor as a positive flow.          |
+| Filter     | Argument | Effect                                                                  |
+| ---------- | -------- | ----------------------------------------------------------------------- |
+| `multiply` | number   | Multiplies the raw value. Use `-1` to flip the sign of a signed sensor. |
+| `divide`   | number   | Divides the raw value.                                                  |
+| `offset`   | number   | Adds the argument to the raw value (use a negative number to subtract). |
 
-Pair `filters` with `entity_id` to render the negative half of a signed sensor as its own node — the sibling node reads the same entity but flips the sign, so positive readings collapse to 0 and negative readings flow as their absolute value. This is how power-mode [autoconfig](#autoconfig) surfaces grid export and battery charging from a single signed `stat_rate`.
+Filters apply in order, so `[{ multiply: 0.001 }, { offset: -5 }]` first scales then offsets.
+
+Pair `filters` with `entity_id` to render the negative half of a signed sensor as its own node — the sibling node reads the same entity but applies `multiply: -1`, so positive readings collapse to 0 (via the chart's positive clamp) and negative readings flow as their absolute value. This is how power-mode [autoconfig](#autoconfig) surfaces grid export and battery charging from a single signed `stat_rate`.
 
 ```yaml
 nodes:
   # Import flow: positive part of the signed sensor (negative readings clamp to 0).
   - id: sensor.grid_power
     section: 0
-  # Export flow: negate first, then clamp — surfaces only the negative readings.
+  # Export flow: flip sign first, then clamp — surfaces only the negative readings.
   - id: sensor.grid_power__export
     entity_id: sensor.grid_power
     filters:
-      - type: negate
+      - multiply: -1
     section: 2
 ```
 

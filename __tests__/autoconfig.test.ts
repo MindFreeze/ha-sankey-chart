@@ -665,13 +665,13 @@ describe('SankeyChart autoconfig', () => {
       expect(allNodeIds).not.toContain('sensor.solar');
       expect(allNodeIds).not.toContain('sensor.device1');
       // Grid stat_rate is signed; surface the export half via a synthetic
-      // sibling node with filters:[{type:'negate'}]. See #357.
+      // sibling node with filters:[{multiply:-1}]. See #357.
       const gridExport = config.nodes.find(
         (n: { id: string }) => n.id === 'sensor.grid_power_in__to_auto',
       );
       expect(gridExport).toBeDefined();
       expect(gridExport.entity_id).toBe('sensor.grid_power_in');
-      expect(gridExport.filters).toEqual([{ type: 'negate' }]);
+      expect(gridExport.filters).toEqual([{ multiply: -1 }]);
       // Solar is unidirectional — no export node for solar.
       expect(allNodeIds).not.toContain('sensor.solar_power__to_auto');
       // Every source links to the export node (mirroring energy-mode pattern).
@@ -710,7 +710,7 @@ describe('SankeyChart autoconfig', () => {
       );
       expect(charge).toBeDefined();
       expect(charge.entity_id).toBe('sensor.battery_power');
-      expect(charge.filters).toEqual([{ type: 'negate' }]);
+      expect(charge.filters).toEqual([{ multiply: -1 }]);
       // Battery and grid both get their own to-side nodes (dedup by stat_rate).
       const gridExport = config.nodes.find(
         (n: { id: string }) => n.id === 'sensor.grid_power_in__to_auto',

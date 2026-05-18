@@ -337,7 +337,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
     // Grid export and battery charge nodes. In energy mode each direction has
     // its own counter (stat_energy_from/to). In rate modes there's a single
-    // signed stat_rate per source — a sibling node with filters:[{type:'negate'}]
+    // signed stat_rate per source — a sibling node with filters:[{multiply:-1}]
     // surfaces the negative half (export/charge) as a positive flow.
     if (mode === 'energy') {
       const seenFlowTo = new Set<string>();
@@ -378,8 +378,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         });
     } else if (rateMode) {
       // Signed stat_rate: positive part already flows from the source node;
-      // a synthetic sibling with negate surfaces the negative part. Dedup by
-      // stat_rate mirrors the energy-mode dedup-by-stat_energy_to.
+      // a synthetic sibling with multiply:-1 surfaces the negative part. Dedup
+      // by stat_rate mirrors the energy-mode dedup-by-stat_energy_to.
       const seenFlowTo = new Set<string>();
       sources.forEach(source => {
         if (source.type !== 'grid' && source.type !== 'battery') return;
@@ -390,7 +390,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         nodes.push({
           id: toId,
           entity_id: rateEntity,
-          filters: [{ type: 'negate' }],
+          filters: [{ multiply: -1 }],
           section: currentSection,
           type: 'entity',
           name: '',

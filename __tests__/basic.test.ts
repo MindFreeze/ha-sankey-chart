@@ -267,8 +267,8 @@ describe('Link value (connection entity)', () => {
 
 describe('Node filters + entity_id (sign-split signed sensors)', () => {
   // Power-mode autoconfig surfaces grid export / battery charge by attaching
-  // a sibling node that reads the same signed stat_rate but negates it
-  // before the positive clamp. See #357.
+  // a sibling node that reads the same signed stat_rate but flips its sign
+  // (multiply:-1) before the positive clamp. See #357.
   const signedHass = mockHass({
     'sensor.signed_pos': {
       entity_id: 'sensor.signed_pos',
@@ -299,16 +299,16 @@ describe('Node filters + entity_id (sign-split signed sensors)', () => {
     return { element, base };
   }
 
-  it('reads via entity_id and applies negate filter (negative → positive)', async () => {
+  it('reads via entity_id and applies multiply:-1 filter (negative → positive)', async () => {
     const config: SankeyChartConfig = {
       type: 'custom:sankey-chart',
       nodes: [
         // Synthetic node id; entity_id points at a signed sensor reading -500.
-        // After negate the raw value becomes +500, then the positive clamp keeps it.
+        // After multiply:-1 the raw value becomes +500, then the positive clamp keeps it.
         {
           id: 'sensor.signed_neg__to_auto',
           entity_id: 'sensor.signed_neg',
-          filters: [{ type: 'negate' }],
+          filters: [{ multiply: -1 }],
           section: 0,
           type: 'entity',
           name: '',
