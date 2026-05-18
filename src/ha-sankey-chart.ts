@@ -55,6 +55,9 @@ const TOTAL_NODE_ID = 'total';
 const UNKNOWN_NODE_ID = 'unknown';
 const NO_FLOOR = 'no_floor';
 const NO_AREA = 'no_area';
+// Suffix for synthetic export/charge nodes in rate-mode autoconfig (mirrors
+// the existing `__passthrough_N__auto` convention from autoRouteCrossGapLinks).
+const AUTO_TO_SUFFIX = '__to_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
@@ -332,16 +335,18 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
     links.push({ source: TOTAL_NODE_ID, target: UNKNOWN_NODE_ID });
 
-    // Grid export and battery charge nodes only exist in energy mode. In rate
-    // and water modes the source is a single signed/unidirectional sensor, so
-    // there is no separate to-side node.
+    // Grid export and battery charge nodes. In energy mode each direction has
+    // its own counter (stat_energy_from/to). In rate modes there's a single
+    // signed stat_rate per source — a sibling node with filters:[{type:'negate'}]
+    // surfaces the negative half (export/charge) as a positive flow.
     if (mode === 'energy') {
-      const gridSources = sources.filter(s => s.type === 'grid');
       const seenFlowTo = new Set<string>();
-      gridSources.forEach(grid => {
-        const exportEntity = grid.stat_energy_to;
-        const importEntity = grid.stat_energy_from;
-        if (!exportEntity || seenFlowTo.has(exportEntity)) return;
+      const addToNode = (
+        source: EnergySource,
+        exportEntity: string,
+        importEntity: string | undefined,
+      ) => {
+        if (seenFlowTo.has(exportEntity)) return;
         seenFlowTo.add(exportEntity);
         nodes.push({
           id: exportEntity,
@@ -349,31 +354,54 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           type: 'entity',
           name: '',
           subtract_entities: netFlows && importEntity ? [importEntity] : undefined,
-          color: getEnergySourceColor(grid.type, 'to'),
+          color: getEnergySourceColor(source.type, 'to'),
         });
-        sources.forEach(source => {
-          const sId = fromEntity(source);
+        sources.forEach(s => {
+          const sId = fromEntity(s);
           if (!sId) return;
           links.push({ source: sId, target: exportEntity });
         });
-      });
+      };
 
-      const battery = sources.find(s => s.type === 'battery');
-      if (battery && battery.stat_energy_from && battery.stat_energy_to) {
+      sources
+        .filter(s => s.type === 'grid')
+        .forEach(grid => {
+          if (!grid.stat_energy_to) return;
+          addToNode(grid, grid.stat_energy_to, grid.stat_energy_from);
+        });
+
+      sources
+        .filter(s => s.type === 'battery')
+        .forEach(battery => {
+          if (!battery.stat_energy_to || !battery.stat_energy_from) return;
+          addToNode(battery, battery.stat_energy_to, battery.stat_energy_from);
+        });
+    } else if (rateMode) {
+      // Signed stat_rate: positive part already flows from the source node;
+      // a synthetic sibling with negate surfaces the negative part. Dedup by
+      // stat_rate mirrors the energy-mode dedup-by-stat_energy_to.
+      const seenFlowTo = new Set<string>();
+      sources.forEach(source => {
+        if (source.type !== 'grid' && source.type !== 'battery') return;
+        const rateEntity = source.stat_rate;
+        if (!rateEntity || seenFlowTo.has(rateEntity)) return;
+        seenFlowTo.add(rateEntity);
+        const toId = `${rateEntity}${AUTO_TO_SUFFIX}`;
         nodes.push({
-          id: battery.stat_energy_to,
+          id: toId,
+          entity_id: rateEntity,
+          filters: [{ type: 'negate' }],
           section: currentSection,
           type: 'entity',
           name: '',
-          subtract_entities: netFlows ? [battery.stat_energy_from] : undefined,
-          color: getEnergySourceColor(battery.type, 'to'),
+          color: getEnergySourceColor(source.type, 'to'),
         });
-        sources.forEach(source => {
-          const sId = fromEntity(source);
+        sources.forEach(s => {
+          const sId = fromEntity(s);
           if (!sId) return;
-          links.push({ source: sId, target: battery.stat_energy_to! });
+          links.push({ source: sId, target: toId });
         });
-      }
+      });
     }
     sections.push({});
 

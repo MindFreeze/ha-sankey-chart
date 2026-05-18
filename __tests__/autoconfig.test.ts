@@ -69,6 +69,31 @@ describe('SankeyChart autoconfig', () => {
     });
   });
 
+  it('energy mode: two batteries with distinct stat_energy_to produce two charge nodes', async () => {
+    hass.states['sensor.battery_a_in'] = { entity_id: 'sensor.battery_a_in', state: '5' } as any;
+    hass.states['sensor.battery_a_out'] = { entity_id: 'sensor.battery_a_out', state: '3' } as any;
+    hass.states['sensor.battery_b_in'] = { entity_id: 'sensor.battery_b_in', state: '4' } as any;
+    hass.states['sensor.battery_b_out'] = { entity_id: 'sensor.battery_b_out', state: '2' } as any;
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        { type: 'battery', stat_energy_from: 'sensor.battery_a_in', stat_energy_to: 'sensor.battery_a_out' },
+        { type: 'battery', stat_energy_from: 'sensor.battery_b_in', stat_energy_to: 'sensor.battery_b_out' },
+      ],
+      device_consumption: [],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+    const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+    // Pre-fix only the first battery got a charge node — see #357.
+    expect(allNodeIds).toContain('sensor.battery_a_out');
+    expect(allNodeIds).toContain('sensor.battery_b_out');
+  });
+
   it('removes subtract_entities with net_flows: false', async () => {
     hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
     sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { net_flows: false } }, true);
@@ -639,8 +664,81 @@ describe('SankeyChart autoconfig', () => {
       expect(allNodeIds).not.toContain('sensor.grid_in');
       expect(allNodeIds).not.toContain('sensor.solar');
       expect(allNodeIds).not.toContain('sensor.device1');
-      // No separate to-side export node in rate mode (signed stat_rate covers both directions).
-      expect(allNodeIds).not.toContain('sensor.grid_out');
+      // Grid stat_rate is signed; surface the export half via a synthetic
+      // sibling node with filters:[{type:'negate'}]. See #357.
+      const gridExport = config.nodes.find(
+        (n: { id: string }) => n.id === 'sensor.grid_power_in__to_auto',
+      );
+      expect(gridExport).toBeDefined();
+      expect(gridExport.entity_id).toBe('sensor.grid_power_in');
+      expect(gridExport.filters).toEqual([{ type: 'negate' }]);
+      // Solar is unidirectional — no export node for solar.
+      expect(allNodeIds).not.toContain('sensor.solar_power__to_auto');
+      // Every source links to the export node (mirroring energy-mode pattern).
+      const linkFromGrid = config.links.find(
+        (l: { source: string; target: string }) =>
+          l.source === 'sensor.grid_power_in' && l.target === 'sensor.grid_power_in__to_auto',
+      );
+      expect(linkFromGrid).toBeDefined();
+      const linkFromSolar = config.links.find(
+        (l: { source: string; target: string }) =>
+          l.source === 'sensor.solar_power' && l.target === 'sensor.grid_power_in__to_auto',
+      );
+      expect(linkFromSolar).toBeDefined();
+    });
+
+    it('mode=power: creates battery charge node from signed stat_rate', async () => {
+      hass.states['sensor.battery_power'] = { entity_id: 'sensor.battery_power', state: '-300' } as any;
+      hass.states['sensor.grid_power_in'] = { entity_id: 'sensor.grid_power_in', state: '1000' } as any;
+      setConfigMode('power');
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_rate: 'sensor.grid_power_in' },
+          { type: 'battery', stat_energy_from: 'sensor.battery_in', stat_energy_to: 'sensor.battery_out', stat_rate: 'sensor.battery_power' },
+        ],
+        device_consumption: [],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const charge = config.nodes.find(
+        (n: { id: string }) => n.id === 'sensor.battery_power__to_auto',
+      );
+      expect(charge).toBeDefined();
+      expect(charge.entity_id).toBe('sensor.battery_power');
+      expect(charge.filters).toEqual([{ type: 'negate' }]);
+      // Battery and grid both get their own to-side nodes (dedup by stat_rate).
+      const gridExport = config.nodes.find(
+        (n: { id: string }) => n.id === 'sensor.grid_power_in__to_auto',
+      );
+      expect(gridExport).toBeDefined();
+    });
+
+    it('mode=power: two batteries with distinct stat_rates produce two charge nodes', async () => {
+      hass.states['sensor.battery_a_power'] = { entity_id: 'sensor.battery_a_power', state: '100' } as any;
+      hass.states['sensor.battery_b_power'] = { entity_id: 'sensor.battery_b_power', state: '-50' } as any;
+      setConfigMode('power');
+
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [
+          { type: 'battery', stat_energy_from: 'sensor.battery_a_in', stat_energy_to: 'sensor.battery_a_out', stat_rate: 'sensor.battery_a_power' },
+          { type: 'battery', stat_energy_from: 'sensor.battery_b_in', stat_energy_to: 'sensor.battery_b_out', stat_rate: 'sensor.battery_b_power' },
+        ],
+        device_consumption: [],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+
+      const allNodeIds = config.nodes.map((n: { id: string }) => n.id);
+      expect(allNodeIds).toContain('sensor.battery_a_power__to_auto');
+      expect(allNodeIds).toContain('sensor.battery_b_power__to_auto');
     });
 
     it('mode=power: remaps included_in_stat (parent stat_consumption) to parent stat_rate', async () => {
