@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.0.1...v5.1.0) (2026-05-18)
+
+
+### Features
+
+* add entity_id and filters to Node schema ([045c039](https://github.com/MindFreeze/ha-sankey-chart/commit/045c039ce1086a19515351a2d36b042a01514966))
+
+
+### Bug Fixes
+
+* **#356:** strip derived section entities from print_yaml output ([#358](https://github.com/MindFreeze/ha-sankey-chart/issues/358)) ([fcf3343](https://github.com/MindFreeze/ha-sankey-chart/commit/fcf33435ba6e3d3c122e34ef7bdf080c335ec899))
+* **#357:** show grid export and battery charge in power-mode autoconfig ([2a1021c](https://github.com/MindFreeze/ha-sankey-chart/commit/2a1021cc10556aaa1424fb0f935b0a4674f91a16))
+
 ## [5.0.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.0.0...v5.0.1) (2026-05-07)
 
 
