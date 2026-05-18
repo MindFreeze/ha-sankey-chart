@@ -19,8 +19,21 @@ export class PrintConfig extends LitElement {
   }
 
   firstUpdated() {
+    // The internal `Config.sections[*].entities` is derived from `nodes`/`links`
+    // via convertNodesToSections. If it ends up in the pasted-back YAML,
+    // normalizeConfig's v3 detection (sections[*].entities truthy) triggers
+    // migrateV3Config, which discards the v4 nodes/links and rebuilds them
+    // from undefined entity_ids — see #356.
+    const { sections, autoconfig, ...rest } = this.config;
+    const printable: Record<string, unknown> = {
+      ...rest,
+      sections: sections.map(({ entities: _entities, ...sectionConfig }) => sectionConfig),
+    };
+    if (autoconfig) {
+      printable.autoconfig = { ...autoconfig, print_yaml: false };
+    }
     // @ts-ignore
-    this.yamlEditor.setValue(this.config);
+    this.yamlEditor.setValue(printable);
   }
 
   protected render(): TemplateResult | void {
