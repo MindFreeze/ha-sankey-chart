@@ -264,3 +264,68 @@ describe('Link value (connection entity)', () => {
     element.remove();
   });
 });
+
+describe('Node filters + entity_id (sign-split signed sensors)', () => {
+  // Power-mode autoconfig surfaces grid export / battery charge by attaching
+  // a sibling node that reads the same signed stat_rate but negates it
+  // before the positive clamp. See #357.
+  const signedHass = mockHass({
+    'sensor.signed_pos': {
+      entity_id: 'sensor.signed_pos',
+      state: '1000',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.signed_neg': {
+      entity_id: 'sensor.signed_neg',
+      state: '-500',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.sink': {
+      entity_id: 'sensor.sink',
+      state: '0',
+      attributes: { unit_of_measurement: 'W' },
+    },
+  });
+
+  async function renderSignedChart(config: SankeyChartConfig) {
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = signedHass as HomeAssistant;
+    element.setConfig(config, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+    return { element, base };
+  }
+
+  it('reads via entity_id and applies negate filter (negative → positive)', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        // Synthetic node id; entity_id points at a signed sensor reading -500.
+        // After negate the raw value becomes +500, then the positive clamp keeps it.
+        {
+          id: 'sensor.signed_neg__to_auto',
+          entity_id: 'sensor.signed_neg',
+          filters: [{ type: 'negate' }],
+          section: 0,
+          type: 'entity',
+          name: '',
+        },
+        { id: 'sensor.sink', section: 1, type: 'entity', name: '' },
+      ],
+      links: [{ source: 'sensor.signed_neg__to_auto', target: 'sensor.sink' }],
+      sections: [{}, {}],
+    };
+    const { base, element } = await renderSignedChart(config);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sections = (base as any).sections as Array<any>;
+    const sourceBox = sections[0].boxes.find(
+      (b: { id: string }) => b.id === 'sensor.signed_neg__to_auto',
+    );
+    expect(sourceBox).toBeDefined();
+    expect(sourceBox.state).toBe(500);
+    element.remove();
+  });
+});

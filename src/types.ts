@@ -76,6 +76,8 @@ export interface Node {
   name?: string;
   attribute?: string;
   unit_of_measurement?: string; // for attribute
+  entity_id?: string; // explicit entity to read; defaults to `id`. Lets a synthetic node id reference a real entity.
+  filters?: NodeFilter[]; // value transforms applied before the positive clamp.
   add_entities?: string[]; // temporary - will be replaced
   subtract_entities?: string[]; // temporary - will be replaced
   color?: string | {
@@ -104,6 +106,10 @@ export interface Link {
 }
 
 export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+
+// Discriminated union to keep future transforms (clamp, scale, abs, …) additive.
+export type NodeFilter =
+  | { type: 'negate' };
 
 export interface NodeInternal extends Node {
   children: ChildConfigOrStr[];

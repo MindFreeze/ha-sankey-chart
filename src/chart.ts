@@ -99,7 +99,7 @@ export class Chart extends LitElement {
       this.config.sections.forEach(({ entities }) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
-            this.entityIds.push(ent.id);
+            this.entityIds.push(ent.entity_id || ent.id);
           } else if (ent.type === 'passthrough') {
             return;
           }
@@ -239,7 +239,14 @@ export class Chart extends LitElement {
       const unit_of_measurement = this._getUnitOfMeasurement(
         entityConf.unit_of_measurement || entity.attributes.unit_of_measurement,
       );
-      const normalized = {...normalizeStateValue(this.config.unit_prefix, Number(entity.state), unit_of_measurement), last_updated: entity.last_updated};
+      // Filters run before normalizeStateValue clamps negatives to 0, so a
+      // signed sensor splits cleanly: the plain node sees max(state, 0);
+      // a sibling with filters: [{ type: 'negate' }] sees max(-state, 0). See #357.
+      let rawState = Number(entity.state);
+      entityConf.filters?.forEach(f => {
+        if (f.type === 'negate') rawState = -rawState;
+      });
+      const normalized = {...normalizeStateValue(this.config.unit_prefix, rawState, unit_of_measurement), last_updated: entity.last_updated};
 
       if (entityConf.type === 'passthrough') {
         normalized.state = this.connections
@@ -593,7 +600,10 @@ export class Chart extends LitElement {
       return this._getEntityState(realConnection.child);
     }
 
-    let entity = this.states[getEntityId(entityConf)];
+    // `entity_id` lets a synthetic node id (e.g. `${stat_rate}__to_auto`) read
+    // from a real entity without conflicting with the node id used as a graph key.
+    const lookupId = entityConf.entity_id || getEntityId(entityConf);
+    let entity = this.states[lookupId];
     if (!entity) {
       if (this.config.ignore_missing_entities) {
         // Return a fake entity with state 0 if ignoring missing entities
@@ -601,11 +611,11 @@ export class Chart extends LitElement {
           state: 0,
           attributes: {
             unit_of_measurement: entityConf.unit_of_measurement || '',
-            friendly_name: entityConf.name || getEntityId(entityConf),
+            friendly_name: entityConf.name || lookupId,
           },
         };
       }
-      throw new Error('Entity not found "' + getEntityId(entityConf) + '"');
+      throw new Error('Entity not found "' + lookupId + '"');
     }
 
     if (entityConf.attribute) {

@@ -58,7 +58,8 @@ Install through [HACS](https://hacs.xyz/)
 
 | Name              | Type    | Requirement  | Default             | Description                                 |
 | ----------------- | ------- | ------------ | ------------------- | ------------------------------------------- |
-| id                | string  | **Required** |                     | Entity id of the sensor
+| id                | string  | **Required** |                     | Unique node id in the chart graph. Defaults to the entity to read, unless `entity_id` is set.
+| entity_id         | string  | **Optional** | value of `id`       | Entity id to read state from. Lets a synthetic `id` (e.g. `sensor.foo__copy`) reference a real entity, so two nodes can render the same entity from different angles. See [filters](#filters).
 | section           | number  | **Optional** |                     | Index of the section this node belongs to (0-based). Determines horizontal/vertical position
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
 | type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
@@ -68,6 +69,7 @@ Install through [HACS](https://hacs.xyz/)
 | color             | string/object | **Optional** | var(--primary-color)| Color of the box. Can be a simple color string ('red', '#FFAA2C', 'rgb(255, 170, 44)', 'random') or a range object for state-based coloring. See [color ranges](#color-ranges)
 | add_entities      | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be added to this entity, showing a sum.
 | subtract_entities | list    | **Optional** |                     | Experimental. List of entity ids. Their states will be subtracted from this entity's state
+| filters           | list    | **Optional** |                     | List of value transforms applied before the positive clamp. See [filters](#filters).
 | tap_action        | action  | **Optional** | more-info           | Home assistant action to perform on tap. Supported action types are `more-info`, `zoom`, `navigate`, `url`, `toggle`, `call-service`, `fire-dom-event`. Ex: `action: zoom`
 | double_tap_action | action  | **Optional** |                     | Home assistant action to perform on double tap
 | hold_action       | action  | **Optional** |                     | Home assistant action to perform on hold
@@ -81,6 +83,29 @@ Install through [HACS](https://hacs.xyz/)
 | source               | string  | **Required** |                     | Entity id of the parent/source node
 | target               | string  | **Required** |                     | Entity id of the child/target node
 | value                | string  | **Optional** |                     | Entity id of a sensor that determines how much of the parent flows into the child (connection entity)
+
+### Filters
+
+Filters transform a node's raw state before the chart's automatic clamp to ≥ 0. Each filter is an object with a `type` discriminator.
+
+| type     | Effect                                                                                                                              |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `negate` | Negates the raw value. Combined with the positive clamp, isolates the negative half of a signed sensor as a positive flow.          |
+
+Pair `filters` with `entity_id` to render the negative half of a signed sensor as its own node — the sibling node reads the same entity but flips the sign, so positive readings collapse to 0 and negative readings flow as their absolute value. This is how power-mode [autoconfig](#autoconfig) surfaces grid export and battery charging from a single signed `stat_rate`.
+
+```yaml
+nodes:
+  # Import flow: positive part of the signed sensor (negative readings clamp to 0).
+  - id: sensor.grid_power
+    section: 0
+  # Export flow: negate first, then clamp — surfaces only the negative readings.
+  - id: sensor.grid_power__export
+    entity_id: sensor.grid_power
+    filters:
+      - type: negate
+    section: 2
+```
 
 ### Color ranges
 
