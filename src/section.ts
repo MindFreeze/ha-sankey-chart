@@ -1,11 +1,14 @@
 import { html, svg, SVGTemplateResult } from 'lit';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { classMap } from 'lit/directives/class-map';
 import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
-import { formatState, getChildConnections, getEntityId, normalizeStateValue } from './utils';
+import { formatState, getBoxName, getChildConnections, getEntityId, normalizeStateValue } from './utils';
 import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { renderLabel } from './label';
+import { BOX_COLOR_BAR } from './const';
+
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 export function renderBranchConnectors(props: {
   section: SectionState;
@@ -14,7 +17,10 @@ export function renderBranchConnectors(props: {
   allConnections: ConnectionState[];
   vertical: boolean;
 }): SVGTemplateResult[] {
-  const { boxes } = props.section;
+  const { boxes, width } = props.section;
+  const nearEdge = BOX_COLOR_BAR;
+  const farEdge = width;
+  const midEdge = (nearEdge + farEdge) / 2;
   return boxes
     .filter(b => b.children.length > 0)
     .map((b, boxIndex) => {
@@ -22,9 +28,7 @@ export function renderBranchConnectors(props: {
         b.children.some(c => getEntityId(c) === child.id),
       );
       const connections = getChildConnections(b, children, props.allConnections).filter(
-        c => {
-          return c.state > 0;
-        },
+        c => c.state > 0,
       );
       return svg`
         <defs>
@@ -40,19 +44,18 @@ export function renderBranchConnectors(props: {
           )}
         </defs>
         ${connections.map((c, i) => {
-          let coords = [
-            ['M', 0, c.startY],
-            ['C', 50, c.startY],
-            ['', 50, c.endY],
-            ['', 100, c.endY],
-            ['L', 100, c.endY + c.endSize],
-            ['C', 50, c.endY + c.endSize],
-            ['', 50, c.startY + c.startSize],
-            ['', 0, c.startY + c.startSize],
+          const pt = (along: number, across: number): [number, number] =>
+            props.vertical ? [along, across] : [across, along];
+          const coords: [string, number, number][] = [
+            ['M', ...pt(c.startY, nearEdge)],
+            ['C', ...pt(c.startY, midEdge)],
+            ['', ...pt(c.endY, midEdge)],
+            ['', ...pt(c.endY, farEdge)],
+            ['L', ...pt(c.endY + c.endSize, farEdge)],
+            ['C', ...pt(c.endY + c.endSize, midEdge)],
+            ['', ...pt(c.startY + c.startSize, midEdge)],
+            ['', ...pt(c.startY + c.startSize, nearEdge)],
           ];
-          if (props.vertical) {
-            coords = coords.map(c => [c[0], c[2] as number, c[1]]);
-          }
           return svg`
               <path d="${coords.map(([cmd, x, y]) => `${cmd}${x},${y}`).join(' ')} Z"
                 fill="url(#gradient${props.sectionIndex}.${boxIndex}.${i})" fill-opacity="${
@@ -79,23 +82,16 @@ export function renderSection(props: {
   onMouseLeave: () => void;
 }) {
   const { show_icons } = props.config;
-  const {
-    boxes,
-    spacerSize,
-    config: { min_width },
-    size,
-  } = props.section;
+  const { boxes, spacerSize, offset, width } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
+  const sectionTransform = props.vertical
+    ? `translate(0, ${offset})`
+    : `translate(${offset}, 0)`;
 
-  const viewBox = props.vertical ? `0 0 ${size} 100` : `0 0 100 ${size}`;
-  const minWidth = min_width && !props.vertical ? min_width + 'px' : undefined;
-
-  return html`
-    <div class="section" style=${styleMap({ minWidth })}>
+  return svg`
+    <g class="section" transform="${sectionTransform}">
       ${hasChildren
-        ? html`<div class="connectors">
-            <svg viewBox="${viewBox}" preserveAspectRatio="none">${renderBranchConnectors(props)}</svg>
-          </div>`
+        ? svg`<g class="connectors">${renderBranchConnectors(props)}</g>`
         : null}
       ${boxes.map(box => {
         const { entity } = box;
@@ -104,35 +100,57 @@ export function renderSection(props: {
         }
         const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
-        const name = box.config.name || entity.attributes.friendly_name || '';
+        const name = getBoxName(box);
         const icon = box.config.icon || stateIcon(entity as HassEntity);
+        const isHighlighted = props.highlightedEntities.includes(box.config);
 
-        const boxStyle = props.vertical
-          ? { left: box.top + 'px', width: box.size + 'px' }
-          : { top: box.top + 'px', height: box.size + 'px' };
+        const colorRect = props.vertical
+          ? { x: box.top, y: 0, width: box.size, height: BOX_COLOR_BAR }
+          : { x: 0, y: box.top, width: BOX_COLOR_BAR, height: box.size };
+        const labelArea = props.vertical
+          ? { x: box.top, y: BOX_COLOR_BAR, width: box.size, height: width - BOX_COLOR_BAR }
+          : { x: BOX_COLOR_BAR, y: box.top, width: width - BOX_COLOR_BAR, height: box.size };
 
-        return html`
-          <div
-            class=${'box type-' + box.config.type!}
-            style=${styleMap(boxStyle)}
+        const classes = classMap({
+          box: true,
+          ['type-' + box.config.type!]: true,
+          hl: isHighlighted,
+        });
+
+        return svg`
+          <g
+            class=${classes}
             @click=${() => props.onTap(box)}
             @dblclick=${() => props.onDoubleTap(box)}
             @mouseenter=${() => props.onMouseEnter(box)}
             @mouseleave=${props.onMouseLeave}
-            title=${formattedState + box.unit_of_measurement + ' ' + name}
           >
-            <div
-              style=${styleMap({ backgroundColor: box.color })}
-              class=${props.highlightedEntities.includes(box.config) ? 'hl' : ''}
-            >
-              ${show_icons && isNotPassthrough
-                ? html`<ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>`
-                : null}
-            </div>
-            ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical)}
-          </div>
+            <title>${formattedState + box.unit_of_measurement + ' ' + name}</title>
+            <rect class="color-bar"
+              x="${colorRect.x}" y="${colorRect.y}"
+              width="${colorRect.width}" height="${colorRect.height}"
+              fill="${box.color}"></rect>
+            ${show_icons && isNotPassthrough
+              ? svg`
+                <foreignObject
+                  x="${colorRect.x}" y="${colorRect.y}"
+                  width="${colorRect.width}" height="${colorRect.height}">
+                  ${html`<div xmlns="${XHTML_NS}" class="icon-wrap">
+                    <ha-icon .icon=${icon} style=${styleMap({ transform: 'scale(0.65)' })}></ha-icon>
+                  </div>`}
+                </foreignObject>
+              `
+              : null}
+            <foreignObject
+              x="${labelArea.x}" y="${labelArea.y}"
+              width="${labelArea.width}" height="${labelArea.height}">
+              ${html`<div xmlns="${XHTML_NS}" class="label-wrap">
+                ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical)}
+              </div>`}
+            </foreignObject>
+          </g>
         `;
       })}
-    </div>
+    </g>
   `;
 }

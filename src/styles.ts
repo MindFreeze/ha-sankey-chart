@@ -1,5 +1,4 @@
-import { css, unsafeCSS } from 'lit';
-import { MIN_VERTICAL_SECTION_H } from './const';
+import { css } from 'lit';
 
 // https://lit.dev/docs/components/styles/
 export default css`
@@ -7,101 +6,75 @@ export default css`
         overflow-x: auto;
     }
     .container {
-        display: flex;
         position: relative;
-        /* height: 210px; */
         padding: 16px;
         overflow: hidden;
     }
     .container.with-header {
         margin-top: -16px;
     }
-    .container.vertical {
-        flex-direction: column;
-    }
-    .section {
-        flex: 1;
-        flex-direction: column;
-        position: relative;
-        min-width: 0;
-        max-width: 50%;
-    }
-    .wide .section:last-child {
-        flex: initial;
-    }
-    .vertical .section {
-        flex: initial;
+    .chart {
+        display: block;
         max-width: 100%;
-        width: 100%;
-        height: ${unsafeCSS(MIN_VERTICAL_SECTION_H + 'px')};
-    }
-    .vertical .section:last-child {
-        flex: 1;
+        overflow: visible;
     }
     .box {
-        display: flex;
-        align-items: center;
-        position: absolute;
-        left: 0;
-        right: 0;
-        transition: top 0.25s, height 0.25s;
+        cursor: pointer;
     }
-    .vertical .box {
-        flex-direction: column;
-        left: auto;
-        right: auto;
-        top: 0;
-        bottom: 0;
-        transition: left 0.25s, width 0.25s;
+    .box .color-bar {
+        transition: x 0.25s, y 0.25s, width 0.25s, height 0.25s;
     }
-    /* .box::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        bottom: -2px;
-        left: -2px;
-        right: -2px;
-        background-color: var(--primary-color);
-        opacity: 0.5;
-        border-radius: 3px;
-    } */
-    .box div:first-child {
+    .box.type-passthrough .color-bar {
+        fill-opacity: 0.4;
+    }
+    .box.type-passthrough.hl .color-bar {
+        fill-opacity: 0.85;
+    }
+    foreignObject {
+        overflow: visible;
+        pointer-events: none;
+    }
+    .icon-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
-        background-color: var(--primary-color);
-        width: 15px;
-        height: 100%;
-        cursor: pointer;
-    }
-    .vertical .box div:first-child {
         width: 100%;
-        height: 15px;
+        height: 100%;
+        overflow: hidden;
     }
-    .box.type-passthrough div:first-child {
-        opacity: 0.4;
-    }
-    .box.type-passthrough div.hl:first-child {
-        opacity: 0.85;
-    }
-    .box .label {
-        flex: 1;
+    .label-wrap {
         display: flex;
         align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+    .vertical .label-wrap {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .box .label {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
         padding: 0 10px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        position: relative;
-        z-index: 1;
+        box-sizing: border-box;
+        pointer-events: auto;
     }
     .vertical .box .label {
         padding: 5px 0 0;
         flex-direction: column;
         white-space: normal;
-        /* word-break: break-all; */
         text-align: center;
+        max-width: none;
+        overflow: visible;
+        pointer-events: none;
+    }
+    .vertical .box .label > * {
+        pointer-events: auto;
     }
     .box .label .name {
         font-style: italic;
@@ -111,31 +84,6 @@ export default css`
         position: sticky;
         z-index: 100;
         color: var(--primary-text-color);
-    }
-    .connectors {
-        position: absolute;
-        top: 0;
-        left: 15px;
-        right: 0;
-        height: 100%;
-        overflow: hidden;
-    }
-    .vertical .connectors {
-        top: 15px;
-        left: 0;
-        bottom: 0;
-        height: auto;
-    }
-    .connectors svg {
-        position: absolute;
-        left: -1px;
-        width: 101%;
-        height: 100%;
-    }
-    .vertical .connectors svg {
-        top: -1px;
-        left: 0;
-        width: 100%;
-        height: 101%;
+        pointer-events: auto;
     }
 `;

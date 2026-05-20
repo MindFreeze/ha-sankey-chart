@@ -129,6 +129,10 @@ export function getEntityId(entity: string | Node | Record<string, unknown>): st
   return typeof entity === 'string' ? entity : ((entity.id || (entity as Record<string, unknown>).entity_id) as string);
 }
 
+export function getBoxName(box: Box): string {
+  return box.config.name || box.entity.attributes.friendly_name || '';
+}
+
 export function getChildConnections(
   parent: Box,
   children: Box[],

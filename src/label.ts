@@ -15,9 +15,8 @@ export function renderLabel(
   const shouldShowLabel = box.config.type !== 'passthrough' && (show_names || show_states);
   if (!shouldShowLabel) return null;
 
-  const maxLabelSize = box.size + spacerSize - 1;
+  const maxLabelSize = box.size + spacerSize - 2;
 
-  // reduce label size if it doesn't fit
   const labelStyle: Record<string, string> = { lineHeight: MIN_LABEL_HEIGHT + 'px' };
   const nameStyle: Record<string, string> = {};
   if (vertical) {
@@ -26,35 +25,35 @@ export function renderLabel(
     const stateChars = (formattedState + (show_units ? box.unit_of_measurement : '')).length;
     const desiredWidth = stateChars * CHAR_WIDTH_RATIO;
     if (desiredWidth > maxLabelSize) {
-      const fontSize = maxLabelSize / desiredWidth;
-      labelStyle.fontSize = `${fontSize}em`;
-      labelStyle.lineHeight = `${fontSize}em`;
+      const fontSize = (maxLabelSize / desiredWidth) * MIN_LABEL_HEIGHT;
+      labelStyle.fontSize = `${fontSize}px`;
+      labelStyle.lineHeight = `${fontSize}px`;
     }
     if (show_names) {
       const nameChars = Math.max(...name.split(/[\s]+/).map(l => l.length));
       const desiredNameWidth = nameChars * CHAR_WIDTH_RATIO;
       if (desiredNameWidth > maxLabelSize) {
-        const fontSize = maxLabelSize / desiredNameWidth;
-        nameStyle.fontSize = `${fontSize}rem`;
-        nameStyle.lineHeight = `${fontSize}rem`;
+        const fontSize = (maxLabelSize / desiredNameWidth) * MIN_LABEL_HEIGHT;
+        nameStyle.fontSize = `${fontSize}px`;
+        nameStyle.lineHeight = `${fontSize}px`;
       }
     }
   } else {
     if (maxLabelSize < MIN_LABEL_HEIGHT) {
-      const fontSize = maxLabelSize / MIN_LABEL_HEIGHT;
-      // labelStyle.maxHeight = maxLabelSize + 'px';
-      labelStyle.fontSize = `${fontSize}em`;
-      labelStyle.lineHeight = `${fontSize}em`;
+      labelStyle.fontSize = `${maxLabelSize}px`;
+      labelStyle.lineHeight = `${maxLabelSize}px`;
     }
     const numLines = name.split('\n').filter(v => v).length;
     if (numLines > 1) {
       nameStyle.whiteSpace = 'pre';
       if (labelStyle.fontSize) {
-        nameStyle.fontSize = `${1 / numLines + 0.1}rem`;
-        nameStyle.lineHeight = `${1 / numLines + 0.1}rem`;
+        const baseLabelSize = maxLabelSize < MIN_LABEL_HEIGHT ? maxLabelSize : MIN_LABEL_HEIGHT;
+        nameStyle.fontSize = `${baseLabelSize * (1 / numLines + 0.1)}px`;
+        nameStyle.lineHeight = `${baseLabelSize * (1 / numLines + 0.1)}px`;
       } else if (maxLabelSize < MIN_LABEL_HEIGHT * numLines) {
-        nameStyle.fontSize = `${(maxLabelSize / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
-        nameStyle.lineHeight = `${(maxLabelSize / MIN_LABEL_HEIGHT / numLines) * 1.1}em`;
+        const fontSize = (maxLabelSize / numLines) * 1.1;
+        nameStyle.fontSize = `${fontSize}px`;
+        nameStyle.lineHeight = `${fontSize}px`;
       }
     }
   }

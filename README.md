@@ -32,7 +32,6 @@ Install through [HACS](https://hacs.xyz/)
 | unit_prefix       | string  |                     | Metric prefix for the unit of measurment. See <https://en.wikipedia.org/wiki/Unit_prefix> . Supported values are m, k, M, G, T, and 'auto'. When 'auto' is used, the appropriate prefix is chosen automatically for each value based on its magnitude (m for values <1, k for values >=1000, etc.)
 | round             | number  | 0                   | Round the value to at most N decimal places. May not apply to near zero values, see issue [#29](https://github.com/MindFreeze/ha-sankey-chart/issues/29)
 | height            | number  | 200                 | The height of the card in pixels. Only matters while in horizontal layout. Vertical layout height is dynamic based on content
-| wide              | boolean | false               | Set this to true if you see extra empty space on the right side of the card. This will expand it horizontally to cover all the available space. Only relevant in horizontal mode.
 | show_icons        | boolean | false               | Display entity icons
 | show_names        | boolean | false               | Display entity names
 | show_states       | boolean | true                | Display entity states
@@ -288,7 +287,6 @@ time_period_to: "now/d"
   show_names: true
   unit_prefix: k
   round: 1
-  wide: true
   nodes:
     # Section 0 - Sources
     - id: sensor.solar

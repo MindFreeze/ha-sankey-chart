@@ -1,5 +1,4 @@
 import { LitElement, html, TemplateResult, PropertyValues, CSSResultGroup } from 'lit';
-import { styleMap } from 'lit/directives/style-map';
 import { classMap } from 'lit/directives/class-map';
 import { until } from 'lit/directives/until.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -9,7 +8,16 @@ import { HomeAssistant } from 'custom-card-helpers'; // This is a community main
 import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import {
+  BOX_COLOR_BAR,
+  CHAR_WIDTH_RATIO,
+  LABEL_PADDING,
+  MIN_LABEL_HEIGHT,
+  MIN_VERTICAL_SECTION_H,
+  NAME_CHAR_WIDTH,
+  SEPARATOR_WIDTH,
+} from './const';
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { handleAction } from './handle-actions';
 import { filterConfigByZoomEntity } from './zoom';
@@ -423,6 +431,8 @@ export class Chart extends LitElement {
         spacerSize: 0,
         config: section,
         size: sectionSize,
+        offset: 0,
+        width: 0,
       });
     });
 
@@ -461,6 +471,82 @@ export class Chart extends LitElement {
         spacerSize,
       };
     });
+
+    this._calcSectionLayout();
+  }
+
+  private _calcSectionLayout() {
+    const n = this.sections.length;
+    if (!n) return;
+    const last = this.sections[n - 1];
+
+    if (this.vertical) {
+      const lastH = Math.min(MIN_VERTICAL_SECTION_H, this._naturalSectionHeight(last));
+      let offset = 0;
+      this.sections = this.sections.map((s, i) => {
+        const height = i === n - 1 ? lastH : MIN_VERTICAL_SECTION_H;
+        const updated = { ...s, offset, width: height };
+        offset += height;
+        return updated;
+      });
+      return;
+    }
+
+    const chartW = this.width - 32;
+    if (n === 1) {
+      this.sections = [{ ...last, offset: 0, width: chartW }];
+      return;
+    }
+
+    const equalW = chartW / n;
+    const lastMin = last.config.min_width || 0;
+    const lastW = Math.max(lastMin, Math.min(equalW, this._naturalSectionWidth(last)));
+    const otherW = equalW + (equalW - lastW) / (n - 1);
+
+    let offset = 0;
+    this.sections = this.sections.map((s, i) => {
+      const width = i === n - 1 ? lastW : Math.max(s.config.min_width || 0, otherW);
+      const updated = { ...s, offset, width };
+      offset += width;
+      return updated;
+    });
+  }
+
+  private _naturalSectionHeight(section: SectionState): number {
+    const { show_states, show_names } = this.config;
+    let nameLines = 0;
+    if (show_names) {
+      for (const box of section.boxes) {
+        if (box.config.type === 'passthrough') continue;
+        const name = getBoxName(box);
+        const explicit = name.split('\n').filter(Boolean).length;
+        const wordCount = name.split(/\s+/).filter(Boolean).length;
+        const lines = Math.max(explicit, wordCount, 1);
+        nameLines = Math.max(nameLines, lines);
+      }
+    }
+    const stateLines = show_states ? 1 : 0;
+    const totalLines = stateLines + nameLines;
+    if (!totalLines) return BOX_COLOR_BAR;
+    return BOX_COLOR_BAR + 5 + totalLines * MIN_LABEL_HEIGHT;
+  }
+
+  private _naturalSectionWidth(section: SectionState): number {
+    const { show_states, show_names, show_units, round, monetary_unit } = this.config;
+    let maxWidth = 0;
+    for (const box of section.boxes) {
+      if (box.config.type === 'passthrough') continue;
+      const stateText = show_states
+        ? formatState(box.state, round, this.hass.locale, monetary_unit) + (show_units ? box.unit_of_measurement || '' : '')
+        : '';
+      const nameText = show_names ? getBoxName(box) : '';
+      const stateW = stateText.length * CHAR_WIDTH_RATIO;
+      const nameW = nameText.length * NAME_CHAR_WIDTH;
+      const separatorW = stateText && nameText ? SEPARATOR_WIDTH : 0;
+      const labelW = stateW + separatorW + nameW + 2 * LABEL_PADDING;
+      maxWidth = Math.max(maxWidth, BOX_COLOR_BAR + labelW);
+    }
+    return maxWidth;
   }
 
   private _calcBoxHeights(
@@ -665,17 +751,14 @@ export class Chart extends LitElement {
       this.reconciledStates.clear();
       const containerClasses = classMap({
         container: true,
-        wide: !!this.config.wide,
         'with-header': !!this.config.title,
         vertical: this.vertical,
       });
 
-      const height = this.vertical ? 'auto' : this.config.height + 'px';
-
       if (!Object.keys(this.states).length) {
         return html`
           <ha-card label="Sankey Chart" .header=${this.config.title}>
-            <div class=${containerClasses} style=${styleMap({ height: height })}>${localize('common.loading')}</div>
+            <div class=${containerClasses}>${localize('common.loading')}</div>
           </ha-card>
         `;
       }
@@ -686,25 +769,39 @@ export class Chart extends LitElement {
 
       this.lastUpdate = Date.now();
 
+      const chartW = this.width - 32;
+      const lastSection = this.sections[this.sections.length - 1];
+      const chartH = this.vertical
+        ? (lastSection ? lastSection.offset + lastSection.width : 0)
+        : this.config.height;
+
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
-          <div class=${containerClasses} style=${styleMap({ height: height })}>
-            ${this.sections.map((s, i) =>
-              renderSection({
-                locale: this.hass.locale,
-                config: this.config,
-                section: s,
-                nextSection: this.sections[i + 1],
-                sectionIndex: i,
-                highlightedEntities: this.highlightedEntities,
-                allConnections: this.connections,
-                onTap: this._handleBoxTap.bind(this),
-                onDoubleTap: this._handleBoxDoubleTap.bind(this),
-                onMouseEnter: this._handleMouseEnter.bind(this),
-                onMouseLeave: this._handleMouseLeave.bind(this),
-                vertical: this.vertical,
-              }),
-            )}
+          <div class=${containerClasses}>
+            <svg
+              class="chart"
+              viewBox="0 0 ${chartW} ${chartH}"
+              width="${chartW}"
+              height="${chartH}"
+              preserveAspectRatio="xMinYMin meet"
+            >
+              ${this.sections.map((s, i) =>
+                renderSection({
+                  locale: this.hass.locale,
+                  config: this.config,
+                  section: s,
+                  nextSection: this.sections[i + 1],
+                  sectionIndex: i,
+                  highlightedEntities: this.highlightedEntities,
+                  allConnections: this.connections,
+                  onTap: this._handleBoxTap.bind(this),
+                  onDoubleTap: this._handleBoxDoubleTap.bind(this),
+                  onMouseEnter: this._handleMouseEnter.bind(this),
+                  onMouseLeave: this._handleMouseLeave.bind(this),
+                  vertical: this.vertical,
+                }),
+              )}
+            </svg>
           </div>
         </ha-card>
       `;
