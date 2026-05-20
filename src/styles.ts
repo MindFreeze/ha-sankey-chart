@@ -32,7 +32,7 @@ export default css`
     .vertical .section {
         display: flex;
         flex: initial;
-        flex-direction: row-reverse;
+        flex-direction: row;
         align-items: flex-start;
         max-width: 100%;
         width: 100%;

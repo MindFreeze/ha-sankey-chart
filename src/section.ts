@@ -14,7 +14,7 @@ export function renderBranchConnectors(props: {
   allConnections: ConnectionState[];
   vertical: boolean;
 }): SVGTemplateResult[] {
-  const { boxes, size } = props.section;
+  const { boxes } = props.section;
   return boxes
     .filter(b => b.children.length > 0)
     .map((b, boxIndex) => {
@@ -51,7 +51,7 @@ export function renderBranchConnectors(props: {
             ['', 0, c.startY + c.startSize],
           ];
           if (props.vertical) {
-            coords = coords.map(c => [c[0], size - (c[2] as number), c[1]]);
+            coords = coords.map(c => [c[0], c[2] as number, c[1]]);
           }
           return svg`
               <path d="${coords.map(([cmd, x, y]) => `${cmd}${x},${y}`).join(' ')} Z"
