@@ -98,7 +98,7 @@ export function renderSection(props: {
           </div>`
         : null}
       ${boxes.map(box => {
-        const { entity, extraSpacers } = box;
+        const { entity } = box;
         if (props.config.unit_prefix === 'auto') {
           box = { ...box, ...normalizeStateValue(props.config.unit_prefix, box.state, box.unit_of_measurement, true) };
         }
@@ -107,16 +107,14 @@ export function renderSection(props: {
         const name = box.config.name || entity.attributes.friendly_name || '';
         const icon = box.config.icon || stateIcon(entity as HassEntity);
 
-        const sizeProp = props.vertical ? 'width' : 'height';
+        const boxStyle = props.vertical
+          ? { left: box.top + 'px', width: box.size + 'px' }
+          : { top: box.top + 'px', height: box.size + 'px' };
 
         return html`
-          ${box.top > 0 ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: spacerSize + 'px' })}></div>` : null}
-          ${extraSpacers
-            ? html`<div class="spacerv" style=${styleMap({ [sizeProp]: extraSpacers + 'px' })}></div>`
-            : null}
           <div
             class=${'box type-' + box.config.type!}
-            style=${styleMap({ [sizeProp]: box.size + 'px' })}
+            style=${styleMap(boxStyle)}
             @click=${() => props.onTap(box)}
             @dblclick=${() => props.onDoubleTap(box)}
             @mouseenter=${() => props.onMouseEnter(box)}
@@ -133,7 +131,6 @@ export function renderSection(props: {
             </div>
             ${renderLabel(box, props.config, formattedState, name, spacerSize, props.vertical)}
           </div>
-          ${extraSpacers ? html`<div class="spacerv" style=${styleMap({ height: extraSpacers + 'px' })}></div>` : null}
         `;
       })}
     </div>

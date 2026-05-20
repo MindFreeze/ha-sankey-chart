@@ -30,10 +30,7 @@ export default css`
         flex: initial;
     }
     .vertical .section {
-        display: flex;
         flex: initial;
-        flex-direction: row;
-        align-items: flex-start;
         max-width: 100%;
         width: 100%;
         height: ${unsafeCSS(MIN_VERTICAL_SECTION_H + 'px')};
@@ -41,22 +38,21 @@ export default css`
     .vertical .section:last-child {
         flex: 1;
     }
-    .spacerv {
-        transition: height 0.25s;
-    }
-    .vertical .spacerv {
-        transition: width 0.25s;
-    }
     .box {
         display: flex;
         align-items: center;
-        /* position: relative; */
-        /* min-height: 1px; */
-        transition: height 0.25s;
+        position: absolute;
+        left: 0;
+        right: 0;
+        transition: top 0.25s, height 0.25s;
     }
     .vertical .box {
         flex-direction: column;
-        transition: width 0.25s;
+        left: auto;
+        right: auto;
+        top: 0;
+        bottom: 0;
+        transition: left 0.25s, width 0.25s;
     }
     /* .box::before {
         content: "";

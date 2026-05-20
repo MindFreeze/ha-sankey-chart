@@ -219,7 +219,6 @@ export interface Box {
   color: string;
   size: number;
   top: number;
-  extraSpacers?: number;
   connections: {
     parents: Connection[];
   };

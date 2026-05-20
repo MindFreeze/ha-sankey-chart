@@ -37,9 +37,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
       </svg>
           </div>
       
-          <div class="spacerv" style="height:2.5px;"></div>
-          
-          <div class="box type-entity" style="height:195px;" title="2W ">
+          <div class="box type-entity" style="top:2.5px;height:195px;" title="2W ">
             <div style="background-color:var(--primary-color);" class="">
               
             </div>
@@ -50,16 +48,13 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
     
   </div>
           </div>
-          
         
     </div>
   
     <div class="section" style="">
       
       
-          
-          
-          <div class="box type-entity" style="height:97px;" title="1W ">
+          <div class="box type-entity" style="top:0px;height:97px;" title="1W ">
             <div style="background-color:var(--primary-color);" class="">
               
             </div>
@@ -70,11 +65,8 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
     
   </div>
           </div>
-          
         
-          <div class="spacerv" style="height:6px;"></div>
-          
-          <div class="box type-entity" style="height:97px;" title="1W ">
+          <div class="box type-entity" style="top:103px;height:97px;" title="1W ">
             <div style="background-color:var(--primary-color);" class="">
               
             </div>
@@ -85,7 +77,6 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
     
   </div>
           </div>
-          
         
     </div>
   
@@ -119,10 +110,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
         flex: initial;
     }
     .vertical .section {
-        display: flex;
         flex: initial;
-        flex-direction: row;
-        align-items: flex-start;
         max-width: 100%;
         width: 100%;
         height: 150px;
@@ -130,22 +118,21 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
     .vertical .section:last-child {
         flex: 1;
     }
-    .spacerv {
-        transition: height 0.25s;
-    }
-    .vertical .spacerv {
-        transition: width 0.25s;
-    }
     .box {
         display: flex;
         align-items: center;
-        /* position: relative; */
-        /* min-height: 1px; */
-        transition: height 0.25s;
+        position: absolute;
+        left: 0;
+        right: 0;
+        transition: top 0.25s, height 0.25s;
     }
     .vertical .box {
         flex-direction: column;
-        transition: width 0.25s;
+        left: auto;
+        right: auto;
+        top: 0;
+        bottom: 0;
+        transition: left 0.25s, width 0.25s;
     }
     /* .box::before {
         content: "";

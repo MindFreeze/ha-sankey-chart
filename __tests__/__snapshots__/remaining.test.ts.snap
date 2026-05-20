@@ -30,9 +30,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
       </svg>
           </div>
       
-          <div class="spacerv" style="height:69.5px;"></div>
-          
-          <div class="box type-entity" style="height:61px;" title="1.8kW Total">
+          <div class="box type-entity" style="top:69.5px;height:61px;" title="1.8kW Total">
             <div style="background-color:var(--warning-color);" class="">
               
             </div>
@@ -43,7 +41,6 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
     
   </div>
           </div>
-          
         
     </div>
   
@@ -78,9 +75,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
       </svg>
           </div>
       
-          <div class="spacerv" style="height:5px;"></div>
-          
-          <div class="box type-remaining_child_state" style="height:190px;" title="5.6kW Total
+          <div class="box type-remaining_child_state" style="top:5px;height:190px;" title="5.6kW Total
 All
 All
 All
@@ -105,7 +100,6 @@ IDK">
     
   </div>
           </div>
-          
         
     </div>
   
@@ -143,9 +137,7 @@ IDK">
       </svg>
           </div>
       
-          
-          
-          <div class="box type-entity" style="height:63px;" title="1.9kW Varmtvann
+          <div class="box type-entity" style="top:0px;height:63px;" title="1.9kW Varmtvann
 Blaa">
             <div style="background-color:var(--primary-color);" class="">
               
@@ -157,11 +149,8 @@ Blaa">
     
   </div>
           </div>
-          
         
-          <div class="spacerv" style="height:5.5px;"></div>
-          
-          <div class="box type-entity" style="height:63px;" title="1.9kВ Avfukter">
+          <div class="box type-entity" style="top:68.5px;height:63px;" title="1.9kВ Avfukter">
             <div style="background-color:var(--primary-color);" class="">
               
             </div>
@@ -172,11 +161,8 @@ Blaa">
     
   </div>
           </div>
-          
         
-          <div class="spacerv" style="height:5.5px;"></div>
-          
-          <div class="box type-entity" style="height:63px;" title="1.9kW ">
+          <div class="box type-entity" style="top:137px;height:63px;" title="1.9kW ">
             <div style="background-color:var(--primary-color);" class="">
               
             </div>
@@ -187,7 +173,6 @@ Blaa">
     
   </div>
           </div>
-          
         
     </div>
   
@@ -208,24 +193,19 @@ Blaa">
       </svg>
           </div>
       
-          <div class="spacerv" style="height:68.5px;"></div>
-          
-          <div class="box type-passthrough" style="height:63px;" title="1.9kW ">
+          <div class="box type-passthrough" style="top:68.5px;height:63px;" title="1.9kW ">
             <div style="background-color:red;" class="">
               
             </div>
             
           </div>
-          
         
     </div>
   
     <div class="section" style="">
       
       
-          <div class="spacerv" style="height:68.5px;"></div>
-          
-          <div class="box type-entity" style="height:63px;" title="1.9kW ">
+          <div class="box type-entity" style="top:68.5px;height:63px;" title="1.9kW ">
             <div style="background-color:red;" class="">
               
             </div>
@@ -236,7 +216,6 @@ Blaa">
     
   </div>
           </div>
-          
         
     </div>
   
@@ -270,10 +249,7 @@ Blaa">
         flex: initial;
     }
     .vertical .section {
-        display: flex;
         flex: initial;
-        flex-direction: row;
-        align-items: flex-start;
         max-width: 100%;
         width: 100%;
         height: 150px;
@@ -281,22 +257,21 @@ Blaa">
     .vertical .section:last-child {
         flex: 1;
     }
-    .spacerv {
-        transition: height 0.25s;
-    }
-    .vertical .spacerv {
-        transition: width 0.25s;
-    }
     .box {
         display: flex;
         align-items: center;
-        /* position: relative; */
-        /* min-height: 1px; */
-        transition: height 0.25s;
+        position: absolute;
+        left: 0;
+        right: 0;
+        transition: top 0.25s, height 0.25s;
     }
     .vertical .box {
         flex-direction: column;
-        transition: width 0.25s;
+        left: auto;
+        right: auto;
+        top: 0;
+        bottom: 0;
+        transition: left 0.25s, width 0.25s;
     }
     /* .box::before {
         content: "";
