@@ -430,9 +430,8 @@ export class Chart extends LitElement {
         statePerPixel: calcResults.statePerPixel,
         spacerSize: 0,
         config: section,
-        size: sectionSize,
         offset: 0,
-        width: 0,
+        size: 0,
       });
     });
 
@@ -484,30 +483,40 @@ export class Chart extends LitElement {
       const lastH = Math.min(MIN_VERTICAL_SECTION_H, this._naturalSectionHeight(last));
       let offset = 0;
       this.sections = this.sections.map((s, i) => {
-        const height = i === n - 1 ? lastH : MIN_VERTICAL_SECTION_H;
-        const updated = { ...s, offset, width: height };
-        offset += height;
+        const size = i === n - 1 ? lastH : MIN_VERTICAL_SECTION_H;
+        const updated = { ...s, offset, size };
+        offset += size;
         return updated;
       });
       return;
     }
 
     const chartW = this.width - 32;
+    const lastMin = last.config.min_width || 0;
     if (n === 1) {
-      this.sections = [{ ...last, offset: 0, width: chartW }];
+      this.sections = [{ ...last, offset: 0, size: Math.max(lastMin, chartW) }];
       return;
     }
 
+    const otherMinSum = this.sections
+      .slice(0, -1)
+      .reduce((sum, s) => sum + (s.config.min_width || 0), 0);
     const equalW = chartW / n;
-    const lastMin = last.config.min_width || 0;
-    const lastW = Math.max(lastMin, Math.min(equalW, this._naturalSectionWidth(last)));
-    const otherW = equalW + (equalW - lastW) / (n - 1);
+    const lastNatural = this._naturalSectionWidth(last);
+    // Last section: at least its min, at most equalW or its natural width.
+    // Also cap so the others can fit their own min_widths (if at all possible).
+    const lastCap = Math.max(lastMin, chartW - otherMinSum);
+    const lastW = Math.max(lastMin, Math.min(equalW, lastNatural, lastCap));
+
+    // Remaining width is distributed evenly on top of each other section's min_width.
+    // If the remainder is negative (mins exceed chartW), each section gets its min and the chart overflows.
+    const extra = Math.max(0, chartW - lastW - otherMinSum) / (n - 1);
 
     let offset = 0;
     this.sections = this.sections.map((s, i) => {
-      const width = i === n - 1 ? lastW : Math.max(s.config.min_width || 0, otherW);
-      const updated = { ...s, offset, width };
-      offset += width;
+      const size = i === n - 1 ? lastW : (s.config.min_width || 0) + extra;
+      const updated = { ...s, offset, size };
+      offset += size;
       return updated;
     });
   }
@@ -772,7 +781,7 @@ export class Chart extends LitElement {
       const chartW = this.width - 32;
       const lastSection = this.sections[this.sections.length - 1];
       const chartH = this.vertical
-        ? (lastSection ? lastSection.offset + lastSection.width : 0)
+        ? (lastSection ? lastSection.offset + lastSection.size : 0)
         : this.config.height;
 
       return html`

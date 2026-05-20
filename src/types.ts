@@ -232,7 +232,6 @@ export interface SectionState {
   config: Section;
   size: number;
   offset: number;
-  width: number;
 }
 
 export interface ConnectionState {

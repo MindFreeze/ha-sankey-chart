@@ -17,9 +17,9 @@ export function renderBranchConnectors(props: {
   allConnections: ConnectionState[];
   vertical: boolean;
 }): SVGTemplateResult[] {
-  const { boxes, width } = props.section;
+  const { boxes, size } = props.section;
   const nearEdge = BOX_COLOR_BAR;
-  const farEdge = width;
+  const farEdge = size;
   const midEdge = (nearEdge + farEdge) / 2;
   return boxes
     .filter(b => b.children.length > 0)
@@ -82,7 +82,7 @@ export function renderSection(props: {
   onMouseLeave: () => void;
 }) {
   const { show_icons } = props.config;
-  const { boxes, spacerSize, offset, width } = props.section;
+  const { boxes, spacerSize, offset, size } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
   const sectionTransform = props.vertical
     ? `translate(0, ${offset})`
@@ -108,8 +108,8 @@ export function renderSection(props: {
           ? { x: box.top, y: 0, width: box.size, height: BOX_COLOR_BAR }
           : { x: 0, y: box.top, width: BOX_COLOR_BAR, height: box.size };
         const labelArea = props.vertical
-          ? { x: box.top, y: BOX_COLOR_BAR, width: box.size, height: width - BOX_COLOR_BAR }
-          : { x: BOX_COLOR_BAR, y: box.top, width: width - BOX_COLOR_BAR, height: box.size };
+          ? { x: box.top, y: BOX_COLOR_BAR, width: box.size, height: size - BOX_COLOR_BAR }
+          : { x: BOX_COLOR_BAR, y: box.top, width: size - BOX_COLOR_BAR, height: box.size };
 
         const classes = classMap({
           box: true,
