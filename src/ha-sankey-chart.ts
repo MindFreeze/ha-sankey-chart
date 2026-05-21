@@ -4,7 +4,7 @@ import { LitElement, html, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators';
 
 import type { CarbonNodeType, Config, Node, SankeyChartConfig, SectionConfig } from './types';
-import { isCarbonNodeType } from './types';
+import { DEFAULT_CONFIG, isCarbonNodeType } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
 import { autoRouteCrossGapLinks, convertNodesToSections, normalizeConfig, renderError } from './utils';
@@ -108,7 +108,17 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       type: node.type,
       sourceEntityIds: sources,
     }));
-    const co2Entity = this.config.co2_intensity_entity || range.co2SignalEntity || '';
+    // For carbon nodes, prefer the entity HA's own energy dashboard uses
+    // (auto-detected by HA from the energy prefs, unit "%"). The chart's
+    // `co2_intensity_entity` is a different conceptual entity (gCO2eq/kWh for
+    // the gCO2 conversion path) — only fall back to it if it was explicitly
+    // overridden away from the default.
+    const co2DefaultEntity = (DEFAULT_CONFIG as { co2_intensity_entity?: string }).co2_intensity_entity;
+    const explicitCo2 =
+      this.config.co2_intensity_entity && this.config.co2_intensity_entity !== co2DefaultEntity
+        ? this.config.co2_intensity_entity
+        : '';
+    const co2Entity = range.co2SignalEntity || explicitCo2 || '';
     const [stats, carbonStates] = await Promise.all([
       this.entityIds.length
         ? getStatistics(this.hass, range, this.entityIds, conversions)
@@ -202,7 +212,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
                 return;
               }
             }
-            await this._fetchStats(data);
+            try {
+              await this._fetchStats(data);
+            } catch (err: any) {
+              this.error = err instanceof Error ? err : new Error(err?.message || String(err));
+            }
             this.forceUpdateTs = Date.now();
           });
         }),
