@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.1.0...v6.0.0) (2026-05-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **#234:** The `wide` option has been removed. It is now the default
+
+### Bug Fixes
+
+* **#234:** layout entities left-to-right in vertical mode ([dbb8d01](https://github.com/MindFreeze/ha-sankey-chart/commit/dbb8d01824d76bb4624b00af41c9510e0150cea1))
+
 ## [5.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.0.1...v5.1.0) (2026-05-18)
 
 
