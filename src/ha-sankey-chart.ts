@@ -383,7 +383,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           entity_id: id,
           section: currentSection,
           type: 'low_carbon_energy',
-          name: 'Low-carbon',
+          name: 'Low-carbon Grid',
           color: 'var(--energy-non-fossil-color)',
         });
         nodes.push({
@@ -391,7 +391,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
           entity_id: id,
           section: currentSection,
           type: 'high_carbon_energy',
-          name: 'High-carbon',
+          name: 'High-carbon Grid',
           color: getEnergySourceColor(source.type),
         });
         links.push({ source: lowId, target: TOTAL_NODE_ID });
