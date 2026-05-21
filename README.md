@@ -61,7 +61,7 @@ Install through [HACS](https://hacs.xyz/)
 | entity_id         | string  | **Optional** | value of `id`       | Entity id to read state from. Lets a synthetic `id` (e.g. `sensor.foo__copy`) reference a real entity, so two nodes can render the same entity from different angles. See [filters](#filters).
 | section           | number  | **Optional** |                     | Index of the section this node belongs to (0-based). Determines horizontal/vertical position
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
-| type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state'. See [entity types](#entity-types)
+| type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state', 'high_carbon_energy', 'low_carbon_energy'. See [entity types](#entity-types)
 | name              | string  | **Optional** | entity name from HA | Custom label for this entity
 | icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
 | unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
@@ -185,6 +185,33 @@ links:
     target: sensor.child1
   - source: discrepancy
     target: sensor.child2
+```
+
+- `high_carbon_energy` / `low_carbon_energy` - Split an energy flow into its carbon-intensive and low-carbon portions, computed for the selected period via Home Assistant's `energy/fossil_energy_consumption` API. Requires either `energy_date_selection: true` or `time_period_from` so a date range is available, plus a CO2 intensity source — either set `co2_intensity_entity` explicitly, or rely on auto-discovery from the energy dashboard's configured CO2 Signal entity. The source entities are taken from `entity_id` (or the node `id` if it's a real entity) plus any `add_entities`. See issue [#54](https://github.com/MindFreeze/ha-sankey-chart/issues/54). Example:
+
+```yaml
+type: custom:sankey-chart
+energy_date_selection: true
+# co2_intensity_entity: sensor.co2_signal_co2_intensity  # optional — auto-discovered from energy dashboard
+nodes:
+  - id: grid
+    entity_id: sensor.grid_consumption
+    section: 0
+  - id: low_carbon
+    type: low_carbon_energy
+    entity_id: sensor.grid_consumption
+    name: Low-carbon
+    section: 1
+  - id: high_carbon
+    type: high_carbon_energy
+    entity_id: sensor.grid_consumption
+    name: High-carbon
+    section: 1
+links:
+  - source: grid
+    target: low_carbon
+  - source: grid
+    target: high_carbon
 ```
 
 ### Autoconfig

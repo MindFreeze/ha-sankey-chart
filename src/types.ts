@@ -104,7 +104,18 @@ export interface Link {
   value?: string; // optional connection entity
 }
 
-export type NodeType = 'entity' | 'passthrough' | 'remaining_parent_state' | 'remaining_child_state';
+export const CARBON_NODE_TYPES = ['high_carbon_energy', 'low_carbon_energy'] as const;
+export type CarbonNodeType = (typeof CARBON_NODE_TYPES)[number];
+
+export type NodeType =
+  | 'entity'
+  | 'passthrough'
+  | 'remaining_parent_state'
+  | 'remaining_child_state'
+  | CarbonNodeType;
+
+export const isCarbonNodeType = (type: NodeType | undefined): type is CarbonNodeType =>
+  type === 'high_carbon_energy' || type === 'low_carbon_energy';
 
 // ESPHome/Plotly-style filter shape: each entry is `{ <name>: <arg> }`. Future
 // transforms (e.g. `abs`, `clamp`) slot in as additional union members.

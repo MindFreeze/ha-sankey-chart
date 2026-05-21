@@ -6,6 +6,7 @@ import { customElement, property, state } from 'lit/decorators';
 import { HomeAssistant } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
 import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
+import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
@@ -263,7 +264,9 @@ export class Chart extends LitElement {
           .filter(c => c.passthroughs.includes(entityConf))
           .reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       }
-      if (entityConf.add_entities) {
+      // Carbon nodes consume `add_entities` as their source declaration —
+      // the carbon helper has already summed them into the synthetic state.
+      if (entityConf.add_entities && !isCarbonNodeType(entityConf.type)) {
         entityConf.add_entities.forEach(subId => {
           const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
@@ -274,7 +277,7 @@ export class Chart extends LitElement {
           normalized.state += state;
         });
       }
-      if (entityConf.subtract_entities) {
+      if (entityConf.subtract_entities && !isCarbonNodeType(entityConf.type)) {
         entityConf.subtract_entities.forEach(subId => {
           const subEntity = this._getEntityState({ id: subId, type: 'entity' as const, children: [] });
           const { state } = normalizeStateValue(
@@ -697,9 +700,11 @@ export class Chart extends LitElement {
       return this._getEntityState(realConnection.child);
     }
 
-    // `entity_id` lets a synthetic node id (e.g. `${stat_rate}__to_auto`) read
-    // from a real entity without conflicting with the node id used as a graph key.
-    const lookupId = entityConf.entity_id || getEntityId(entityConf);
+    // Carbon nodes ignore `entity_id` for the lookup — `entity_id` is the
+    // source declaration; the computed value lives under the node id.
+    const lookupId = isCarbonNodeType(entityConf.type)
+      ? getEntityId(entityConf)
+      : entityConf.entity_id || getEntityId(entityConf);
     let entity = this.states[lookupId];
     if (!entity) {
       if (this.config.ignore_missing_entities) {

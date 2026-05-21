@@ -65,7 +65,9 @@
       "entity": "Entity",
       "remaining_parent_state": "Remaining parent state",
       "remaining_child_state": "Remaining child state",
-      "passthrough": "Passthrough"
+      "passthrough": "Passthrough",
+      "high_carbon_energy": "High carbon energy",
+      "low_carbon_energy": "Low carbon energy"
     },
     "sort_by": {
       "none": "None",

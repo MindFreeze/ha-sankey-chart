@@ -4,7 +4,12 @@ import { HomeAssistant } from "custom-card-helpers";
 import { Collection } from "home-assistant-js-websocket";
 import { differenceInDays } from 'date-fns';
 import { FT3_PER_M3 } from './const';
-import type { AutoconfigMode } from './types';
+import type { AutoconfigMode, CarbonNodeType, Node } from './types';
+
+export const getStatisticsPeriod = (start: Date, end?: Date): 'hour' | 'day' | 'month' => {
+  const days = differenceInDays(end || new Date(), start);
+  return days > 35 ? 'month' : days > 2 ? 'day' : 'hour';
+};
 
 export const sourceTypesForMode = (mode: AutoconfigMode): string[] =>
   mode === 'water' || mode === 'water_flow' ? ['water'] : ['grid', 'solar', 'battery'];
@@ -24,7 +29,7 @@ export interface EnergyData {
   statsCompare: Statistics;
   // co2SignalConfigEntry?: ConfigEntry;
   co2SignalEntity?: string;
-  // fossilEnergyConsumption?: FossilEnergyConsumption;
+  fossilEnergyConsumption?: FossilEnergyConsumption;
   // fossilEnergyConsumptionCompare?: FossilEnergyConsumption;
 }
 
@@ -206,11 +211,7 @@ const calculateStatisticSumGrowth = (
 };
 
 export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<EnergyData, 'start' | 'end'>, devices: string[], conversions: Conversions): Promise<Record<string, number>> {
-  const dayDifference = differenceInDays(
-    end || new Date(),
-    start
-  );
-  const period = dayDifference > 35 ? "month" : dayDifference > 2 ? "day" : "hour";
+  const period = getStatisticsPeriod(start, end);
 
   let time_invariant_devices: string[] = [];
   const time_variant_data = {};
@@ -349,6 +350,61 @@ export async function getStatistics(hass: HomeAssistant, { start, end }: Pick<En
     }
   }
 
+  return result;
+}
+
+export interface CarbonNodeDef {
+  nodeId: string;
+  type: CarbonNodeType;
+  sourceEntityIds: string[];
+}
+
+export function resolveCarbonSources(node: Pick<Node, 'id' | 'entity_id' | 'add_entities'>, hass: HomeAssistant): string[] {
+  const extras = node.add_entities ?? [];
+  if (node.entity_id) return [node.entity_id, ...extras];
+  if (node.id && hass.states[node.id]) return [node.id, ...extras];
+  return [...extras];
+}
+
+export async function getCarbonNodeStates(
+  hass: HomeAssistant,
+  { start, end }: Pick<EnergyData, 'start' | 'end'>,
+  carbonNodes: CarbonNodeDef[],
+  co2Entity: string,
+): Promise<Record<string, number>> {
+  if (!carbonNodes.length) return {};
+  if (!co2Entity) {
+    throw new Error(
+      'No CO2 signal entity available. Set `co2_intensity_entity` or configure CO2 Signal in the energy dashboard.',
+    );
+  }
+
+  const period = getStatisticsPeriod(start, end);
+  const allSources = Array.from(new Set(carbonNodes.flatMap(n => n.sourceEntityIds)));
+  if (!allSources.length) return {};
+
+  const [totalsStats, ...fossilResults] = await Promise.all([
+    fetchStatistics(hass, start, end, allSources, period, ['change']),
+    ...carbonNodes.map(n =>
+      n.sourceEntityIds.length
+        ? fetchFossilEnergyConsumption(hass, start, n.sourceEntityIds, co2Entity, end, period)
+        : Promise.resolve<FossilEnergyConsumption>({}),
+    ),
+  ]);
+
+  const result: Record<string, number> = {};
+  carbonNodes.forEach((node, idx) => {
+    const fossil = sumOverTime(fossilResults[idx]);
+    if (node.type === 'high_carbon_energy') {
+      result[node.nodeId] = fossil;
+      return;
+    }
+    const total = node.sourceEntityIds.reduce(
+      (sum, id) => sum + (calculateStatisticSumGrowth(totalsStats[id]) ?? 0),
+      0,
+    );
+    result[node.nodeId] = Math.max(0, total - fossil);
+  });
   return result;
 }
 

@@ -3,7 +3,8 @@ import { LitElement, html, TemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 
-import type { Config, SankeyChartConfig, SectionConfig } from './types';
+import type { CarbonNodeType, Config, Node, SankeyChartConfig, SectionConfig } from './types';
+import { isCarbonNodeType } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
 import { autoRouteCrossGapLinks, convertNodesToSections, normalizeConfig, renderError } from './utils';
@@ -12,17 +13,20 @@ import './chart';
 import './print-config';
 import { HassEntities } from 'home-assistant-js-websocket';
 import {
+  CarbonNodeDef,
   Conversions,
   DeviceConsumptionEnergyPreference,
   EnergyCollection,
   EnergyData,
   EnergySource,
+  getCarbonNodeStates,
   getEnergyDataCollection,
   getEnergySourceColor,
   getStatistics,
   getEnergyPreferences,
   EnergyPreferences,
   isRateMode,
+  resolveCarbonSources,
   sourceTypesForMode,
 } from './energy';
 import { until } from 'lit/directives/until';
@@ -80,8 +84,17 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private error?: unknown;
   @state() private forceUpdateTs?: number;
 
-  private async _fetchStats(range: Pick<EnergyData, 'start' | 'end'>): Promise<void> {
-    if (!this.entityIds.length) return;
+  private _collectCarbonNodes(): { node: Node & { type: CarbonNodeType }; sources: string[] }[] {
+    const isCarbonNode = (n: Node): n is Node & { type: CarbonNodeType } => isCarbonNodeType(n.type);
+    return this.config.nodes.filter(isCarbonNode).map(node => ({
+      node,
+      sources: resolveCarbonSources(node, this.hass).filter(id => this.hass.states[id]),
+    }));
+  }
+
+  private async _fetchStats(range: Pick<EnergyData, 'start' | 'end' | 'co2SignalEntity'>): Promise<void> {
+    const carbonNodes = this._collectCarbonNodes();
+    if (!this.entityIds.length && !carbonNodes.length) return;
     if (isRateMode(this.config.autoconfig?.mode || 'energy')) return;
     const conversions: Conversions = {
       convert_units_to: this.config.convert_units_to!,
@@ -90,11 +103,51 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       electricity_price: this.config.electricity_price,
       gas_price: this.config.gas_price,
     };
-    const stats = await getStatistics(this.hass, range, this.entityIds, conversions);
+    const carbonDefs: CarbonNodeDef[] = carbonNodes.map(({ node, sources }) => ({
+      nodeId: node.id,
+      type: node.type,
+      sourceEntityIds: sources,
+    }));
+    const co2Entity = this.config.co2_intensity_entity || range.co2SignalEntity || '';
+    const [stats, carbonStates] = await Promise.all([
+      this.entityIds.length
+        ? getStatistics(this.hass, range, this.entityIds, conversions)
+        : Promise.resolve<Record<string, number>>({}),
+      carbonDefs.length
+        ? getCarbonNodeStates(this.hass, range, carbonDefs, co2Entity)
+        : Promise.resolve<Record<string, number>>({}),
+    ]);
     const states: HassEntities = {};
     Object.keys(stats).forEach(id => {
       if (this.hass.states[id]) {
         states[id] = { ...this.hass.states[id], state: String(stats[id]) };
+      }
+    });
+    carbonNodes.forEach(({ node, sources }) => {
+      if (!(node.id in carbonStates)) return;
+      const sourceEntity = sources.length ? this.hass.states[sources[0]] : undefined;
+      const baseAttributes = sourceEntity?.attributes ?? {};
+      const attributes = {
+        ...baseAttributes,
+        unit_of_measurement: baseAttributes.unit_of_measurement || '',
+        friendly_name: node.name || node.id,
+      };
+      if (sourceEntity) {
+        states[node.id] = {
+          ...sourceEntity,
+          entity_id: node.id,
+          state: String(carbonStates[node.id]),
+          attributes,
+        };
+      } else {
+        states[node.id] = {
+          entity_id: node.id,
+          state: String(carbonStates[node.id]),
+          last_changed: '',
+          last_updated: '',
+          context: { id: '', user_id: null, parent_id: null },
+          attributes,
+        };
       }
     });
     this.states = states;

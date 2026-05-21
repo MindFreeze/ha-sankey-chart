@@ -18,6 +18,8 @@ const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
           { value: 'remaining_parent_state', label: localize('editor.entity_types.remaining_parent_state') },
           { value: 'remaining_child_state', label: localize('editor.entity_types.remaining_child_state') },
           { value: 'passthrough', label: localize('editor.entity_types.passthrough') },
+          { value: 'high_carbon_energy', label: localize('editor.entity_types.high_carbon_energy') },
+          { value: 'low_carbon_energy', label: localize('editor.entity_types.low_carbon_energy') },
         ],
       },
     },
