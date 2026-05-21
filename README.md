@@ -242,6 +242,7 @@ or like this:
 | group_by_floor    | boolean | **Optional** | true                | Display data per floor
 | group_by_area     | boolean | **Optional** | true                | Display data per area
 | net_flows         | boolean | **Optional** | true                | Show net energy flows. Set to `false` to show gross energy flows instead, making grid export and battery charge/discharge visible even for net importers
+| carbon_split      | boolean | **Optional** | false               | Replace the grid source node with a `high_carbon_energy` / `low_carbon_energy` split (energy mode only). Requires a CO2 signal entity configured in the energy dashboard. See [entity types](#entity-types).
 
 ### Time Period
 

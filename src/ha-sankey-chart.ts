@@ -62,6 +62,8 @@ const NO_AREA = 'no_area';
 // Suffix for synthetic export/charge nodes in rate-mode autoconfig (mirrors
 // the existing `__passthrough_N__auto` convention from autoRouteCrossGapLinks).
 const AUTO_TO_SUFFIX = '__to_auto';
+const AUTO_LOW_CARBON_SUFFIX = '__low_carbon_auto';
+const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
@@ -292,6 +294,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     const rateMode = isRateMode(mode);
     const validTypes = sourceTypesForMode(mode);
     const netFlows = this.config.autoconfig?.net_flows !== false;
+    const carbonSplit = this.config.autoconfig?.carbon_split === true && mode === 'energy';
 
     const fromEntity = (s: EnergySource): string | undefined =>
       rateMode ? s.stat_rate : s.stat_energy_from;
@@ -370,6 +373,31 @@ class SankeyChart extends SubscribeMixin(LitElement) {
 
     sources.forEach(source => {
       const id = fromEntity(source)!;
+      if (carbonSplit && source.type === 'grid') {
+        // Replace the grid source node with a fossil/non-fossil split using
+        // the same section, so there's no extra column added to the chart.
+        const lowId = `${id}${AUTO_LOW_CARBON_SUFFIX}`;
+        const highId = `${id}${AUTO_HIGH_CARBON_SUFFIX}`;
+        nodes.push({
+          id: lowId,
+          entity_id: id,
+          section: currentSection,
+          type: 'low_carbon_energy',
+          name: 'Low-carbon',
+          color: 'var(--energy-non-fossil-color)',
+        });
+        nodes.push({
+          id: highId,
+          entity_id: id,
+          section: currentSection,
+          type: 'high_carbon_energy',
+          name: 'High-carbon',
+          color: getEnergySourceColor(source.type),
+        });
+        links.push({ source: lowId, target: TOTAL_NODE_ID });
+        links.push({ source: highId, target: TOTAL_NODE_ID });
+        return;
+      }
       const exportId = toEntity(source);
       const subtract = (source.type === 'grid' || source.type === 'battery') && !netFlows
         ? undefined
@@ -426,6 +454,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         sources.forEach(s => {
           const sId = fromEntity(s);
           if (!sId) return;
+          // With carbon_split, there's no grid source node — skip the link
+          // rather than producing a dangling source.
+          if (carbonSplit && s.type === 'grid') return;
           links.push({ source: sId, target: exportEntity });
         });
       };

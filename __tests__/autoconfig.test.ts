@@ -122,6 +122,68 @@ describe('SankeyChart autoconfig', () => {
     expect(gridImport.subtract_entities).toBeUndefined();
   });
 
+  it('carbon_split: replaces grid source node with high/low carbon nodes', async () => {
+    hass.states['sensor.grid_out'] = { entity_id: 'sensor.grid_out', state: '3' } as any;
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { carbon_split: true } }, true);
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [
+        { type: 'grid', stat_energy_from: 'sensor.grid_in', stat_energy_to: 'sensor.grid_out' },
+        { type: 'solar', stat_energy_from: 'sensor.solar' },
+      ],
+      device_consumption: [],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+
+    // No plain grid_in node
+    expect(config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_in')).toBeUndefined();
+
+    const low = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_in__low_carbon_auto');
+    const high = config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_in__high_carbon_auto');
+    expect(low).toMatchObject({ type: 'low_carbon_energy', entity_id: 'sensor.grid_in', section: 0 });
+    expect(high).toMatchObject({ type: 'high_carbon_energy', entity_id: 'sensor.grid_in', section: 0 });
+
+    // Both carbon nodes link to total
+    expect(config.links).toEqual(
+      expect.arrayContaining([
+        { source: low.id, target: 'total' },
+        { source: high.id, target: 'total' },
+      ]),
+    );
+
+    // Solar source untouched
+    expect(config.nodes.find((n: { id: string }) => n.id === 'sensor.solar')).toBeDefined();
+
+    // Grid export node still exists, but no dangling grid_in → grid_out link
+    expect(config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_out')).toBeDefined();
+    expect(
+      config.links.find((l: { source: string; target: string }) => l.source === 'sensor.grid_in' && l.target === 'sensor.grid_out'),
+    ).toBeUndefined();
+  });
+
+  it('carbon_split: ignored in power mode', async () => {
+    sankeyChart.setConfig({ ...DEFAULT_CONFIG, autoconfig: { mode: 'power', carbon_split: true } }, true);
+    hass.states['sensor.grid_rate'] = { entity_id: 'sensor.grid_rate', state: '2' } as any;
+    (getEnergyPreferences as jest.Mock).mockResolvedValue({
+      energy_sources: [{ type: 'grid', stat_rate: 'sensor.grid_rate' }],
+      device_consumption: [],
+    });
+    (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+    (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sankeyChart as any)['autoconfig']();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = (sankeyChart as any).config;
+    expect(config.nodes.find((n: { id: string }) => n.id === 'sensor.grid_rate')).toBeDefined();
+    expect(config.nodes.find((n: { type?: string }) => n.type === 'low_carbon_energy')).toBeUndefined();
+  });
+
   it('creates sections from energy preferences', async () => {
     (getEnergyPreferences as jest.Mock).mockResolvedValue({
       energy_sources: [

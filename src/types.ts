@@ -38,6 +38,7 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
     group_by_floor?: boolean;
     group_by_area?: boolean;
     net_flows?: boolean;
+    carbon_split?: boolean;
   };
   title?: string;
   convert_units_to?: '' | CONVERSION_UNITS;
