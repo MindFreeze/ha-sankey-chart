@@ -14,7 +14,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           <div class=" container with-header ">
             <svg class="chart" preserveAspectRatio="xMinYMin meet" viewBox="0 0 992 200" width="992" height="200">
               
-    <g class="section" transform="translate(0, 0)">
+    <g class="section">
       
         <defs>
           
@@ -47,7 +47,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
         
     </g>
   
-    <g class="section" transform="translate(229.0625, 0)">
+    <g class="section">
       
         <defs>
           
@@ -68,11 +68,11 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           
         </defs>
         
-              <path d="M15,5 C122.03125,5 122.03125,0 229.0625,0 L229.0625,63 C122.03125,63 122.03125,68.2879899767317 15,68.2879899767317 Z" fill="url(#gradient1.0.0)" fill-opacity="0.4"></path>
+              <path d="M244.0625,5 C351.09375,5 351.09375,0 458.125,0 L458.125,63 C351.09375,63 351.09375,68.2879899767317 244.0625,68.2879899767317 Z" fill="url(#gradient1.0.0)" fill-opacity="0.4"></path>
             
-              <path d="M15,68.2879899767317 C122.03125,68.2879899767317 122.03125,68.5 229.0625,68.5 L229.0625,131.5 C122.03125,131.5 122.03125,131.60998747091463 15,131.60998747091463 Z" fill="url(#gradient1.0.1)" fill-opacity="0.4"></path>
+              <path d="M244.0625,68.2879899767317 C351.09375,68.2879899767317 351.09375,68.5 458.125,68.5 L458.125,131.5 C351.09375,131.5 351.09375,131.60998747091463 244.0625,131.60998747091463 Z" fill="url(#gradient1.0.1)" fill-opacity="0.4"></path>
             
-              <path d="M15,131.60998747091463 C122.03125,131.60998747091463 122.03125,137 229.0625,137 L229.0625,200 C122.03125,200 122.03125,195.00000000000003 15,195.00000000000003 Z" fill="url(#gradient1.0.2)" fill-opacity="0.4"></path>
+              <path d="M244.0625,131.60998747091463 C351.09375,131.60998747091463 351.09375,137 458.125,137 L458.125,200 C351.09375,200 351.09375,195.00000000000003 244.0625,195.00000000000003 Z" fill="url(#gradient1.0.2)" fill-opacity="0.4"></path>
             
       </g>
       
@@ -92,9 +92,9 @@ IDK
 IDK
 IDK
 IDK</title>
-            <rect class="color-bar" x="0" y="5" width="15" height="190" fill="darkslateblue"></rect>
+            <rect class="color-bar" x="229.0625" y="5" width="15" height="190" fill="darkslateblue"></rect>
             
-            <foreignObject x="15" y="5" width="214.0625" height="190">
+            <foreignObject x="244.0625" y="5" width="214.0625" height="190">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
@@ -108,7 +108,7 @@ IDK</title>
         
     </g>
   
-    <g class="section" transform="translate(458.125, 0)">
+    <g class="section">
       
         <defs>
           
@@ -119,7 +119,7 @@ IDK</title>
           
         </defs>
         
-              <path d="M15,0 C122.03125,0 122.03125,68.5 229.0625,68.5 L229.0625,131.43236714975845 C122.03125,131.43236714975845 122.03125,63 15,63 Z" fill="url(#gradient2.0.0)" fill-opacity="0.4"></path>
+              <path d="M473.125,0 C580.15625,0 580.15625,68.5 687.1875,68.5 L687.1875,131.43236714975845 C580.15625,131.43236714975845 580.15625,63 473.125,63 Z" fill="url(#gradient2.0.0)" fill-opacity="0.4"></path>
             
       
         <defs>
@@ -131,7 +131,7 @@ IDK</title>
           
         </defs>
         
-              <path d="M15,68.5 C122.03125,68.5 122.03125,131.43236714975845 229.0625,131.43236714975845 L229.0625,131.5 C122.03125,131.5 122.03125,68.56766917293233 15,68.56766917293233 Z" fill="url(#gradient2.1.0)" fill-opacity="0.4"></path>
+              <path d="M473.125,68.5 C580.15625,68.5 580.15625,131.43236714975845 687.1875,131.43236714975845 L687.1875,131.5 C580.15625,131.5 580.15625,68.56766917293233 473.125,68.56766917293233 Z" fill="url(#gradient2.1.0)" fill-opacity="0.4"></path>
             
       
         <defs>
@@ -143,9 +143,9 @@ IDK</title>
           <g class=" box type-entity ">
             <title>1.9kW Varmtvann
 Blaa</title>
-            <rect class="color-bar" x="0" y="0" width="15" height="63" fill="var(--primary-color)"></rect>
+            <rect class="color-bar" x="458.125" y="0" width="15" height="63" fill="var(--primary-color)"></rect>
             
-            <foreignObject x="15" y="0" width="214.0625" height="63">
+            <foreignObject x="473.125" y="0" width="214.0625" height="63">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
@@ -159,9 +159,9 @@ Blaa</title>
         
           <g class=" box type-entity ">
             <title></title>
-            <rect class="color-bar" x="0" y="68.5" width="15" height="63" fill="var(--primary-color)"></rect>
+            <rect class="color-bar" x="458.125" y="68.5" width="15" height="63" fill="var(--primary-color)"></rect>
             
-            <foreignObject x="15" y="68.5" width="214.0625" height="63">
+            <foreignObject x="473.125" y="68.5" width="214.0625" height="63">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
@@ -175,9 +175,9 @@ Blaa</title>
         
           <g class=" box type-entity ">
             <title></title>
-            <rect class="color-bar" x="0" y="137" width="15" height="63" fill="var(--primary-color)"></rect>
+            <rect class="color-bar" x="458.125" y="137" width="15" height="63" fill="var(--primary-color)"></rect>
             
-            <foreignObject x="15" y="137" width="214.0625" height="63">
+            <foreignObject x="473.125" y="137" width="214.0625" height="63">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
@@ -191,7 +191,7 @@ Blaa</title>
         
     </g>
   
-    <g class="section" transform="translate(687.1875, 0)">
+    <g class="section">
       
         <defs>
           
@@ -202,15 +202,15 @@ Blaa</title>
           
         </defs>
         
-              <path d="M15,68.5 C122.03125,68.5 122.03125,68.5 229.0625,68.5 L229.0625,131.5 C122.03125,131.5 122.03125,131.5 15,131.5 Z" fill="url(#gradient3.0.0)" fill-opacity="0.4"></path>
+              <path d="M702.1875,68.5 C809.21875,68.5 809.21875,68.5 916.25,68.5 L916.25,131.5 C809.21875,131.5 809.21875,131.5 702.1875,131.5 Z" fill="url(#gradient3.0.0)" fill-opacity="0.4"></path>
             
       </g>
       
           <g class=" box type-passthrough ">
             <title></title>
-            <rect class="color-bar" x="0" y="68.5" width="15" height="63" fill="red"></rect>
+            <rect class="color-bar" x="687.1875" y="68.5" width="15" height="63" fill="red"></rect>
             
-            <foreignObject x="15" y="68.5" width="214.0625" height="63">
+            <foreignObject x="702.1875" y="68.5" width="214.0625" height="63">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 
               </div>
@@ -219,14 +219,14 @@ Blaa</title>
         
     </g>
   
-    <g class="section" transform="translate(916.25, 0)">
+    <g class="section">
       
       
           <g class=" box type-entity ">
             <title></title>
-            <rect class="color-bar" x="0" y="68.5" width="15" height="63" fill="red"></rect>
+            <rect class="color-bar" x="916.25" y="68.5" width="15" height="63" fill="red"></rect>
             
-            <foreignObject x="15" y="68.5" width="60.75" height="63">
+            <foreignObject x="931.25" y="68.5" width="60.75" height="63">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>

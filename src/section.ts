@@ -17,9 +17,9 @@ export function renderBranchConnectors(props: {
   allConnections: ConnectionState[];
   vertical: boolean;
 }): SVGTemplateResult[] {
-  const { boxes, size } = props.section;
-  const nearEdge = BOX_COLOR_BAR;
-  const farEdge = size;
+  const { boxes, size, offset } = props.section;
+  const nearEdge = BOX_COLOR_BAR + offset;
+  const farEdge = size + offset;
   const midEdge = (nearEdge + farEdge) / 2;
   return boxes
     .filter(b => b.children.length > 0)
@@ -84,12 +84,9 @@ export function renderSection(props: {
   const { show_icons } = props.config;
   const { boxes, spacerSize, offset, size } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
-  const sectionTransform = props.vertical
-    ? `translate(0, ${offset})`
-    : `translate(${offset}, 0)`;
 
   return svg`
-    <g class="section" transform="${sectionTransform}">
+    <g class="section">
       ${hasChildren
         ? svg`<g class="connectors">${renderBranchConnectors(props)}</g>`
         : null}
@@ -105,11 +102,11 @@ export function renderSection(props: {
         const isHighlighted = props.highlightedEntities.includes(box.config);
 
         const colorRect = props.vertical
-          ? { x: box.top, y: 0, width: box.size, height: BOX_COLOR_BAR }
-          : { x: 0, y: box.top, width: BOX_COLOR_BAR, height: box.size };
+          ? { x: box.top, y: offset, width: box.size, height: BOX_COLOR_BAR }
+          : { x: offset, y: box.top, width: BOX_COLOR_BAR, height: box.size };
         const labelArea = props.vertical
-          ? { x: box.top, y: BOX_COLOR_BAR, width: box.size, height: size - BOX_COLOR_BAR }
-          : { x: BOX_COLOR_BAR, y: box.top, width: size - BOX_COLOR_BAR, height: box.size };
+          ? { x: box.top, y: offset + BOX_COLOR_BAR, width: box.size, height: size - BOX_COLOR_BAR }
+          : { x: offset + BOX_COLOR_BAR, y: box.top, width: size - BOX_COLOR_BAR, height: box.size };
 
         const classes = classMap({
           box: true,

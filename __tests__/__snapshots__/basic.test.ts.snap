@@ -14,7 +14,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
           <div class=" container ">
             <svg class="chart" preserveAspectRatio="xMinYMin meet" viewBox="0 0 992 200" width="992" height="200">
               
-    <g class="section" transform="translate(0, 0)">
+    <g class="section">
       
         <defs>
           
@@ -54,14 +54,14 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
         
     </g>
   
-    <g class="section" transform="translate(940.7, 0)">
+    <g class="section">
       
       
           <g class=" box type-entity ">
             <title></title>
-            <rect class="color-bar" x="0" y="0" width="15" height="97" fill="var(--primary-color)"></rect>
+            <rect class="color-bar" x="940.7" y="0" width="15" height="97" fill="var(--primary-color)"></rect>
             
-            <foreignObject x="15" y="0" width="36.3" height="97">
+            <foreignObject x="955.7" y="0" width="36.3" height="97">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
@@ -75,9 +75,9 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
         
           <g class=" box type-entity ">
             <title></title>
-            <rect class="color-bar" x="0" y="103" width="15" height="97" fill="var(--primary-color)"></rect>
+            <rect class="color-bar" x="940.7" y="103" width="15" height="97" fill="var(--primary-color)"></rect>
             
-            <foreignObject x="15" y="103" width="36.3" height="97">
+            <foreignObject x="955.7" y="103" width="36.3" height="97">
               <div class="label-wrap" xmlns="http://www.w3.org/1999/xhtml">
                 <div class="label" style="line-height:15px;">
     <span>
