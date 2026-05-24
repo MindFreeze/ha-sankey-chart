@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.0.0...v6.1.0) (2026-05-24)
+
+
+### Features
+
+* **#54:** add high_carbon_energy and low_carbon_energy node types and carbon_split option to autoconfig ([#364](https://github.com/MindFreeze/ha-sankey-chart/issues/364)) ([4f41934](https://github.com/MindFreeze/ha-sankey-chart/commit/4f419341d7aa0edc784743350931580c2c16d917))
+
+
+### Bug Fixes
+
+* **#368:** position section content with absolute coords to fix Safari icon placement ([#369](https://github.com/MindFreeze/ha-sankey-chart/issues/369)) ([e392d44](https://github.com/MindFreeze/ha-sankey-chart/commit/e392d4404ed8418b5d08494f50303a356ba97d0d))
+
 ## [6.0.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v5.1.0...v6.0.0) (2026-05-21)
 
 
