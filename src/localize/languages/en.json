@@ -34,6 +34,8 @@
       "wide": "Wide",
       "min_box_size": "Min box size",
       "min_box_distance": "Min box distance",
+      "box_thickness": "Box thickness",
+      "connection_margin": "Connection margin",
       "min_state": "Min state",
       "static_scale": "Static scale",
       "round": "Round",

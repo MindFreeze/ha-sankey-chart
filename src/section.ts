@@ -6,11 +6,11 @@ import { formatState, getBoxName, getChildConnections, getEntityId, normalizeSta
 import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { renderLabel } from './label';
-import { BOX_COLOR_BAR } from './const';
 
 const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 export function renderBranchConnectors(props: {
+  config: Config;
   section: SectionState;
   nextSection?: SectionState;
   sectionIndex: number;
@@ -18,8 +18,9 @@ export function renderBranchConnectors(props: {
   vertical: boolean;
 }): SVGTemplateResult[] {
   const { boxes, size, offset } = props.section;
-  const nearEdge = BOX_COLOR_BAR + offset;
-  const farEdge = size + offset;
+  const { box_thickness, connection_margin } = props.config;
+  const nearEdge = box_thickness + connection_margin + offset;
+  const farEdge = size + offset - connection_margin;
   const midEdge = (nearEdge + farEdge) / 2;
   return boxes
     .filter(b => b.children.length > 0)
@@ -81,7 +82,7 @@ export function renderSection(props: {
   onMouseEnter: (config: Box) => void;
   onMouseLeave: () => void;
 }) {
-  const { show_icons } = props.config;
+  const { show_icons, box_thickness } = props.config;
   const { boxes, spacerSize, offset, size } = props.section;
   const hasChildren = props.nextSection && boxes.some(b => b.children.length > 0);
 
@@ -102,11 +103,11 @@ export function renderSection(props: {
         const isHighlighted = props.highlightedEntities.includes(box.config);
 
         const colorRect = props.vertical
-          ? { x: box.top, y: offset, width: box.size, height: BOX_COLOR_BAR }
-          : { x: offset, y: box.top, width: BOX_COLOR_BAR, height: box.size };
+          ? { x: box.top, y: offset, width: box.size, height: box_thickness }
+          : { x: offset, y: box.top, width: box_thickness, height: box.size };
         const labelArea = props.vertical
-          ? { x: box.top, y: offset + BOX_COLOR_BAR, width: box.size, height: size - BOX_COLOR_BAR }
-          : { x: offset + BOX_COLOR_BAR, y: box.top, width: size - BOX_COLOR_BAR, height: box.size };
+          ? { x: box.top, y: offset + box_thickness, width: box.size, height: size - box_thickness }
+          : { x: offset + box_thickness, y: box.top, width: size - box_thickness, height: box.size };
 
         const classes = classMap({
           box: true,

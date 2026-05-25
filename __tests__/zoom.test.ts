@@ -9,6 +9,8 @@ const config = {
   height: 200,
   min_box_size: 3,
   min_box_distance: 5,
+  box_thickness: 15,
+  connection_margin: 0,
   min_state: 0,
   nodes: [],
   links: [],

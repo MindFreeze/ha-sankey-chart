@@ -11,7 +11,6 @@ import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
 import {
-  BOX_COLOR_BAR,
   CHAR_WIDTH_RATIO,
   LABEL_PADDING,
   MIN_LABEL_HEIGHT,
@@ -539,12 +538,13 @@ export class Chart extends LitElement {
     }
     const stateLines = show_states ? 1 : 0;
     const totalLines = stateLines + nameLines;
-    if (!totalLines) return BOX_COLOR_BAR;
-    return BOX_COLOR_BAR + 5 + totalLines * MIN_LABEL_HEIGHT;
+    const { box_thickness } = this.config;
+    if (!totalLines) return box_thickness;
+    return box_thickness + 5 + totalLines * MIN_LABEL_HEIGHT;
   }
 
   private _naturalSectionWidth(section: SectionState): number {
-    const { show_states, show_names, show_units, round, monetary_unit } = this.config;
+    const { show_states, show_names, show_units, round, monetary_unit, box_thickness } = this.config;
     let maxWidth = 0;
     for (const box of section.boxes) {
       if (box.config.type === 'passthrough') continue;
@@ -556,7 +556,7 @@ export class Chart extends LitElement {
       const nameW = nameText.length * NAME_CHAR_WIDTH;
       const separatorW = stateText && nameText ? SEPARATOR_WIDTH : 0;
       const labelW = stateW + separatorW + nameW + 2 * LABEL_PADDING;
-      maxWidth = Math.max(maxWidth, BOX_COLOR_BAR + labelW);
+      maxWidth = Math.max(maxWidth, box_thickness + labelW);
     }
     return maxWidth;
   }

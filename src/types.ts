@@ -5,7 +5,7 @@ import {
   LovelaceCardConfig,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
-import { UNIT_PREFIXES, CONVERSION_UNITS } from './const';
+import { UNIT_PREFIXES, CONVERSION_UNITS, BOX_COLOR_BAR } from './const';
 
 export const DEFAULT_CONFIG: Config = {
   type: 'custom:ha-sankey-chart',
@@ -20,6 +20,8 @@ export const DEFAULT_CONFIG: Config = {
   min_state: 0,
   show_states: true,
   show_units: true,
+  box_thickness: BOX_COLOR_BAR,
+  connection_margin: 0,
   nodes: [],
   links: [],
   sections: [],
@@ -59,6 +61,8 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   energy_collection_key?: string;
   min_box_size?: number;
   min_box_distance?: number;
+  box_thickness?: number;
+  connection_margin?: number;
   throttle?: number;
   min_state?: number;
   static_scale?: number;
@@ -201,6 +205,8 @@ export interface Config extends SankeyChartConfig {
   height: number;
   min_box_size: number;
   min_box_distance: number;
+  box_thickness: number;
+  connection_margin: number;
   min_state: number;
   nodes: Node[];
   links: Link[];
