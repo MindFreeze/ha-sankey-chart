@@ -5,7 +5,7 @@ import {
   LovelaceCardConfig,
 } from 'custom-card-helpers';
 import { HassEntity, HassServiceTarget } from 'home-assistant-js-websocket';
-import { UNIT_PREFIXES, CONVERSION_UNITS, BOX_COLOR_BAR } from './const';
+import { UNIT_PREFIXES, CONVERSION_UNITS, DEFAULT_BOX_THICKNESS } from './const';
 
 export const DEFAULT_CONFIG: Config = {
   type: 'custom:ha-sankey-chart',
@@ -20,7 +20,7 @@ export const DEFAULT_CONFIG: Config = {
   min_state: 0,
   show_states: true,
   show_units: true,
-  box_thickness: BOX_COLOR_BAR,
+  box_thickness: DEFAULT_BOX_THICKNESS,
   connection_margin: 0,
   nodes: [],
   links: [],

@@ -14,7 +14,7 @@ export const NAME_CHAR_WIDTH = 6; // proportional/italic name text is narrower
 export const SEPARATOR_WIDTH = 4; // nbsp between state and name
 export const LABEL_PADDING = 10; // .label has padding: 0 10px
 
-export const BOX_COLOR_BAR = 15; // width/height of the colored bar on each box
+export const DEFAULT_BOX_THICKNESS = 15; // default width/height of the colored bar on each box
 
 export const MIN_HORIZONTAL_SECTION_W = 150;
 export const MIN_VERTICAL_SECTION_H = 150;
