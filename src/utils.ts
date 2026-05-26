@@ -401,56 +401,69 @@ export function calculateTimePeriod(from: string, to = 'now'): { start: Date; en
   const now = new Date();
 
   function parseTimeString(timeStr: string): Date {
-    if (timeStr === 'now') return now;
-
-    const match = timeStr.match(/^now(-|\+)?(\d+)?([smhdwMy])?(\/(d|w|M|y))?$/);
-    if (!match) throw new Error(`Invalid time format: ${timeStr}`);
-
-    const [, sign, amount, unit, , roundTo] = match;
-    let date = new Date(now);
-
-    if (amount && unit) {
-      const numAmount = parseInt(amount, 10) * (sign === '-' ? -1 : 1);
-      switch (unit) {
-        case 's':
-          date = addSeconds(date, numAmount);
-          break;
-        case 'm':
-          date = addMinutes(date, numAmount);
-          break;
-        case 'h':
-          date = addHours(date, numAmount);
-          break;
-        case 'd':
-          date = addDays(date, numAmount);
-          break;
-        case 'w':
-          date = addWeeks(date, numAmount);
-          break;
-        case 'M':
-          date = addMonths(date, numAmount);
-          break;
-        case 'y':
-          date = addYears(date, numAmount);
-          break;
-      }
+    if (!timeStr.startsWith('now')) {
+      throw new Error(`Invalid time format: ${timeStr}`);
     }
 
-    if (roundTo) {
-      switch (roundTo) {
-        case 'd':
-          date = startOfDay(date);
-          break;
-        case 'w':
-          date = startOfWeek(date);
-          break;
-        case 'M':
-          date = startOfMonth(date);
-          break;
-        case 'y':
-          date = startOfYear(date);
-          break;
+    let date = new Date(now);
+    let rest = timeStr.slice(3);
+
+    // Apply offset (`[+-]N{unit}`) and rounding (`/{unit}`) tokens left-to-right,
+    // so Grafana-style anchors like `now/d+7h` or `now-1d/d+23h` are supported.
+    while (rest.length > 0) {
+      const offsetMatch = rest.match(/^([+-])(\d+)([smhdwMy])/);
+      if (offsetMatch) {
+        const [token, sign, amount, unit] = offsetMatch;
+        const numAmount = parseInt(amount, 10) * (sign === '-' ? -1 : 1);
+        switch (unit) {
+          case 's':
+            date = addSeconds(date, numAmount);
+            break;
+          case 'm':
+            date = addMinutes(date, numAmount);
+            break;
+          case 'h':
+            date = addHours(date, numAmount);
+            break;
+          case 'd':
+            date = addDays(date, numAmount);
+            break;
+          case 'w':
+            date = addWeeks(date, numAmount);
+            break;
+          case 'M':
+            date = addMonths(date, numAmount);
+            break;
+          case 'y':
+            date = addYears(date, numAmount);
+            break;
+        }
+        rest = rest.slice(token.length);
+        continue;
       }
+
+      const roundMatch = rest.match(/^\/([dwMy])/);
+      if (roundMatch) {
+        const [token, roundUnit] = roundMatch;
+        switch (roundUnit) {
+          case 'd':
+            date = startOfDay(date);
+            break;
+          case 'w':
+            date = startOfWeek(date);
+            break;
+          case 'M':
+            date = startOfMonth(date);
+            break;
+          case 'y':
+            date = startOfYear(date);
+            break;
+        }
+        rest = rest.slice(token.length);
+        continue;
+      }
+
+      throw new Error(`Invalid time format: ${timeStr}`);
     }
 
     return date;

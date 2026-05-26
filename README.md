@@ -266,6 +266,11 @@ Examples:
 - `now/M`: Start of the current month
 - `now/y`: Start of the current year
 - `now-1d/d`: Start of the previous day
+- `now/d+7h`: Today at 07:00
+- `now-1d/d+23h`: Yesterday at 23:00
+- `now/d-1h`: Yesterday at 23:00 (equivalent)
+
+Modifiers can be combined: offsets and roundings are applied left-to-right, so anchors like `now/d+7h` (round to today's midnight, then add 7 hours) are supported.
 
 If `time_period_to` is not specified, it defaults to `now`.
 
@@ -282,6 +287,13 @@ type: custom:sankey-chart
 title: Yesterday
 time_period_from: "now-1d/d"
 time_period_to: "now/d"
+```
+
+```yaml
+type: custom:sankey-chart
+title: Quiet hours (23:00–07:00)
+time_period_from: "now-1d/d+23h"
+time_period_to: "now/d+7h"
 ```
 
 
