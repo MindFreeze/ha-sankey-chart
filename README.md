@@ -37,7 +37,9 @@ Install through [HACS](https://hacs.xyz/)
 | show_states       | boolean | true                | Display entity states
 | show_units        | boolean | true                | Display unit of measurement
 | min_box_size      | number  | 3                   | Minimum size of an entity box
-| min_box_distance  | number  | 5                   | Minimum space between entity boxes
+| min_box_distance  | number  | 5                   | Minimum space between entity boxes in the same section (perpendicular to flow)
+| box_thickness     | number  | 15                  | Thickness in px of the colored bar on each entity box (its width in horizontal layout, height in vertical)
+| connection_margin | number  | 0                   | Gap in px between a box and where its connection curves start/end (along the direction of flow). Increase to separate the curves from the box bars
 | min_state         | number  | >0                  | Any entity below this value will not be displayed. Only positive numbers above 0 are allowed. The default is to show everything above 0.
 | throttle          | number  |                     | Minimum time in ms between updates/rerenders
 | static_scale      | number  |                     | State value corresponding to the maximum size (height for horizontal layout and width in vertical) of the card. For example, if this is set to 1000, then a box with state 500 will take up half of its section. If some section exceeds the value of `static_scale`, the card will dynamically rescale overriding this option. See [#153](https://github.com/MindFreeze/ha-sankey-chart/issues/153).

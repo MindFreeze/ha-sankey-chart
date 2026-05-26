@@ -89,6 +89,69 @@ describe('SankeyChart', () => {
 
     expect(sankeyChartBase.shadowRoot?.innerHTML.replace(/<!--.*-->/g, '')).toMatchSnapshot();
   });
+
+  it('honors box_thickness and connection_margin in rendered SVG', async () => {
+    const config: SankeyChartConfig = {
+      type: '',
+      box_thickness: 5,
+      connection_margin: 8,
+      nodes: [
+        { id: 'ent1', section: 0, type: 'entity', name: '' },
+        { id: 'ent2', section: 1, type: 'entity', name: '' },
+      ],
+      links: [{ source: 'ent1', target: 'ent2' }],
+      sections: [{}, {}],
+    };
+    sankeyChart.setConfig(config, true);
+    document.body.appendChild(sankeyChart);
+    await sankeyChart.updateComplete;
+    const base = sankeyChart.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+
+    // First color bar: width should match box_thickness (5px), not the 15px default.
+    const colorBars = base.shadowRoot?.querySelectorAll('rect.color-bar');
+    expect(colorBars && colorBars.length).toBe(2);
+    expect(colorBars![0].getAttribute('width')).toBe('5');
+    // Second section's color bar sits at the right edge — its x marks the end
+    // of section 0, which is where farEdge is measured against.
+    const nextSectionX = Number(colorBars![1].getAttribute('x'));
+
+    // Connector path: nearEdge = box_thickness + connection_margin = 13;
+    // farEdge = nextSectionX - connection_margin.
+    const path = base.shadowRoot?.querySelector('g.connectors path');
+    const d = path?.getAttribute('d') || '';
+    const moveTo = d.match(/^M([\d.]+),/);
+    expect(moveTo).not.toBeNull();
+    expect(Number(moveTo![1])).toBe(13);
+    const lineTo = d.match(/L([\d.]+),/);
+    expect(lineTo).not.toBeNull();
+    expect(Number(lineTo![1])).toBe(nextSectionX - 8);
+  });
+
+  it('collapses the color bar when box_thickness is 0', async () => {
+    const config: SankeyChartConfig = {
+      type: '',
+      box_thickness: 0,
+      nodes: [
+        { id: 'ent1', section: 0, type: 'entity', name: '' },
+        { id: 'ent2', section: 1, type: 'entity', name: '' },
+      ],
+      links: [{ source: 'ent1', target: 'ent2' }],
+      sections: [{}, {}],
+    };
+    sankeyChart.setConfig(config, true);
+    document.body.appendChild(sankeyChart);
+    await sankeyChart.updateComplete;
+    const base = sankeyChart.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+
+    const colorBar = base.shadowRoot?.querySelector('rect.color-bar');
+    expect(colorBar?.getAttribute('width')).toBe('0');
+    // With default connection_margin (0), the connector starts at the box's
+    // right edge — which, with thickness 0, is the section's left edge (x=0).
+    const path = base.shadowRoot?.querySelector('g.connectors path');
+    expect(path?.getAttribute('d')).toMatch(/^M0,/);
+  });
 });
 
 describe('Missing entities', () => {
