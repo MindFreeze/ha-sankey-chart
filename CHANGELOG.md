@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.1.0...v6.2.0) (2026-05-26)
+
+
+### Features
+
+* **#366:** add box_thickness and connection_margin config options ([#371](https://github.com/MindFreeze/ha-sankey-chart/issues/371)) ([299a772](https://github.com/MindFreeze/ha-sankey-chart/commit/299a77282c44de6dabd14ecae8c649ebdbcb3314))
+
+
+### Bug Fixes
+
+* **#370:** allow modifiers after rounding in time_period_from/to ([#374](https://github.com/MindFreeze/ha-sankey-chart/issues/374)) ([f4349a8](https://github.com/MindFreeze/ha-sankey-chart/commit/f4349a8b25cd8367afecea4fd0a453688ac2744c))
+
 ## [6.1.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.0.0...v6.1.0) (2026-05-24)
 
 
