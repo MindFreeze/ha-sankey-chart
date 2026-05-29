@@ -442,4 +442,70 @@ describe('Connection tooltip', () => {
     expect(titles).toEqual(['Grid → House: 200W', 'Grid → Battery: 100W']);
     element.remove();
   });
+
+  it('collapses multi-line node names into a single-line tooltip', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.grid', section: 0, type: 'entity', name: 'Power\nMeter' },
+        { id: 'sensor.house', section: 1, type: 'entity', name: 'Main\nHouse' },
+      ],
+      links: [{ source: 'sensor.grid', target: 'sensor.house' }],
+      sections: [{}, {}],
+    };
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = tooltipHass as HomeAssistant;
+    element.setConfig(config, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+
+    const title = base.shadowRoot?.querySelector('g.connectors path title')?.textContent;
+    expect(title).toBe('Power Meter → Main House: 200W');
+    element.remove();
+  });
+
+  it('scales the tooltip value with the box label under unit_prefix: auto', async () => {
+    const autoHass = mockHass({
+      'sensor.grid': {
+        entity_id: 'sensor.grid',
+        state: '2500',
+        attributes: { unit_of_measurement: 'W' },
+      },
+      'sensor.house': {
+        entity_id: 'sensor.house',
+        state: '2500',
+        attributes: { unit_of_measurement: 'W' },
+      },
+    });
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      unit_prefix: 'auto',
+      round: 1,
+      nodes: [
+        { id: 'sensor.grid', section: 0, type: 'entity', name: 'Grid' },
+        { id: 'sensor.house', section: 1, type: 'entity', name: 'House' },
+      ],
+      links: [{ source: 'sensor.grid', target: 'sensor.house' }],
+      sections: [{}, {}],
+    };
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = autoHass as HomeAssistant;
+    element.setConfig(config, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+
+    // 2500 W auto-scales to 2.5 kW; the tooltip must match the box label, not
+    // show the raw base-unit value (2500W).
+    const title = base.shadowRoot?.querySelector('g.connectors path title')?.textContent;
+    const boxTitle = base.shadowRoot?.querySelector('g.box title')?.textContent;
+    expect(title).toBe('Grid → House: 2.5kW');
+    expect(boxTitle).toContain('2.5kW');
+    element.remove();
+  });
 });

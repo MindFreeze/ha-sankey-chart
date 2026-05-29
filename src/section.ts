@@ -59,11 +59,25 @@ export function renderBranchConnectors(props: {
             ['', ...pt(c.startY + c.startSize, nearEdge)],
           ];
           // Native hover tooltip for the flow, mirroring the box <title>.
-          // Built as one concatenated string so it renders as a single text node.
+          // Re-apply the unit prefix so the value matches the box label: with
+          // unit_prefix: 'auto' the boxes are rescaled per-box at render time
+          // while c.state stays in base units (for explicit prefixes the state
+          // is already scaled, so this is a no-op). Node names may carry
+          // intentional newlines for box labels, but a flow tooltip reads best
+          // on one line, so collapse whitespace. Built as one concatenated
+          // string so it renders as a single text node.
+          const { state: scaledState, unit_of_measurement: scaledUnit } = normalizeStateValue(
+            props.config.unit_prefix,
+            c.state,
+            b.unit_of_measurement,
+            true,
+          );
           const value =
-            formatState(c.state, props.config.round, props.locale, props.config.monetary_unit) +
-            (b.unit_of_measurement || '');
-          const title = `${c.startName} → ${c.endName}: ${value}`;
+            formatState(scaledState, props.config.round, props.locale, props.config.monetary_unit) +
+            (scaledUnit || '');
+          const source = (c.startName || '').replace(/\s+/g, ' ').trim();
+          const target = (c.endName || '').replace(/\s+/g, ' ').trim();
+          const title = `${source} → ${target}: ${value}`;
           return svg`
               <path d="${coords.map(([cmd, x, y]) => `${cmd}${x},${y}`).join(' ')} Z"
                 fill="url(#gradient${props.sectionIndex}.${boxIndex}.${i})" fill-opacity="${
