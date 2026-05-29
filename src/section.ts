@@ -10,6 +10,7 @@ import { renderLabel } from './label';
 const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 export function renderBranchConnectors(props: {
+  locale: FrontendLocaleData;
   config: Config;
   section: SectionState;
   nextSection?: SectionState;
@@ -57,11 +58,19 @@ export function renderBranchConnectors(props: {
             ['', ...pt(c.startY + c.startSize, midEdge)],
             ['', ...pt(c.startY + c.startSize, nearEdge)],
           ];
+          // Native hover tooltip for the flow, mirroring the box <title>.
+          // Built as one concatenated string so it renders as a single text node.
+          const value =
+            formatState(c.state, props.config.round, props.locale, props.config.monetary_unit) +
+            (b.unit_of_measurement || '');
+          const title = `${c.startName} → ${c.endName}: ${value}`;
           return svg`
               <path d="${coords.map(([cmd, x, y]) => `${cmd}${x},${y}`).join(' ')} Z"
                 fill="url(#gradient${props.sectionIndex}.${boxIndex}.${i})" fill-opacity="${
             c.highlighted ? 0.85 : 0.4
-          }" />
+          }">
+                <title>${title}</title>
+              </path>
             `;
         })}
       `;

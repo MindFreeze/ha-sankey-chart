@@ -392,3 +392,54 @@ describe('Node filters + entity_id (sign-split signed sensors)', () => {
     element.remove();
   });
 });
+
+describe('Connection tooltip', () => {
+  const tooltipHass = mockHass({
+    'sensor.grid': {
+      entity_id: 'sensor.grid',
+      state: '300',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.house': {
+      entity_id: 'sensor.house',
+      state: '200',
+      attributes: { unit_of_measurement: 'W' },
+    },
+    'sensor.battery': {
+      entity_id: 'sensor.battery',
+      state: '100',
+      attributes: { unit_of_measurement: 'W' },
+    },
+  });
+
+  it('renders a title on each connection with source, target and value', async () => {
+    const config: SankeyChartConfig = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.grid', section: 0, type: 'entity', name: 'Grid' },
+        { id: 'sensor.house', section: 1, type: 'entity', name: 'House' },
+        { id: 'sensor.battery', section: 1, type: 'entity', name: 'Battery' },
+      ],
+      links: [
+        { source: 'sensor.grid', target: 'sensor.house' },
+        { source: 'sensor.grid', target: 'sensor.battery' },
+      ],
+      sections: [{}, {}],
+    };
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = tooltipHass as HomeAssistant;
+    element.setConfig(config, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+
+    // Grid (300W) feeds House first (200W), leaving 100W for Battery.
+    const titles = Array.from(
+      base.shadowRoot?.querySelectorAll('g.connectors path title') ?? [],
+    ).map(t => t.textContent);
+    expect(titles).toEqual(['Grid → House: 200W', 'Grid → Battery: 100W']);
+    element.remove();
+  });
+});
