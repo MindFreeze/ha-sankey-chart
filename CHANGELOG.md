@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.2.0...v6.3.0) (2026-06-01)
+
+
+### Features
+
+* **#375:** add hover tooltip to connections ([#376](https://github.com/MindFreeze/ha-sankey-chart/issues/376)) ([9473af6](https://github.com/MindFreeze/ha-sankey-chart/commit/9473af68337a7ac49f12bc27dece36da3df0ef39))
+
 ## [6.2.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.1.0...v6.2.0) (2026-05-26)
 
 
