@@ -171,9 +171,11 @@ export function getChildConnections(
       startY,
       startSize,
       startColor: parent.color,
+      startName: getBoxName(parent),
       endY,
       endSize,
       endColor: child.color,
+      endName: getBoxName(child),
       state,
       highlighted: connections.some(c => c.highlighted),
     };

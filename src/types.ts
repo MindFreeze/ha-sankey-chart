@@ -221,6 +221,8 @@ export interface Connection {
   state: number;
   startColor?: string;
   endColor?: string;
+  startName?: string;
+  endName?: string;
   highlighted?: boolean;
 }
 
