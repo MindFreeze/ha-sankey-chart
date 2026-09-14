@@ -10,6 +10,7 @@ import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import { entityNamesChanged } from './entity-name';
 import {
   CHAR_WIDTH_RATIO,
   LABEL_PADDING,
@@ -54,6 +55,9 @@ export class Chart extends LitElement {
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
       return false;
+    }
+    if (entityNamesChanged(changedProps.get('hass') as HomeAssistant | undefined, this.hass)) {
+      return true;
     }
     if (
       changedProps.has('config') ||

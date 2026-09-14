@@ -23,6 +23,24 @@ export function supportsEntityNameSelector(hass: HomeAssistant | undefined): boo
   return atLeastVersion(hass, 2025, 11);
 }
 
+// formatEntityName resolves against the entity/device/area/floor registries, and
+// HA swaps the real formatter in asynchronously once translations load. Neither
+// shows up as an entity state change, so without this a rename (or that swap)
+// leaves rendered labels stale until some unrelated state change forces a render.
+const NAME_SOURCES = ['formatEntityName', 'entities', 'devices', 'areas', 'floors'] as const;
+
+export function entityNamesChanged(
+  oldHass: HomeAssistant | undefined,
+  newHass: HomeAssistant | undefined,
+): boolean {
+  if (!oldHass || !newHass) {
+    return false;
+  }
+  const before = oldHass as unknown as Record<string, unknown>;
+  const after = newHass as unknown as Record<string, unknown>;
+  return NAME_SOURCES.some(key => before[key] !== after[key]);
+}
+
 type HassWithEntityNames = HomeAssistant & {
   formatEntityName: (stateObj: HassEntity, name: EntityName | undefined) => string;
 };
