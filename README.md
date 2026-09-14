@@ -64,7 +64,7 @@ Install through [HACS](https://hacs.xyz/)
 | section           | number  | **Optional** |                     | Index of the section this node belongs to (0-based). Determines horizontal/vertical position
 | attribute         | string  | **Optional** |                     | Use the value of an attribute instead of the state of the entity. unit_of_measurement and id will still come from the entity. For more complex customization, please use HA templates.
 | type              | string  | **Optional** | entity              | Possible values are 'entity', 'passthrough', 'remaining_parent_state', 'remaining_child_state', 'high_carbon_energy', 'low_carbon_energy'. See [entity types](#entity-types)
-| name              | string  | **Optional** | entity name from HA | Custom label for this entity
+| name              | string / list | **Optional** | entity name from HA | Custom label for this entity. Accepts a [structured name](#structured-names) on Home Assistant 2026.4 and later.
 | icon              | string  | **Optional** | entity icon from HA | Custom icon for this entity
 | unit_of_measurement| string  | **Optional** | unit_of_measurement from HA | Custom unit_of_measurement for this entity. Useful when using attribute. If it contains a unit prefix, that must be in latin. Ex GВт, not ГВт
 | color             | string/object | **Optional** | var(--primary-color)| Color of the box. Can be a simple color string ('red', '#FFAA2C', 'rgb(255, 170, 44)', 'random') or a range object for state-based coloring. See [color ranges](#color-ranges)
@@ -296,6 +296,34 @@ time_period_from: "now-1d/d+23h"
 time_period_to: "now/d+7h"
 ```
 
+
+### Structured names
+
+*Requires Home Assistant 2026.4 or later. On earlier versions a structured `name` falls back to the entity's friendly name.*
+
+Home Assistant composes an entity's display name out of its registry context
+(entity, device, area, floor) rather than one `friendly_name` string. A node's
+`name` can be a list of those parts instead of a plain string, so labels keep
+following renames and match what the built-in cards show:
+
+```yaml
+entities:
+  - entity_id: sensor.living_room_thermostat_power
+    name:
+      - type: area
+      - type: entity
+```
+
+Available part types are `entity`, `device`, `parent_device`, `area`, `floor`, and
+`text` (a literal, written as `{type: text, text: 'Total'}`). Parts that resolve to
+nothing are dropped, so the remaining parts still render. A plain string `name`
+keeps working exactly as before, and the visual editor offers both modes on Home
+Assistant 2025.11 and later.
+
+Synthetic nodes (`remaining_parent_state`, carbon nodes and similar) have no
+registry entity to resolve against, so they keep using a plain string `name`.
+
+See the [Home Assistant developer documentation](https://developers.home-assistant.io/docs/frontend/data#hassformatentitynamestateobj-name-options) for details.
 
 ## Examples
 

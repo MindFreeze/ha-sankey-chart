@@ -73,11 +73,18 @@ export interface SankeyChartConfig extends LovelaceCardConfig {
   ignore_missing_entities?: boolean;
 }
 
+/** A `name` option: a plain string, or name parts resolved from the registry. */
+export type EntityName = string | EntityNameItem | EntityNameItem[];
+
+export type EntityNameItem =
+  | { type: 'entity' | 'device' | 'parent_device' | 'area' | 'floor' }
+  | { type: 'text'; text: string };
+
 export interface Node {
   id: string;
   section?: number; // index in sections array
   type?: NodeType;
-  name?: string;
+  name?: EntityName;
   attribute?: string;
   unit_of_measurement?: string; // for attribute
   entity_id?: string; // explicit entity to read; defaults to `id`. Lets a synthetic node id reference a real entity.
