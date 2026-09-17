@@ -6,7 +6,9 @@ import {
   LovelaceCard,
   LovelaceCardConfig,
 } from 'custom-card-helpers';
+import { HassEntity } from 'home-assistant-js-websocket';
 import { html, TemplateResult } from 'lit';
+import { computeEntityName } from './entity-name';
 import { UNIT_PREFIXES, FT3_PER_M3 } from './const';
 import {
   Box,
@@ -129,11 +131,12 @@ export function getEntityId(entity: string | Node | Record<string, unknown>): st
   return typeof entity === 'string' ? entity : ((entity.id || (entity as Record<string, unknown>).entity_id) as string);
 }
 
-export function getBoxName(box: Box): string {
-  return box.config.name || box.entity.attributes.friendly_name || '';
+export function getBoxName(hass: HomeAssistant | undefined, box: Box): string {
+  return computeEntityName(hass, box.entity as HassEntity, box.config.name);
 }
 
 export function getChildConnections(
+  hass: HomeAssistant | undefined,
   parent: Box,
   children: Box[],
   allConnections: ConnectionState[],
@@ -171,11 +174,11 @@ export function getChildConnections(
       startY,
       startSize,
       startColor: parent.color,
-      startName: getBoxName(parent),
+      startName: getBoxName(hass, parent),
       endY,
       endSize,
       endColor: child.color,
-      endName: getBoxName(child),
+      endName: getBoxName(hass, child),
       state,
       highlighted: connections.some(c => c.highlighted),
     };

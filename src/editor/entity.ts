@@ -6,8 +6,9 @@ import type { NodeConfigForEditor, NodeConfigOrStr } from '../types';
 import { localize } from '../localize/localize';
 import { repeat } from 'lit/directives/repeat';
 import { DEFAULT_ENTITY_CONF } from '../const';
+import { supportsEntityNameSelector } from '../entity-name';
 
-const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
+const computeSchema = (hass: HomeAssistant, nodeConf: NodeConfigForEditor, icon: string) => [
   {
     name: 'type',
     selector: {
@@ -37,7 +38,11 @@ const computeSchema = (nodeConf: NodeConfigForEditor, icon: string) => [
         },
       ]
     : []),
-  { name: 'name', selector: { text: {} } },
+  // The entity_name selector, which lets users compose a name out of registry
+  // parts, was added in HA 2025.11. Older versions keep the plain text field.
+  supportsEntityNameSelector(hass)
+    ? { name: 'name', selector: { entity_name: {} }, context: { entity: 'id' } }
+    : { name: 'name', selector: { text: {} } },
   {
     type: 'grid',
     name: '',
@@ -102,7 +107,7 @@ class SankeyChartEntityEditor extends LitElement {
 
     const icon = data.icon || this._getEntityIcon(conf.id);
 
-    const schema = computeSchema(data, icon);
+    const schema = computeSchema(this.hass, data, icon);
     return html`
       <div class="header">
         <ha-icon-button .label=${this.hass!.localize('ui.common.back')} @click=${this.onClose}>

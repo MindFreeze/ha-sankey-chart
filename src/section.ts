@@ -3,13 +3,14 @@ import { classMap } from 'lit/directives/class-map';
 import { styleMap } from 'lit/directives/style-map';
 import { Box, Config, ConnectionState, EntityConfigInternal, SectionState } from './types';
 import { formatState, getBoxName, getChildConnections, getEntityId, normalizeStateValue } from './utils';
-import { FrontendLocaleData, stateIcon } from 'custom-card-helpers';
+import { FrontendLocaleData, HomeAssistant, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { renderLabel } from './label';
 
 const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 export function renderBranchConnectors(props: {
+  hass: HomeAssistant;
   locale: FrontendLocaleData;
   config: Config;
   section: SectionState;
@@ -29,7 +30,7 @@ export function renderBranchConnectors(props: {
       const children = props.nextSection!.boxes.filter(child =>
         b.children.some(c => getEntityId(c) === child.id),
       );
-      const connections = getChildConnections(b, children, props.allConnections).filter(
+      const connections = getChildConnections(props.hass, b, children, props.allConnections).filter(
         c => c.state > 0,
       );
       return svg`
@@ -92,6 +93,7 @@ export function renderBranchConnectors(props: {
 }
 
 export function renderSection(props: {
+  hass: HomeAssistant;
   locale: FrontendLocaleData;
   config: Config;
   section: SectionState;
@@ -121,7 +123,7 @@ export function renderSection(props: {
         }
         const formattedState = formatState(box.state, props.config.round, props.locale, props.config.monetary_unit);
         const isNotPassthrough = box.config.type !== 'passthrough';
-        const name = getBoxName(box);
+        const name = getBoxName(props.hass, box);
         const icon = box.config.icon || stateIcon(entity as HassEntity);
         const isHighlighted = props.highlightedEntities.includes(box.config);
 
