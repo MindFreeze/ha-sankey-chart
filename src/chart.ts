@@ -10,6 +10,7 @@ import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import { entityNamesChanged } from './entity-name';
 import {
   CHAR_WIDTH_RATIO,
   LABEL_PADDING,
@@ -54,6 +55,9 @@ export class Chart extends LitElement {
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (!this.config) {
       return false;
+    }
+    if (entityNamesChanged(changedProps.get('hass') as HomeAssistant | undefined, this.hass)) {
+      return true;
     }
     if (
       changedProps.has('config') ||
@@ -529,7 +533,7 @@ export class Chart extends LitElement {
     if (show_names) {
       for (const box of section.boxes) {
         if (box.config.type === 'passthrough') continue;
-        const name = getBoxName(box);
+        const name = getBoxName(this.hass, box);
         const explicit = name.split('\n').filter(Boolean).length;
         const wordCount = name.split(/\s+/).filter(Boolean).length;
         const lines = Math.max(explicit, wordCount, 1);
@@ -551,7 +555,7 @@ export class Chart extends LitElement {
       const stateText = show_states
         ? formatState(box.state, round, this.hass.locale, monetary_unit) + (show_units ? box.unit_of_measurement || '' : '')
         : '';
-      const nameText = show_names ? getBoxName(box) : '';
+      const nameText = show_names ? getBoxName(this.hass, box) : '';
       const stateW = stateText.length * CHAR_WIDTH_RATIO;
       const nameW = nameText.length * NAME_CHAR_WIDTH;
       const separatorW = stateText && nameText ? SEPARATOR_WIDTH : 0;
@@ -713,7 +717,7 @@ export class Chart extends LitElement {
           state: 0,
           attributes: {
             unit_of_measurement: entityConf.unit_of_measurement || '',
-            friendly_name: entityConf.name || lookupId,
+            friendly_name: typeof entityConf.name === 'string' ? entityConf.name : lookupId,
           },
         };
       }
@@ -801,6 +805,7 @@ export class Chart extends LitElement {
             >
               ${this.sections.map((s, i) =>
                 renderSection({
+                  hass: this.hass,
                   locale: this.hass.locale,
                   config: this.config,
                   section: s,

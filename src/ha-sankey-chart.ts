@@ -142,7 +142,9 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       const attributes = {
         ...baseAttributes,
         unit_of_measurement: baseAttributes.unit_of_measurement || '',
-        friendly_name: node.name || node.id,
+        // Synthetic state object: a structured name has no registry entity to
+        // resolve against, so only a plain string name applies here.
+        friendly_name: typeof node.name === 'string' ? node.name : node.id,
       };
       if (sourceEntity) {
         states[node.id] = {
