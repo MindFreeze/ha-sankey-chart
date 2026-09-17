@@ -307,8 +307,8 @@ Home Assistant composes an entity's display name out of its registry context
 following renames and match what the built-in cards show:
 
 ```yaml
-entities:
-  - entity_id: sensor.living_room_thermostat_power
+nodes:
+  - id: sensor.living_room_thermostat_power
     name:
       - type: area
       - type: entity

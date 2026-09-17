@@ -61,13 +61,14 @@ export function computeEntityName(
   stateObj: HassEntity | undefined,
   name: EntityName | undefined,
 ): string {
-  const configuredName = typeof name === 'string' ? name : '';
-
+  const resolvedName = name === '' ? undefined : name;
+  const configuredName = typeof resolvedName === 'string' ? resolvedName : '';
+  
   if (!stateObj || !hass) {
     return configuredName;
   }
   if (supportsEntityNames(hass)) {
-    return hass ? (hass as HassWithEntityNames).formatEntityName(stateObj, name) : configuredName;
+    return (hass as HassWithEntityNames).formatEntityName(stateObj, resolvedName);
   }
   return configuredName || stateObj.attributes.friendly_name || '';
 }
