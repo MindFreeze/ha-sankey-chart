@@ -314,7 +314,7 @@ nodes:
       - type: entity
 ```
 
-Available part types are `entity`, `device`, `parent_device`, `area`, `floor`, and
+Available part types are `entity`, `device`, `area`, `floor`, and
 `text` (a literal, written as `{type: text, text: 'Total'}`). Parts that resolve to
 nothing are dropped, so the remaining parts still render. A plain string `name`
 keeps working exactly as before, and the visual editor offers both modes on Home
