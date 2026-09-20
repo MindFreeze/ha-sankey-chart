@@ -8,7 +8,7 @@ import { repeat } from 'lit/directives/repeat';
 import { DEFAULT_ENTITY_CONF } from '../const';
 import { supportsEntityNameSelector } from '../entity-name';
 
-const computeSchema = (hass: HomeAssistant, nodeConf: NodeConfigForEditor, icon: string) => [
+export const computeSchema = (hass: HomeAssistant, nodeConf: NodeConfigForEditor, icon: string) => [
   {
     name: 'type',
     selector: {
@@ -39,9 +39,13 @@ const computeSchema = (hass: HomeAssistant, nodeConf: NodeConfigForEditor, icon:
       ]
     : []),
   // The entity_name selector, which lets users compose a name out of registry
-  // parts, was added in HA 2025.11. Older versions keep the plain text field.
-  supportsEntityNameSelector(hass)
-    ? { name: 'name', selector: { entity_name: {} }, context: { entity: 'id' } }
+  // parts, is supported from HA 2026.4. Older versions keep the plain text field.
+  nodeConf.type === 'entity' && supportsEntityNameSelector(hass)
+    ? {
+        name: 'name',
+        selector: { entity_name: {} },
+        context: { entity: nodeConf.entity_id ? 'entity_id' : 'id' },
+      }
     : { name: 'name', selector: { text: {} } },
   {
     type: 'grid',

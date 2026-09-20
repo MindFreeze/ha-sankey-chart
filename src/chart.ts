@@ -10,7 +10,7 @@ import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
 import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
-import { entityNamesChanged } from './entity-name';
+import { entityNamesChanged, entityStateNamesChanged } from './entity-name';
 import {
   CHAR_WIDTH_RATIO,
   LABEL_PADDING,
@@ -81,15 +81,20 @@ export class Chart extends LitElement {
       return false;
     }
 
-    const oldStates = changedProps.get('states') as HomeAssistant | undefined;
+    const oldStates = changedProps.get('states') as HassEntities | undefined;
     if (!oldStates) {
       return false;
     }
     if (!Object.keys(oldStates).length) {
       return true;
     }
+    if (entityStateNamesChanged(oldStates, this.states, this.entityIds)) {
+      return true;
+    }
     return this.entityIds.some(id => {
-      return oldStates[id] !== this.states[id] && oldStates[id].state !== this.states[id].state;
+      const oldState = oldStates[id];
+      const newState = this.states[id];
+      return oldState !== newState && oldState?.state !== newState?.state;
     });
   }
 
