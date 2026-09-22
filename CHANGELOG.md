@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.3.0...v6.4.0) (2026-09-22)
+
+
+### Features
+
+* Resolve entity names via hass.formatEntityName ([#380](https://github.com/MindFreeze/ha-sankey-chart/issues/380)) ([b9b5c48](https://github.com/MindFreeze/ha-sankey-chart/commit/b9b5c48e6591163c0d091444c43a75a0a560b801))
+
 ## [6.3.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.2.0...v6.3.0) (2026-06-01)
 
 
