@@ -7,12 +7,18 @@ on:
         required: true
         description: Target release tag
 
+permissions: {}
+
 jobs:
   release:
     name: Prepare release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       # Build
       - name: Build the file
@@ -23,7 +29,7 @@ jobs:
 
       # Upload build file to the releas as an asset.
       - name: Upload zip to release
-        uses: svenstaro/upload-release-action@v1-release
+        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # 2.11.5
 
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -34,10 +40,14 @@ jobs:
   validate:
     needs: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
       # - uses: "home-assistant/actions/hassfest@master"
       - name: HACS Validate
-        uses: hacs/action@main
+        uses: hacs/action@d556e736723344f83838d08488c983a15381059a # 22.5.0
         with:
           category: plugin
