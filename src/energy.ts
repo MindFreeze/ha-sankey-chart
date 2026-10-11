@@ -110,9 +110,12 @@ export const getEnergyDataCollection = (
   const conn = hass.connection as any;
   const isCollection = (obj: any) => obj && typeof obj.subscribe === 'function';
 
-  // If an explicit key is provided, use only that key
+  // If an explicit key is provided, use only that key.
+  // HA stores a card's `collection_key: energy_foo` on the connection as `_energy_foo`,
+  // so accept both the card's collection_key and the raw connection key.
   if (collectionKey) {
-    return isCollection(conn[collectionKey]) ? conn[collectionKey] : null;
+    const key = collectionKey.startsWith('_') ? collectionKey : `_${collectionKey}`;
+    return isCollection(conn[key]) ? conn[key] : null;
   }
 
   // Smart auto-detection: try panel-specific key first (HA 2026.4+)
