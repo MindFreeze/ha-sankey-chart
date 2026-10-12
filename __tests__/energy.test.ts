@@ -64,6 +64,12 @@ describe('getEnergyDataCollection', () => {
     expect(getEnergyDataCollection(hass, '_energy_custom')).toBe(explicitCollection);
   });
 
+  it('accepts the collection_key of an energy-date-selection card (#387)', () => {
+    const collection = mockCollection();
+    const hass = createHass({ '_energy_aquarium': collection }, 'energy');
+    expect(getEnergyDataCollection(hass, 'energy_aquarium')).toBe(collection);
+  });
+
   it('skips objects without subscribe method', () => {
     const hass = createHass({
       '_energy_energy': { notSubscribe: jest.fn() },
