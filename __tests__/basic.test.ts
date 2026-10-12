@@ -2,10 +2,12 @@
 import { HomeAssistant } from 'custom-card-helpers';
 import '../src/ha-sankey-chart';
 import '../src/chart';
+import type { Chart } from '../src/chart';
+import * as utils from '../src/utils';
 import SankeyChart from '../src/ha-sankey-chart';
 import type { SankeyChartConfig } from '../src/types';
 import mockHass from './__mocks__/hass.mock';
-import { LitElement } from 'lit';
+import { LitElement, html } from 'lit';
 
 const hass = mockHass({
   ent1: {
@@ -507,5 +509,101 @@ describe('Connection tooltip', () => {
     expect(title).toBe('Grid → House: 2.5kW');
     expect(boxTitle).toContain('2.5kW');
     element.remove();
+  });
+});
+
+describe('Passthrough with multiple outgoing links (#390)', () => {
+  const fanoutHass = mockHass({
+    'sensor.grid': { entity_id: 'sensor.grid', state: '1000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.solar': { entity_id: 'sensor.solar', state: '3000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.inverter': { entity_id: 'sensor.inverter', state: '3000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.home': { entity_id: 'sensor.home', state: '800', attributes: { unit_of_measurement: 'W' } },
+    'sensor.battery_charge': {
+      entity_id: 'sensor.battery_charge',
+      state: '700',
+      attributes: { unit_of_measurement: 'W' },
+    },
+  });
+
+  // Mirrors the issue: a passthrough in the middle column feeding two
+  // different targets in the next column.
+  const config: SankeyChartConfig = {
+    type: 'custom:sankey-chart',
+    nodes: [
+      { id: 'sensor.solar', section: 0, type: 'entity', name: 'Solar' },
+      { id: 'sensor.grid', section: 0, type: 'entity', name: 'Grid' },
+      { id: 'sensor.inverter', section: 1, type: 'entity', name: 'Inverter' },
+      { id: 'import_passthrough', section: 1, type: 'passthrough' },
+      { id: 'sensor.home', section: 2, type: 'entity', name: 'House' },
+      { id: 'sensor.battery_charge', section: 2, type: 'entity', name: 'Battery' },
+    ],
+    links: [
+      { source: 'sensor.solar', target: 'sensor.inverter' },
+      { source: 'sensor.grid', target: 'import_passthrough' },
+      { source: 'import_passthrough', target: 'sensor.home' },
+      { source: 'import_passthrough', target: 'sensor.battery_charge' },
+      { source: 'sensor.inverter', target: 'sensor.home' },
+      { source: 'sensor.inverter', target: 'sensor.battery_charge' },
+    ],
+  };
+
+  async function renderChart(conf: SankeyChartConfig) {
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = fanoutHass as HomeAssistant;
+    element.setConfig(conf, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+    return { element, base };
+  }
+
+  it('creates a connection for every link out of the passthrough', async () => {
+    // Render errors (e.g. "Missing connection") are caught and shown as an
+    // error card; stub that out so a regression fails cleanly in jsdom.
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const renderErrorSpy = jest.spyOn(utils, 'renderError').mockResolvedValue(html``);
+    const { element, base } = await renderChart(config);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { connections, sections } = base as any;
+
+    expect(renderErrorSpy).not.toHaveBeenCalled();
+    expect(base.shadowRoot?.querySelector('svg.chart')).not.toBeNull();
+
+    const fromGrid = connections.filter(c => c.parent.id === 'sensor.grid');
+    expect(fromGrid.map(c => [c.child.id, c.passthroughs.map(p => p.id), c.state])).toEqual([
+      ['sensor.home', ['import_passthrough'], 800],
+      ['sensor.battery_charge', ['import_passthrough'], 200],
+    ]);
+    const passthroughBox = sections[1].boxes.find(b => b.id === 'import_passthrough');
+    expect(passthroughBox.state).toBe(1000);
+    // solar→inverter, grid→passthrough, passthrough→home, passthrough→battery, inverter→battery
+    expect(base.shadowRoot?.querySelectorAll('.connectors path').length).toBe(5);
+
+    consoleSpy.mockRestore();
+    renderErrorSpy.mockRestore();
+    element.remove();
+  });
+
+  it('does not loop forever on a passthrough cycle', () => {
+    const base = window.document.createElement('sankey-chart-base') as Chart;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (base as any).config = utils.normalizeConfig({
+      ...config,
+      nodes: [...config.nodes!, { id: 'loop_passthrough', section: 2, type: 'passthrough' }],
+      links: [
+        ...config.links!,
+        { source: 'import_passthrough', target: 'loop_passthrough' },
+        { source: 'loop_passthrough', target: 'import_passthrough' },
+      ],
+    });
+    base.willUpdate(new Map([['config', undefined]]));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { connections } = base as any;
+    expect(connections.filter(c => c.parent.id === 'sensor.grid').map(c => c.child.id)).toEqual([
+      'sensor.home',
+      'sensor.battery_charge',
+    ]);
   });
 });
