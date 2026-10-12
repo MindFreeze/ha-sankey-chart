@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.0...v6.4.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* accept energy-date-selection collection_key in energy_collection_key ([#388](https://github.com/MindFreeze/ha-sankey-chart/issues/388)) ([20186ef](https://github.com/MindFreeze/ha-sankey-chart/commit/20186ef3773086ab13ee4d50d1f189ff6d5d4d03)), closes [#387](https://github.com/MindFreeze/ha-sankey-chart/issues/387)
+
 ## [6.4.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.3.0...v6.4.0) (2026-09-22)
 
 
