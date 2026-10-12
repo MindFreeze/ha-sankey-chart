@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.1...v6.4.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* follow every outgoing link of a passthrough node ([#391](https://github.com/MindFreeze/ha-sankey-chart/issues/391)) ([08d51aa](https://github.com/MindFreeze/ha-sankey-chart/commit/08d51aab80f496363580339238887dfdb48e84e6)), closes [#390](https://github.com/MindFreeze/ha-sankey-chart/issues/390)
+
 ## [6.4.1](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.0...v6.4.1) (2026-10-12)
 
 
