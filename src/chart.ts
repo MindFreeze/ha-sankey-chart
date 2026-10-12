@@ -5,7 +5,15 @@ import { until } from 'lit/directives/until.js';
 import { customElement, property, state } from 'lit/decorators';
 import { HomeAssistant } from 'custom-card-helpers'; // This is a community maintained npm module with common helper functions/types. https://github.com/custom-cards/custom-card-helpers
 
-import type { Config, SectionState, Box, ConnectionState, EntityConfigInternal, NormalizedState } from './types';
+import type {
+  Config,
+  SectionState,
+  Box,
+  ChildConfigOrStr,
+  ConnectionState,
+  EntityConfigInternal,
+  NormalizedState,
+} from './types';
 import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
@@ -101,9 +109,10 @@ export class Chart extends LitElement {
       this.connectionsByParent.clear();
       this.connectionsByChild.clear();
       this.reconciledStates.clear();
-      // Passthroughs have unique ids in v4 and carry an explicit outgoing link
-      // (children[0]). Follow that chain to the first non-passthrough node
-      // instead of matching by id across sections.
+      // Passthroughs have unique ids in v4 and carry explicit outgoing links.
+      // Follow them to the first non-passthrough node instead of matching by id
+      // across sections. A passthrough may fan out to several targets (#390),
+      // so every path through it becomes its own connection.
       const byId = new Map<string, EntityConfigInternal>();
       this.config.sections.forEach(({ entities }) =>
         entities.forEach(e => byId.set(e.id, e)),
@@ -116,41 +125,41 @@ export class Chart extends LitElement {
             return;
           }
           ent.children.forEach(childConf => {
-            const passthroughs: EntityConfigInternal[] = [];
-            let next: EntityConfigInternal | undefined = byId.get(getEntityId(childConf));
-            while (next?.type === 'passthrough') {
-              passthroughs.push(next);
-              const onward = next.children[0];
-              if (!onward) {
-                this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
+            const addConnection = (child: EntityConfigInternal, passthroughs: EntityConfigInternal[]) => {
+              const connection: ConnectionState = {
+                parent: ent,
+                child: child,
+                state: 0,
+                prevParentState: 0,
+                prevChildState: 0,
+                ready: false,
+                passthroughs,
+                connection_entity_id: typeof childConf === 'object' ? childConf.connection_entity_id : undefined,
+              };
+              this.connections.push(connection);
+              if (!this.connectionsByParent.has(ent)) {
+                this.connectionsByParent.set(ent, []);
+              }
+              this.connectionsByParent.get(ent)!.push(connection);
+              if (!this.connectionsByChild.has(child)) {
+                this.connectionsByChild.set(child, []);
+              }
+              this.connectionsByChild.get(child)!.push(connection);
+            };
+            const follow = (conf: ChildConfigOrStr, passthroughs: EntityConfigInternal[]) => {
+              const next = byId.get(getEntityId(conf));
+              if (!next || (next.type === 'passthrough' && !next.children.length)) {
+                this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(conf));
                 throw this.error;
               }
-              next = byId.get(getEntityId(onward));
-            }
-            if (!next) {
-              this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(childConf));
-              throw this.error;
-            }
-            const child: EntityConfigInternal = next;
-            const connection: ConnectionState = {
-              parent: ent,
-              child: child,
-              state: 0,
-              prevParentState: 0,
-              prevChildState: 0,
-              ready: false,
-              passthroughs,
-              connection_entity_id: typeof childConf === 'object' ? childConf.connection_entity_id : undefined,
+              if (next.type !== 'passthrough') {
+                addConnection(next, passthroughs);
+              } else if (!passthroughs.includes(next)) {
+                // the includes() check guards against passthrough cycles
+                next.children.forEach(onward => follow(onward, [...passthroughs, next]));
+              }
             };
-            this.connections.push(connection);
-            if (!this.connectionsByParent.has(ent)) {
-              this.connectionsByParent.set(ent, []);
-            }
-            this.connectionsByParent.get(ent)!.push(connection);
-            if (!this.connectionsByChild.has(child)) {
-              this.connectionsByChild.set(child, []);
-            }
-            this.connectionsByChild.get(child)!.push(connection);
+            follow(childConf, []);
           });
         });
       });
