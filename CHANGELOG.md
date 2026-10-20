@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.2...v6.4.3) (2026-10-20)
+
+
+### Bug Fixes
+
+* allocate passthrough flows at the passthrough's position ([#394](https://github.com/MindFreeze/ha-sankey-chart/issues/394)) ([#395](https://github.com/MindFreeze/ha-sankey-chart/issues/395)) ([81b5c00](https://github.com/MindFreeze/ha-sankey-chart/commit/81b5c006856405b24ab6088a26f8703f1bcde1d3))
+
 ## [6.4.2](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.1...v6.4.2) (2026-10-12)
 
 
