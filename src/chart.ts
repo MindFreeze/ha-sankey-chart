@@ -17,7 +17,7 @@ import type {
 import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, getBoxName, getEntityId, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import { formatState, getBoxName, getEntityId, isAutoPassthrough, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
 import { entityNamesChanged } from './entity-name';
 import {
   CHAR_WIDTH_RATIO,
@@ -58,6 +58,8 @@ export class Chart extends LitElement {
   @state() public error?: Error;
 
   private randomColors = new Map<string, string>();
+  // order in which _calcConnections allocates the connections
+  private calcOrder: ConnectionState[] = [];
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -113,10 +115,18 @@ export class Chart extends LitElement {
       // Follow them to the first non-passthrough node instead of matching by id
       // across sections. A passthrough may fan out to several targets (#390),
       // so every path through it becomes its own connection.
+      // Each connection is ranked by the last user-declared node on its path,
+      // so a passthrough competes for its target at its own position, not its
+      // source's (#394). Auto-inserted passthroughs stay transparent.
       const byId = new Map<string, EntityConfigInternal>();
+      const position = new Map<EntityConfigInternal, number>();
       this.config.sections.forEach(({ entities }) =>
-        entities.forEach(e => byId.set(e.id, e)),
+        entities.forEach(e => {
+          byId.set(e.id, e);
+          position.set(e, position.size);
+        }),
       );
+      const rank = new Map<ConnectionState, [number, number]>();
       this.config.sections.forEach(({ entities }) => {
         entities.forEach(ent => {
           if (ent.type === 'entity') {
@@ -124,8 +134,12 @@ export class Chart extends LitElement {
           } else if (ent.type === 'passthrough') {
             return;
           }
-          ent.children.forEach(childConf => {
-            const addConnection = (child: EntityConfigInternal, passthroughs: EntityConfigInternal[]) => {
+          ent.children.forEach((childConf, childIdx) => {
+            const addConnection = (
+              child: EntityConfigInternal,
+              passthroughs: EntityConfigInternal[],
+              connectionRank: [number, number],
+            ) => {
               const connection: ConnectionState = {
                 parent: ent,
                 child: child,
@@ -137,6 +151,7 @@ export class Chart extends LitElement {
                 connection_entity_id: typeof childConf === 'object' ? childConf.connection_entity_id : undefined,
               };
               this.connections.push(connection);
+              rank.set(connection, connectionRank);
               if (!this.connectionsByParent.has(ent)) {
                 this.connectionsByParent.set(ent, []);
               }
@@ -146,23 +161,68 @@ export class Chart extends LitElement {
               }
               this.connectionsByChild.get(child)!.push(connection);
             };
-            const follow = (conf: ChildConfigOrStr, passthroughs: EntityConfigInternal[]) => {
+            const follow = (
+              conf: ChildConfigOrStr,
+              passthroughs: EntityConfigInternal[],
+              connectionRank: [number, number],
+            ) => {
               const next = byId.get(getEntityId(conf));
               if (!next || (next.type === 'passthrough' && !next.children.length)) {
                 this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(conf));
                 throw this.error;
               }
               if (next.type !== 'passthrough') {
-                addConnection(next, passthroughs);
+                addConnection(next, passthroughs, connectionRank);
               } else if (!passthroughs.includes(next)) {
                 // the includes() check guards against passthrough cycles
-                next.children.forEach(onward => follow(onward, [...passthroughs, next]));
+                next.children.forEach((onward, onwardIdx) =>
+                  follow(
+                    onward,
+                    [...passthroughs, next],
+                    isAutoPassthrough(next) ? connectionRank : [position.get(next)!, onwardIdx],
+                  ),
+                );
               }
             };
-            follow(childConf, []);
+            follow(childConf, [], [position.get(ent)!, childIdx]);
           });
         });
       });
+      // Flows are allocated greedily, so order only matters between connections
+      // that share a parent or a child. Each parent keeps its links in the order
+      // written; each child takes its incoming links by rank. If the two orders
+      // conflict, the parent's wins. Array.prototype.sort is stable, so rank ties
+      // keep their build order.
+      const pending = [...this.connections].sort((a, b) => {
+        const [aPos, aIdx] = rank.get(a)!;
+        const [bPos, bIdx] = rank.get(b)!;
+        return aPos - bPos || aIdx - bIdx;
+      });
+      const enqueue = (
+        queues: Map<EntityConfigInternal, ConnectionState[]>,
+        key: EntityConfigInternal,
+        c: ConnectionState,
+      ) => {
+        if (!queues.has(key)) {
+          queues.set(key, []);
+        }
+        queues.get(key)!.push(c);
+      };
+      const parentQueues = new Map<EntityConfigInternal, ConnectionState[]>();
+      const childQueues = new Map<EntityConfigInternal, ConnectionState[]>();
+      this.connections.forEach(c => enqueue(parentQueues, c.parent, c));
+      pending.forEach(c => enqueue(childQueues, c.child, c));
+      this.calcOrder = [];
+      while (pending.length) {
+        const isNextForParent = (c: ConnectionState) => parentQueues.get(c.parent)![0] === c;
+        let idx = pending.findIndex(c => isNextForParent(c) && childQueues.get(c.child)![0] === c);
+        if (idx === -1) {
+          idx = pending.findIndex(isNextForParent);
+        }
+        const [next] = pending.splice(idx, 1);
+        [parentQueues.get(next.parent)!, childQueues.get(next.child)!].forEach(q => q.splice(q.indexOf(next), 1));
+        this.calcOrder.push(next);
+      }
     }
   }
 
@@ -173,7 +233,7 @@ export class Chart extends LitElement {
       c.ready = false;
       c.calculating = false;
     });
-    this.connections.forEach(c => this._calcConnection(c, accountedIn, accountedOut));
+    this.calcOrder.forEach(c => this._calcConnection(c, accountedIn, accountedOut));
   }
 
   private _calcConnection(
