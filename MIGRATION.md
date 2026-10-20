@@ -182,6 +182,8 @@ links:
 
 If you link across a section gap without declaring a passthrough, the card auto-inserts one (and rewrites the link into an explicit chain) so you don't have to do this manually for every hop.
 
+The two differ in one way. A declared passthrough's flows compete for their target at the passthrough's position in its section, while an auto-inserted one keeps its source's position (see [Does the order of `links` matter](README.md#faq)). Configs migrated from v3 use declared passthroughs, so if a target's split looks wrong, move the passthrough up or down among the nodes of its section.
+
 ### Step 6: Move section config (if any)
 
 Section-level settings like `sort_by`, `sort_dir`, and `min_width` stay in the `sections[]` array, but without entities.

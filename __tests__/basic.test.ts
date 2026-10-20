@@ -526,14 +526,15 @@ describe('Passthrough with multiple outgoing links (#390)', () => {
   });
 
   // Mirrors the issue: a passthrough in the middle column feeding two
-  // different targets in the next column.
+  // different targets in the next column. The passthrough is listed first in
+  // its section so the grid gets first claim on home and battery (#394).
   const config: SankeyChartConfig = {
     type: 'custom:sankey-chart',
     nodes: [
       { id: 'sensor.solar', section: 0, type: 'entity', name: 'Solar' },
       { id: 'sensor.grid', section: 0, type: 'entity', name: 'Grid' },
-      { id: 'sensor.inverter', section: 1, type: 'entity', name: 'Inverter' },
       { id: 'import_passthrough', section: 1, type: 'passthrough' },
+      { id: 'sensor.inverter', section: 1, type: 'entity', name: 'Inverter' },
       { id: 'sensor.home', section: 2, type: 'entity', name: 'House' },
       { id: 'sensor.battery_charge', section: 2, type: 'entity', name: 'Battery' },
     ],
@@ -605,5 +606,140 @@ describe('Passthrough with multiple outgoing links (#390)', () => {
       'sensor.home',
       'sensor.battery_charge',
     ]);
+  });
+});
+
+describe('Passthrough flow priority (#394)', () => {
+  const priorityHass = mockHass({
+    'sensor.solar': { entity_id: 'sensor.solar', state: '5000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.se': { entity_id: 'sensor.se', state: '3000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.pw3': { entity_id: 'sensor.pw3', state: '2000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.battery': { entity_id: 'sensor.battery', state: '1500', attributes: { unit_of_measurement: 'W' } },
+    'sensor.home': { entity_id: 'sensor.home', state: '1500', attributes: { unit_of_measurement: 'W' } },
+    'sensor.export': { entity_id: 'sensor.export', state: '5000', attributes: { unit_of_measurement: 'W' } },
+    'sensor.a': { entity_id: 'sensor.a', state: '100', attributes: { unit_of_measurement: 'W' } },
+    'sensor.b': { entity_id: 'sensor.b', state: '100', attributes: { unit_of_measurement: 'W' } },
+    'sensor.x': { entity_id: 'sensor.x', state: '100', attributes: { unit_of_measurement: 'W' } },
+    'sensor.y': { entity_id: 'sensor.y', state: '100', attributes: { unit_of_measurement: 'W' } },
+  });
+
+  async function renderConnections(conf: SankeyChartConfig) {
+    const element = window.document.createElement(ROOT_TAG) as SankeyChart;
+    // @ts-ignore
+    element.hass = priorityHass as HomeAssistant;
+    element.setConfig(conf, true);
+    document.body.appendChild(element);
+    await element.updateComplete;
+    const base = element.shadowRoot?.querySelector('sankey-chart-base') as LitElement;
+    await base.updateComplete;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const connections = (base as any).connections as Array<any>;
+    const flow = (parent: string, child: string) =>
+      connections.find(c => c.parent.id === parent && c.child.id === child)?.state;
+    return { element, flow };
+  }
+
+  it("allocates a passthrough's flows at the passthrough's position", async () => {
+    // Trimmed from the issue: the battery reaches home through a passthrough
+    // listed after the solar inverters, so solar must feed home first.
+    const { element, flow } = await renderConnections({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.solar', section: 0, type: 'entity', name: 'Solar' },
+        { id: 'sensor.battery', section: 0, type: 'entity', name: 'Battery' },
+        { id: 'sensor.se', section: 1, type: 'entity', name: 'SE' },
+        { id: 'sensor.pw3', section: 1, type: 'entity', name: 'PW3' },
+        { id: 'battery_passthrough', section: 1, type: 'passthrough' },
+        { id: 'sensor.home', section: 2, type: 'entity', name: 'House' },
+        { id: 'sensor.export', section: 2, type: 'entity', name: 'Export' },
+      ],
+      links: [
+        { source: 'sensor.solar', target: 'sensor.se' },
+        { source: 'sensor.solar', target: 'sensor.pw3' },
+        { source: 'sensor.battery', target: 'battery_passthrough' },
+        { source: 'sensor.se', target: 'sensor.home' },
+        { source: 'sensor.pw3', target: 'sensor.home' },
+        { source: 'battery_passthrough', target: 'sensor.home' },
+        { source: 'sensor.se', target: 'sensor.export' },
+        { source: 'sensor.pw3', target: 'sensor.export' },
+        { source: 'battery_passthrough', target: 'sensor.export' },
+      ],
+    });
+    expect(flow('sensor.se', 'sensor.home')).toBe(1500);
+    expect(flow('sensor.pw3', 'sensor.home')).toBe(0);
+    expect(flow('sensor.battery', 'sensor.home')).toBe(0);
+    expect(flow('sensor.se', 'sensor.export')).toBe(1500);
+    expect(flow('sensor.pw3', 'sensor.export')).toBe(2000);
+    expect(flow('sensor.battery', 'sensor.export')).toBe(1500);
+    element.remove();
+  });
+
+  it("keeps a source's link order when one link goes through a passthrough", async () => {
+    // The battery lists home (through a passthrough) before pw3, and neither
+    // target has another source, so home must get the battery's power.
+    const { element, flow } = await renderConnections({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.battery', section: 0, type: 'entity', name: 'Battery' },
+        { id: 'sensor.pw3', section: 1, type: 'entity', name: 'PW3' },
+        { id: 'battery_passthrough', section: 1, type: 'passthrough' },
+        { id: 'sensor.home', section: 2, type: 'entity', name: 'House' },
+      ],
+      links: [
+        { source: 'sensor.battery', target: 'battery_passthrough' },
+        { source: 'sensor.battery', target: 'sensor.pw3' },
+        { source: 'battery_passthrough', target: 'sensor.home' },
+      ],
+    });
+    expect(flow('sensor.battery', 'sensor.home')).toBe(1500);
+    expect(flow('sensor.battery', 'sensor.pw3')).toBe(0);
+    element.remove();
+  });
+
+  it("keeps each source's link order when it conflicts with target order", async () => {
+    // a prefers y (through a passthrough ranked after x), b prefers x. Each
+    // target's order favors the other source, so the two orders form a cycle.
+    const { element, flow } = await renderConnections({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.a', section: 0, type: 'entity', name: 'A' },
+        { id: 'sensor.b', section: 0, type: 'entity', name: 'B' },
+        { id: 'sensor.x', section: 1, type: 'entity', name: 'X' },
+        { id: 'a_passthrough', section: 1, type: 'passthrough' },
+        { id: 'sensor.y', section: 2, type: 'entity', name: 'Y' },
+      ],
+      links: [
+        { source: 'sensor.a', target: 'a_passthrough' },
+        { source: 'sensor.a', target: 'sensor.x' },
+        { source: 'a_passthrough', target: 'sensor.y' },
+        { source: 'sensor.b', target: 'sensor.x' },
+        { source: 'sensor.b', target: 'sensor.y' },
+      ],
+    });
+    expect(flow('sensor.a', 'sensor.y')).toBe(100);
+    expect(flow('sensor.a', 'sensor.x')).toBe(0);
+    expect(flow('sensor.b', 'sensor.x')).toBe(100);
+    expect(flow('sensor.b', 'sensor.y')).toBe(0);
+    element.remove();
+  });
+
+  it("keeps a cross-gap link at its source's position", async () => {
+    // The auto-inserted passthrough is invisible to the user, so solar's
+    // direct link to home still outranks the battery in the middle column.
+    const { element, flow } = await renderConnections({
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'sensor.solar', section: 0, type: 'entity', name: 'Solar' },
+        { id: 'sensor.battery', section: 1, type: 'entity', name: 'Battery' },
+        { id: 'sensor.home', section: 2, type: 'entity', name: 'House' },
+      ],
+      links: [
+        { source: 'sensor.solar', target: 'sensor.home' },
+        { source: 'sensor.battery', target: 'sensor.home' },
+      ],
+    });
+    expect(flow('sensor.solar', 'sensor.home')).toBe(1500);
+    expect(flow('sensor.battery', 'sensor.home')).toBe(0);
+    element.remove();
   });
 });

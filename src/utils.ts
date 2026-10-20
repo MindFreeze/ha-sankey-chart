@@ -295,6 +295,16 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
   };
 }
 
+const AUTO_PASSTHROUGH_SUFFIX = '__auto';
+
+/**
+ * Whether the node is a passthrough inserted by autoRouteCrossGapLinks rather
+ * than declared by the user.
+ */
+export function isAutoPassthrough(node: { id: string; type?: string }): boolean {
+  return node.type === 'passthrough' && node.id.endsWith(AUTO_PASSTHROUGH_SUFFIX);
+}
+
 /**
  * When a link's source and target are not in adjacent sections, insert a chain
  * of synthetic passthrough nodes in the intermediate sections and rewrite the
@@ -322,7 +332,7 @@ export function autoRouteCrossGapLinks(nodes: Node[], links: Link[]): void {
     const originalTarget = link.target;
     const hopIds: string[] = [];
     for (let i = srcSec + 1; i < tgtSec; i++) {
-      const pid = `${originalTarget}__passthrough_${i}__auto`;
+      const pid = `${originalTarget}__passthrough_${i}${AUTO_PASSTHROUGH_SUFFIX}`;
       // Reuse an existing synthetic passthrough for the same (target, section)
       if (!nodes.some(n => n.id === pid)) {
         // Inherit visual props (color, icon, name, etc.) from the target so
