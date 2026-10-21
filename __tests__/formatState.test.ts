@@ -60,4 +60,16 @@ describe('formatState', () => {
     const result3 = formatState(5385.16025, 2, germanLocale);
     expect(result3).toBe('5.385,16');
   });
+
+  test('handles quote_decimal number format', () => {
+    const swissLocale = {
+      language: 'de',
+      number_format: 'quote_decimal',
+      time_format: TimeFormat.twenty_four,
+    } as unknown as FrontendLocaleData;
+
+    expect(formatState(40321, 0, swissLocale)).toBe('40’321');
+    expect(formatState(253.7, 1, swissLocale)).toBe('253.7');
+    expect(formatState(1234567.891, 2, swissLocale)).toBe('1’234’567.89');
+  });
 }); 
