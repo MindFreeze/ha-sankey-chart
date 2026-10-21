@@ -5,6 +5,7 @@ import {
   HomeAssistant,
   LovelaceCard,
   LovelaceCardConfig,
+  NumberFormat,
 } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { html, TemplateResult } from 'lit';
@@ -50,7 +51,18 @@ export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
+// custom-card-helpers doesn't know quote_decimal (1'234'567.89) and falls back to the language,
+// so map it to de-CH like the HA frontend does.
+// Remove once https://github.com/custom-cards/custom-card-helpers/pull/111 ships
+function resolveNumberLocale(locale: FrontendLocaleData): FrontendLocaleData {
+  if ((locale?.number_format as string) === 'quote_decimal') {
+    return { ...locale, language: 'de-CH', number_format: NumberFormat.language };
+  }
+  return locale;
+}
+
 export function formatState(state: number, round: number, locale: FrontendLocaleData, monetary_unit?: string): string {
+  locale = resolveNumberLocale(locale);
   let rounded: string;
   let decimals = round;
   do {
