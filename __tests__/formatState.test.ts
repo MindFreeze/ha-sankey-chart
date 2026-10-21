@@ -68,8 +68,9 @@ describe('formatState', () => {
       time_format: TimeFormat.twenty_four,
     } as unknown as FrontendLocaleData;
 
-    expect(formatState(40321, 0, swissLocale)).toBe('40’321');
+    // the group separator is ' or ’ depending on the ICU version
+    expect(formatState(40321, 0, swissLocale)).toMatch(/^40['’]321$/);
     expect(formatState(253.7, 1, swissLocale)).toBe('253.7');
-    expect(formatState(1234567.891, 2, swissLocale)).toBe('1’234’567.89');
+    expect(formatState(1234567.891, 2, swissLocale)).toMatch(/^1['’]234['’]567\.89$/);
   });
 }); 
