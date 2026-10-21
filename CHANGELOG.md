@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.3...v6.4.4) (2026-10-21)
+
+
+### Bug Fixes
+
+* support quote_decimal number format ([#398](https://github.com/MindFreeze/ha-sankey-chart/issues/398)) ([0132105](https://github.com/MindFreeze/ha-sankey-chart/commit/0132105716b023fbc51b36a1f154bd5b41441af8))
+
 ## [6.4.3](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.2...v6.4.3) (2026-10-20)
 
 
