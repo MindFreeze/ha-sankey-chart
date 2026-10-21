@@ -52,7 +52,8 @@ export function cloneObj<T extends Record<string, unknown>>(obj: T): T {
 }
 
 // custom-card-helpers doesn't know quote_decimal (1'234'567.89) and falls back to the language,
-// so map it to de-CH like the HA frontend does
+// so map it to de-CH like the HA frontend does.
+// Remove once https://github.com/custom-cards/custom-card-helpers/pull/111 ships
 function resolveNumberLocale(locale: FrontendLocaleData): FrontendLocaleData {
   if ((locale?.number_format as string) === 'quote_decimal') {
     return { ...locale, language: 'de-CH', number_format: NumberFormat.language };
