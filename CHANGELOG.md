@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.5](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.4...v6.4.5) (2026-11-02)
+
+
+### Bug Fixes
+
+* use entity_id for more-info actions ([#401](https://github.com/MindFreeze/ha-sankey-chart/issues/401)) ([645aca7](https://github.com/MindFreeze/ha-sankey-chart/commit/645aca7db2aa204ef0204b124c782047fdc3338d))
+
 ## [6.4.4](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.3...v6.4.4) (2026-10-21)
 
 
