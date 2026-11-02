@@ -1,4 +1,5 @@
 import { HomeAssistant, fireEvent, forwardHaptic, navigate, toggleEntity } from "custom-card-helpers";
+import { isCarbonNodeType } from "./types";
 import type { EntityConfigInternal } from "./types";
 import type Chart from "./chart";
 
@@ -62,9 +63,12 @@ export const handleAction = async (
 
     switch (actionConfig.action) {
         case "more-info": {
+            // @ts-ignore
+            const actionEntityId = actionConfig.entity ?? actionConfig.data?.entity_id;
             fireEvent(node, "hass-more-info", {
-                // @ts-ignore
-                entityId: actionConfig.entity ?? actionConfig.data?.entity_id ?? config.id,
+                entityId:
+                    actionEntityId ??
+                    (isCarbonNodeType(config.type) ? config.id : config.entity_id || config.id),
             });
             break;
         }
