@@ -71,6 +71,21 @@
       body.no-embed ha-embed-provider {
         display: none;
       }
+      .controls {
+        margin: 0 0 16px;
+      }
+      .controls button {
+        font: inherit;
+        color: var(--fg);
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      body.no-embed .controls {
+        display: none;
+      }
       details {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -204,6 +219,10 @@
         </div>
       </div>
 
+      <p class="controls">
+        <button type="button" id="toggle-updates">Pause updates</button>
+      </p>
+
       <details>
         <summary>Card configuration</summary>
         <pre id="config-yaml"></pre>
@@ -258,7 +277,17 @@
           provider.hass.mockEntities[id]?.update({ state: String(state) });
         }
       };
-      setInterval(tick, 3000);
+
+      // Let visitors stop the updates (WCAG 2.2.2); start paused for reduced motion.
+      const button = document.getElementById('toggle-updates');
+      let timer;
+      const setRunning = (run) => {
+        clearInterval(timer);
+        timer = run ? setInterval(tick, 3000) : undefined;
+        button.textContent = run ? 'Pause updates' : 'Resume updates';
+      };
+      button.addEventListener('click', () => setRunning(!timer));
+      setRunning(!matchMedia('(prefers-reduced-motion: reduce)').matches);
     </script>
   </body>
 </html>
