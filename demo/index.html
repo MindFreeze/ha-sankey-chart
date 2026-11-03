@@ -137,34 +137,42 @@
                 # Sources
                 - id: sensor.solar_power
                   section: 0
-                  color: var(--warning-color)
+                  color: '#ffb300'
                 - id: sensor.grid_power
                   section: 0
+                  color: '#42a5f5'
                 - id: sensor.battery_power
                   section: 0
-                  color: var(--success-color)
+                  color: '#66bb6a'
                 # Total
                 - id: sensor.total_power
                   section: 1
+                  color: '#7e57c2'
                 # Distribution
                 - id: sensor.garage_power
                   section: 2
-                  color: purple
+                  color: '#ec407a'
                 - id: sensor.floor1_power
                   section: 2
+                  color: '#26c6da'
                 - id: sensor.floor2_power
                   section: 2
+                  color: '#ff7043'
                 # End consumers
                 - id: sensor.ev_charger_power
                   section: 3
+                  color: '#ab47bc'
                 - id: garage_other
                   section: 3
+                  color: '#f48fb1'
                   type: remaining_parent_state
                   name: Other
                 - id: sensor.living_room_power
                   section: 3
+                  color: '#26a69a'
                 - id: sensor.washer_power
                   section: 3
+                  color: '#5c6bc0'
               links:
                 - source: sensor.solar_power
                   target: sensor.total_power
