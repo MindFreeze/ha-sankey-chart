@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sankey Chart Card – Live demo</title>
+    <meta
+      name="description"
+      content="Live demo of the Sankey Chart Card for Home Assistant, running against a mocked Home Assistant backend."
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafafa;
+        --fg: #212121;
+        --muted: #616161;
+        --border: #e0e0e0;
+        --code-bg: #f1f1f1;
+        --link: #03a9f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111111;
+          --fg: #e1e1e1;
+          --muted: #9e9e9e;
+          --border: #2c2c2c;
+          --code-bg: #1c1c1c;
+          --link: #4fc3f7;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.8rem;
+      }
+      p {
+        margin: 0 0 16px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      a {
+        color: var(--link);
+      }
+      .demo {
+        margin: 24px 0;
+      }
+      .fallback {
+        display: none;
+      }
+      .fallback img {
+        max-width: 100%;
+        border-radius: 12px;
+      }
+      body.no-embed .fallback {
+        display: block;
+      }
+      body.no-embed ha-embed-provider {
+        display: none;
+      }
+      details {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+      }
+      summary {
+        cursor: pointer;
+      }
+      pre {
+        overflow-x: auto;
+        background: var(--code-bg);
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+    </style>
+
+    <!-- Home Assistant demo backend + embed elements. Must load before the card. -->
+    <script
+      type="module"
+      src="https://demo.home-assistant.io/embed.js"
+      onerror="document.body.classList.add('no-embed')"
+    ></script>
+    <!-- The card itself, built from this repository. -->
+    <script type="module" src="./ha-sankey-chart.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Sankey Chart Card</h1>
+      <p>
+        A Home Assistant card that shows how power, energy or water flows between your entities.
+        This is the real card, running against a mocked Home Assistant backend in your browser. The values
+        change every few seconds.
+      </p>
+      <p class="muted">
+        <a href="https://github.com/MindFreeze/ha-sankey-chart">Source &amp; documentation</a> ·
+        Install through <a href="https://hacs.xyz/">HACS</a>
+      </p>
+
+      <div class="demo">
+        <ha-embed-provider>
+          <script type="application/json">
+            [
+              { "entity_id": "sensor.solar_power", "state": "2400", "attributes": { "friendly_name": "Solar", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:solar-power" } },
+              { "entity_id": "sensor.grid_power", "state": "850", "attributes": { "friendly_name": "Grid", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:transmission-tower" } },
+              { "entity_id": "sensor.battery_power", "state": "350", "attributes": { "friendly_name": "Battery", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:battery" } },
+              { "entity_id": "sensor.total_power", "state": "3600", "attributes": { "friendly_name": "Total", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:home-lightning-bolt" } },
+              { "entity_id": "sensor.garage_power", "state": "1500", "attributes": { "friendly_name": "Garage", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:garage" } },
+              { "entity_id": "sensor.floor1_power", "state": "1200", "attributes": { "friendly_name": "Ground floor", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:home-floor-0" } },
+              { "entity_id": "sensor.floor2_power", "state": "900", "attributes": { "friendly_name": "First floor", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:home-floor-1" } },
+              { "entity_id": "sensor.ev_charger_power", "state": "1100", "attributes": { "friendly_name": "EV", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:ev-station" } },
+              { "entity_id": "sensor.living_room_power", "state": "750", "attributes": { "friendly_name": "Living", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:sofa" } },
+              { "entity_id": "sensor.washer_power", "state": "450", "attributes": { "friendly_name": "Washer", "unit_of_measurement": "W", "device_class": "power", "state_class": "measurement", "icon": "mdi:washing-machine" } }
+            ]
+          </script>
+          <ha-embed-card>
+            <script type="text/yaml" id="card-config">
+              type: custom:sankey-chart
+              show_names: true
+              unit_prefix: k
+              round: 1
+              height: 300
+              nodes:
+                # Sources
+                - id: sensor.solar_power
+                  section: 0
+                  color: var(--warning-color)
+                - id: sensor.grid_power
+                  section: 0
+                - id: sensor.battery_power
+                  section: 0
+                  color: var(--success-color)
+                # Total
+                - id: sensor.total_power
+                  section: 1
+                # Distribution
+                - id: sensor.garage_power
+                  section: 2
+                  color: purple
+                - id: sensor.floor1_power
+                  section: 2
+                - id: sensor.floor2_power
+                  section: 2
+                # End consumers
+                - id: sensor.ev_charger_power
+                  section: 3
+                - id: garage_other
+                  section: 3
+                  type: remaining_parent_state
+                  name: Other
+                - id: sensor.living_room_power
+                  section: 3
+                - id: sensor.washer_power
+                  section: 3
+              links:
+                - source: sensor.solar_power
+                  target: sensor.total_power
+                - source: sensor.grid_power
+                  target: sensor.total_power
+                - source: sensor.battery_power
+                  target: sensor.total_power
+                - source: sensor.total_power
+                  target: sensor.garage_power
+                - source: sensor.total_power
+                  target: sensor.floor1_power
+                - source: sensor.total_power
+                  target: sensor.floor2_power
+                - source: sensor.garage_power
+                  target: sensor.ev_charger_power
+                - source: sensor.garage_power
+                  target: garage_other
+                - source: sensor.floor1_power
+                  target: sensor.living_room_power
+                - source: sensor.floor1_power
+                  target: sensor.washer_power
+            </script>
+          </ha-embed-card>
+        </ha-embed-provider>
+
+        <div class="fallback">
+          <p class="muted">The live demo could not load. Here is a screenshot instead.</p>
+          <img src="./example.png" alt="Sankey chart showing energy flowing from sources to consumers" />
+        </div>
+      </div>
+
+      <details>
+        <summary>Card configuration</summary>
+        <pre id="config-yaml"></pre>
+      </details>
+    </main>
+
+    <script type="module">
+      // Show the card config below the demo, without the HTML indentation.
+      const lines = document.getElementById('card-config').textContent.split('\n').filter((l) => l.trim());
+      const indent = Math.min(...lines.map((l) => l.match(/^ */)[0].length));
+      document.getElementById('config-yaml').textContent = lines.map((l) => l.slice(indent)).join('\n');
+
+      // Make the values drift so the chart looks alive.
+      await customElements.whenDefined('ha-embed-provider');
+      const provider = document.querySelector('ha-embed-provider');
+      await provider.updateComplete;
+
+      const jitter = (value, spread) => Math.max(0, Math.round(value + (Math.random() - 0.5) * spread));
+      let solar = 2400;
+      let ev = 1100;
+      let living = 750;
+      let washer = 450;
+      let floor2 = 900;
+
+      const tick = () => {
+        solar = Math.min(3500, jitter(solar, 400));
+        ev = Math.min(2200, jitter(ev, 300));
+        living = Math.min(1500, jitter(living, 150));
+        washer = Math.min(900, jitter(washer, 200));
+        floor2 = Math.min(1600, jitter(floor2, 200));
+
+        const garage = ev + 400;
+        const floor1 = living + washer;
+        const total = garage + floor1 + floor2;
+        const battery = 350;
+        const pv = Math.min(solar, total - battery);
+        const grid = total - pv - battery;
+
+        const states = {
+          'sensor.solar_power': pv,
+          'sensor.grid_power': grid,
+          'sensor.battery_power': battery,
+          'sensor.total_power': total,
+          'sensor.garage_power': garage,
+          'sensor.floor1_power': floor1,
+          'sensor.floor2_power': floor2,
+          'sensor.ev_charger_power': ev,
+          'sensor.living_room_power': living,
+          'sensor.washer_power': washer,
+        };
+        for (const [id, state] of Object.entries(states)) {
+          provider.hass.mockEntities[id]?.update({ state: String(state) });
+        }
+      };
+      setInterval(tick, 3000);
+    </script>
+  </body>
+</html>

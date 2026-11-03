@@ -10,7 +10,9 @@ A Home Assistant lovelace card to display a sankey chart. For example for energy
 
 This card is intended to display connections between entities with numeric state. It is not a general graph card.
 
-![Example card](img/example.png)
+[![Example card](img/example.png)](https://mindfreeze.github.io/ha-sankey-chart/)
+
+**[Try the live demo](https://mindfreeze.github.io/ha-sankey-chart/)**: the real card, running in your browser against a mocked Home Assistant.
 
 ## Installation
 
