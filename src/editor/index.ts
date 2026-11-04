@@ -9,9 +9,9 @@ import {
   getEditorBridge,
   PreviewAction,
   PreviewSelection,
-  SankeyEditorBridge,
   selectionEquals,
 } from '../editor-bridge';
+import { SankeyEditorBridge } from '../preview/bridge';
 import type { SankeyChartConfig } from '../types';
 import { isAutoPassthrough, normalizeConfig } from '../utils';
 import {

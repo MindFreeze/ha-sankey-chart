@@ -322,34 +322,6 @@ export function isAutoPassthrough(node: { id: string; type?: string }): boolean 
 }
 
 /**
- * Inverse of autoRouteCrossGapLinks: drops the synthetic passthroughs and points
- * each link straight at the node its chain ends in.
- */
-export function collapseAutoPassthroughs(nodes: Node[], links: Link[]): { nodes: Node[]; links: Link[] } {
-  const auto = new Set(nodes.filter(isAutoPassthrough).map(n => n.id));
-  const onward = new Map<string, string>();
-  links.forEach(l => {
-    if (auto.has(l.source)) onward.set(l.source, l.target);
-  });
-  const resolve = (id: string): string => {
-    const seen = new Set<string>();
-    while (auto.has(id) && onward.has(id) && !seen.has(id)) {
-      seen.add(id);
-      id = onward.get(id)!;
-    }
-    return id;
-  };
-  const collapsed: Link[] = [];
-  links.forEach(link => {
-    if (auto.has(link.source)) return;
-    const target = resolve(link.target);
-    if (auto.has(target) || collapsed.some(l => l.source === link.source && l.target === target)) return;
-    collapsed.push({ ...link, target });
-  });
-  return { nodes: nodes.filter(n => !auto.has(n.id)), links: collapsed };
-}
-
-/**
  * When a link's source and target are not in adjacent sections, insert a chain
  * of synthetic passthrough nodes in the intermediate sections and rewrite the
  * link so the flow is expressed as explicit hops in the graph. Multiple flows

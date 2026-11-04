@@ -8,6 +8,7 @@ const mockCzech: Record<string, string> = {
 
 jest.mock('../src/localize/localize', () => ({
   localize: (key: string) => mockCzech[key],
+  registerTranslations: () => undefined,
 }));
 
 describe('trCount with a translation of its own', () => {

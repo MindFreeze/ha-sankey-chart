@@ -3,18 +3,13 @@ import { LitElement, html, PropertyValues, TemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 
-import type { CarbonNodeType, Config, Node, SankeyChartConfig, Section, SectionConfig } from './types';
+import type { CarbonNodeType, Config, Node, SankeyChartConfig, SectionConfig } from './types';
 import { DEFAULT_CONFIG, isCarbonNodeType } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
-import {
-  autoRouteCrossGapLinks,
-  collapseAutoPassthroughs,
-  convertNodesToSections,
-  normalizeConfig,
-  renderError,
-} from './utils';
-import { getEditorBridge, SankeyEditorBridge } from './editor-bridge';
+import { autoRouteCrossGapLinks, convertNodesToSections, normalizeConfig, renderError } from './utils';
+import { getEditorBridge } from './editor-bridge';
+import type { EditorBridge } from './editor-bridge';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import './print-config';
@@ -39,7 +34,6 @@ import {
 import { until } from 'lit/directives/until';
 import { fetchFloorRegistry, FloorRegistryEntry, getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
-import './editor/index';
 import { calculateTimePeriod } from './utils';
 
 /* eslint no-console: 0 */
@@ -74,21 +68,15 @@ const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
-// Section settings by section index, as a config stores them
-const sectionConfigs = (sections: Section[]): SectionConfig[] => {
-  const configs: SectionConfig[] = [];
-  sections.forEach((section, position) => {
-    const { sort_by, sort_dir, sort_group_by_parent, min_width } = section;
-    const config: SectionConfig = { sort_by, sort_dir, sort_group_by_parent, min_width };
-    (Object.keys(config) as (keyof SectionConfig)[]).forEach(key => config[key] === undefined && delete config[key]);
-    configs[section.index ?? position] = config;
-  });
-  return Array.from(configs, config => config ?? {});
-};
-
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
+    try {
+      await import('./editor/index');
+    } catch (err) {
+      console.error(err);
+      throw new Error(`${localize('common.editor_load_failed')} (${err instanceof Error ? err.message : err})`);
+    }
     return document.createElement('sankey-chart-editor');
   }
 
@@ -104,7 +92,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private entityIds: string[] = [];
   @state() private error?: unknown;
   @state() private forceUpdateTs?: number;
-  @state() private editorBridge?: SankeyEditorBridge;
+  @state() private editorBridge?: EditorBridge;
   @state() private ownsEditorBridge = false;
 
   public connectedCallback(): void {
@@ -146,8 +134,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   // An autoconfig chart pasted from print_yaml already has its graph, so autoconfig() never runs to report it
   private reportPastedGraph(): void {
     if (!this.ownsEditorBridge || !this.isConnected || !this.config?.autoconfig || !this.config.nodes.length) return;
-    const { nodes, links } = collapseAutoPassthroughs(this.config.nodes, this.config.links);
-    this.editorBridge?.reportGenerated({ nodes, links, sections: sectionConfigs(this.config.sections) });
+    this.editorBridge?.reportPasted(this.config);
   }
 
   private claimEditorBridge(): void {
@@ -767,7 +754,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     this.setNormalizedConfig({ ...this.config, nodes, links, sections } as any);
     // a replaced preview must not report a graph built from an older config
     if (this.ownsEditorBridge && this.isConnected && this.editorBridge?.active) {
-      this.editorBridge.reportGenerated({ ...collapseAutoPassthroughs(nodes, links), sections });
+      this.editorBridge.reportGenerated({ nodes, links, sections });
     }
   }
 
