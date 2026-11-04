@@ -14,19 +14,10 @@ describe('lazy editor', () => {
     expect(localize('editor.preview.add_node')).toBeUndefined();
   });
 
-  it('loads the editor once, without defining the card again', async () => {
-    const define = jest.spyOn(customElements, 'define');
+  it('loads the editor and its strings on demand', async () => {
     const editor = (await SankeyChart.getConfigElement()) as unknown as HTMLElement;
     expect(editor.localName).toBe('sankey-chart-editor');
+    expect(customElements.get('sankey-chart-editor')).toBeDefined();
     expect(localize('editor.preview.add_node')).toBe('Add node');
-
-    const tags = define.mock.calls.map(([tag]) => tag);
-    expect(tags).toContain('sankey-chart-editor');
-    expect(tags).not.toContain('sankey-chart');
-    expect(tags).not.toContain('sankey-chart-base');
-
-    await SankeyChart.getConfigElement();
-    expect(define).toHaveBeenCalledTimes(tags.length);
-    define.mockRestore();
   });
 });

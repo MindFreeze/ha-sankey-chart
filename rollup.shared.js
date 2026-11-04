@@ -78,7 +78,7 @@ export function checkBundle(bundle, { markers = EDITOR_MARKERS, maxCoreBytes = M
   return errors;
 }
 
-export const chunkPlugins = () => [
+export const chunkPlugins = ({ maxCoreBytes = MAX_CORE_BYTES } = {}) => [
   {
     name: 'version-hash',
     augmentChunkHash: () => version,
@@ -90,7 +90,7 @@ export const chunkPlugins = () => [
         const code = f.type === 'chunk' ? f.code : f.source;
         console.log(`${f.fileName}: ${Buffer.byteLength(code)} B, ${gzipSync(code).length} B gzip`);
       });
-      const errors = checkBundle(bundle);
+      const errors = checkBundle(bundle, { maxCoreBytes });
       if (errors.length) this.error(errors.join('\n'));
     },
   },

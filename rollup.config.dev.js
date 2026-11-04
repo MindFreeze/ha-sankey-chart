@@ -27,6 +27,6 @@ export default {
         "Access-Control-Allow-Origin": "*",
       },
     }),
-    ...chunkPlugins(),
+    ...chunkPlugins({ maxCoreBytes: Infinity }),
   ],
 };

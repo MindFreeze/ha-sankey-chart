@@ -42,6 +42,7 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           chunks=(dist/ha-sankey-chart-*.js)
+          gh release delete-asset "$TAG_NAME" ha-sankey-chart.js --yes 2>/dev/null || true
           if [ ${#chunks[@]} -gt 0 ]; then gh release upload "$TAG_NAME" "${chunks[@]}" --clobber; fi
           gh release upload "$TAG_NAME" dist/ha-sankey-chart.js --clobber
           diff <(cd dist && ls -1 *.js | sort) <(gh release view "$TAG_NAME" --json assets --jq '.assets[].name' | sort)

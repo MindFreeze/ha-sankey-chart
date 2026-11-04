@@ -40,7 +40,7 @@ const plugins = [
   dev && serve(serveopts),
   !dev && minifyHTML(),
   !dev && terser({ output: { comments: false } }),
-  ...chunkPlugins(),
+  ...chunkPlugins({ maxCoreBytes: dev ? Infinity : undefined }),
 ];
 
 export default [
