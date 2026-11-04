@@ -6,8 +6,8 @@ const CHUNK_NAME = /^ha-sankey-chart-(core|editor)-[0-9a-f]{8}\.js$/;
 const FACADE = /^export\s*\{[^}]*\}\s*from\s*["']\.\/ha-sankey-chart-core-[0-9a-f]{8}\.js["'];?\s*$/;
 
 // Strings that only exist in editor code. Finding one in core means a static import pulled editor code in.
-export const EDITOR_MARKERS = ['sankey-chart-node-editor'];
-export const MAX_CORE_BYTES = 135000;
+export const EDITOR_MARKERS = ['sankey-chart-node-editor', 'drop-column'];
+export const MAX_CORE_BYTES = 110000;
 
 // HACS and HA add ?hacstag= / ?v= to the entry URL only, so chunks must import the hashed core chunk,
 // never ha-sankey-chart.js, or the card is evaluated twice.

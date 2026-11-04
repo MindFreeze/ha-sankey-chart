@@ -31,6 +31,7 @@ src/
 ├── energy.ts           # Energy dashboard integration
 ├── migrate.ts          # V3→V4 config migration
 ├── editor/             # Visual card editor components
+├── preview/            # Preview editing, loaded with the editor
 └── localize/           # i18n translations
 __tests__/              # Jest test files
 dist/                   # Build output

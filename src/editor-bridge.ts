@@ -1,4 +1,7 @@
-import type { Link, Node, SectionConfig } from './types';
+import type { ReactiveController, SVGTemplateResult } from 'lit';
+import type { Chart } from './chart';
+import type { SectionEditProps } from './section';
+import type { Config, Link, Node, Section, SectionConfig } from './types';
 
 // Like HA's PREVIEW_CLICK_CALLBACK: survives config spreads and deepFreeze, never serialized.
 export const EDITOR_BRIDGE = Symbol('sankeyChartEditorBridge');
@@ -26,123 +29,48 @@ export const selectionEquals = (a?: PreviewSelection, b?: PreviewSelection): boo
   return false;
 };
 
-/**
- * Two-way channel between the visual editor and the preview card.
- * Fires `change` when editor state the preview renders (active, selection,
- * highlight) changes, and `generated` when the card reports an autoconfig graph.
- */
-const REFOCUS_WINDOW = 2000;
-
-export class SankeyEditorBridge extends EventTarget {
-  private _active = false;
-  private _selection?: PreviewSelection;
-  private _highlight?: string;
-  private _generated?: GeneratedConfig;
-  private _owner?: Element;
-  private _refocusUntil = 0;
-  private _onAction?: (action: PreviewAction) => void;
-
-  /** Last width the preview card rendered at; reading it again from a rebuilt card resets its scroll. */
-  public previewWidth?: number;
-
-  /** Whether the preview shows its focus ring: only after keyboard use, also across rebuilds. */
-  public focusRing = false;
-
-  constructor(onAction?: (action: PreviewAction) => void) {
-    super();
-    this._onAction = onAction;
-  }
-
-  // HA's deepEqual compares objects with their own valueOf, so bridges compare by identity
-  // instead of walking into the preview card element they point to.
-  public valueOf(): this {
-    return this;
-  }
-
-  /** The editor drops its handler while detached, so a saved config does not keep it alive. */
-  public setHandler(onAction?: (action: PreviewAction) => void): void {
-    this._onAction = onAction;
-  }
-
-  public get active(): boolean {
-    return this._active;
-  }
-
-  public get selection(): PreviewSelection | undefined {
-    return this._selection;
-  }
-
-  public get highlight(): string | undefined {
-    return this._highlight;
-  }
-
-  public get generated(): GeneratedConfig | undefined {
-    return this._generated;
-  }
-
-  public setActive(active: boolean): void {
-    if (this._active === active) return;
-    this._active = active;
-    this._changed();
-  }
-
-  public setSelection(selection?: PreviewSelection): void {
-    if (selectionEquals(this._selection, selection)) return;
-    this._selection = selection;
-    this._changed();
-  }
-
-  public setHighlight(nodeId?: string): void {
-    if (this._highlight === nodeId) return;
-    this._highlight = nodeId;
-    this._changed();
-  }
-
-  public dispatch(action: PreviewAction): void {
-    if (this._active) {
-      this._onAction?.(action);
-    }
-  }
-
-  public reportGenerated(config: GeneratedConfig): void {
-    this._generated = config;
-    this.dispatchEvent(new Event('generated'));
-  }
-
-  /**
-   * Only one card may edit through the bridge. On save HA renders the
-   * dashboard's own card with the preview's config while the dialog is open.
-   */
-  public claim(card: Element): boolean {
-    if (this._owner && this._owner !== card && this._owner.isConnected) return false;
-    this._owner = card;
-    return true;
-  }
-
-  public release(card: Element): void {
-    if (this._owner === card) {
-      this._owner = undefined;
-    }
-  }
-
-  // HA replaces the preview card on every change, which drops keyboard focus.
-  public keepPreviewFocus(): void {
-    this._refocusUntil = Date.now() + REFOCUS_WINDOW;
-  }
-
-  public takePreviewFocus(): boolean {
-    const refocus = Date.now() < this._refocusUntil;
-    this._refocusUntil = 0;
-    return refocus;
-  }
-
-  private _changed(): void {
-    this.dispatchEvent(new Event('change'));
-  }
+export interface EditorBridge extends EventTarget {
+  readonly active: boolean;
+  readonly selection?: PreviewSelection;
+  readonly highlight?: string;
+  focusRing: boolean;
+  previewWidth?: number;
+  claim(card: Element): boolean;
+  release(card: Element): void;
+  reportGenerated(config: GeneratedConfig): void;
+  reportPasted(config: Config): void;
+  dispatch(action: PreviewAction): void;
+  keepPreviewFocus(): void;
+  takePreviewFocus(): boolean;
+  createEditController(host: Chart): EditController;
 }
 
-export const getEditorBridge = (config: unknown): SankeyEditorBridge | undefined => {
+export interface EditRender {
+  section: SectionEditProps;
+  background: SVGTemplateResult;
+  foreground: SVGTemplateResult;
+  onPointerDown(ev: PointerEvent): void;
+  onPointerMove(ev: PointerEvent): void;
+  onPointerUp(ev: PointerEvent): void;
+  onPointerCancel(ev: PointerEvent): void;
+  onTouchStart: EventListenerObject & AddEventListenerOptions;
+  onKeyDown(ev: KeyboardEvent): void;
+  onFocus(): void;
+}
+
+export interface EditController extends ReactiveController {
+  readonly dragging: boolean;
+  indexLinks(): void;
+  sectionsForEditing(sections: Section[]): Section[];
+  sectionSize(sections: Section[]): number;
+  ghostSize(sectionSize: number, boxCount: number, ghostCount: number): number;
+  prepare(): EditRender;
+}
+
+export const getEditorBridge = (config: unknown): EditorBridge | undefined => {
   if (!config || typeof config !== 'object') return undefined;
   const bridge = (config as Record<symbol, unknown>)[EDITOR_BRIDGE];
-  return bridge instanceof SankeyEditorBridge ? bridge : undefined;
+  return bridge instanceof EventTarget && typeof (bridge as EditorBridge).createEditController === 'function'
+    ? (bridge as EditorBridge)
+    : undefined;
 };

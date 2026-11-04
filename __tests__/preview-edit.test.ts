@@ -2,7 +2,8 @@ import { HomeAssistant } from 'custom-card-helpers';
 import { LitElement } from 'lit';
 import '../src/ha-sankey-chart';
 import SankeyChart from '../src/ha-sankey-chart';
-import { EDITOR_BRIDGE, PreviewAction, SankeyEditorBridge } from '../src/editor-bridge';
+import { EDITOR_BRIDGE, PreviewAction } from '../src/editor-bridge';
+import { SankeyEditorBridge } from '../src/preview/bridge';
 import type { SankeyChartConfig } from '../src/types';
 import mockHass from './__mocks__/hass.mock';
 
@@ -89,6 +90,56 @@ describe('preview editing', () => {
     expect(root.querySelectorAll('.ghost-link')).toHaveLength(2);
     // section 2 exists (empty), so every node can start a link
     expect(root.querySelectorAll('.link-handle')).toHaveLength(4);
+  });
+
+  describe('edit styles', () => {
+    type Base = LitElement & { _editMode: boolean; render(): unknown };
+    const proto = () => customElements.get('sankey-chart-base')!.prototype as Base;
+    const editStyleCount = (root: ShadowRoot) =>
+      Array.from(root.querySelectorAll('style')).filter(s => s.textContent?.includes('drop-column')).length;
+    let originalRender: Base['render'];
+    let seen: number[];
+
+    beforeEach(() => {
+      seen = [];
+      originalRender = proto().render;
+      proto().render = function (this: Base) {
+        if (this._editMode) seen.push(editStyleCount(this.shadowRoot!));
+        return originalRender.call(this);
+      };
+    });
+
+    afterEach(() => {
+      proto().render = originalRender;
+    });
+
+    it('adds them once, by the first edit render', async () => {
+      const root = await mount({ ...baseConfig(), [EDITOR_BRIDGE]: bridge } as SankeyChartConfig);
+      card.remove();
+      document.body.appendChild(card);
+      await card.updateComplete;
+
+      expect(seen.length).toBeGreaterThan(0);
+      expect(seen.every(count => count === 1)).toBe(true);
+      expect(editStyleCount(root)).toBe(1);
+    });
+
+    it('adds them by the first edit render when the editor arrives later', async () => {
+      const config = baseConfig();
+      config.nodes = config.nodes!.filter(n => n.id !== MISSING);
+      config.links = config.links!.filter(l => l.target !== MISSING);
+      const root = await mount(config);
+      expect(root.querySelector('g.box')).not.toBeNull();
+      expect(seen).toEqual([]);
+
+      card.setConfig({ ...config, [EDITOR_BRIDGE]: bridge } as SankeyChartConfig, true);
+      await card.updateComplete;
+      await (root.host as LitElement).updateComplete;
+
+      expect(root.querySelector('.container.editing')).not.toBeNull();
+      expect(seen.length).toBeGreaterThan(0);
+      expect(seen.every(count => count === 1)).toBe(true);
+    });
   });
 
   it('keeps the regular rendering without an active editor', async () => {

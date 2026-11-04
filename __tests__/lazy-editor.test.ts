@@ -1,9 +1,14 @@
+import type { LitElement } from 'lit';
 import SankeyChart from '../src/ha-sankey-chart';
 
 describe('lazy editor', () => {
   it('does not load the editor with the card', () => {
     expect(customElements.get('sankey-chart')).toBeDefined();
     expect(customElements.get('sankey-chart-editor')).toBeUndefined();
+    const base = customElements.get('sankey-chart-base') as unknown as typeof LitElement;
+    const css = base.elementStyles.map(String).join('');
+    expect(css).toContain('.chart');
+    expect(css).not.toContain('drop-column');
   });
 
   it('loads the editor once, without defining the card again', async () => {

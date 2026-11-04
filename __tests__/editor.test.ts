@@ -1,5 +1,6 @@
 import { HomeAssistant } from 'custom-card-helpers';
-import { getEditorBridge, SankeyEditorBridge } from '../src/editor-bridge';
+import { getEditorBridge } from '../src/editor-bridge';
+import type { SankeyEditorBridge } from '../src/preview/bridge';
 import { updateNode } from '../src/editor/config-ops';
 import { trCount } from '../src/editor/helpers';
 import '../src/editor/index';

@@ -67,6 +67,11 @@ describe('checkBundle', () => {
     expect(errors).toEqual([expect.stringContaining('contains editor code')]);
   });
 
+  it('rejects preview editing styles in the core chunk', () => {
+    const errors = checkBundle(bundle(entry(), core('".editing .drop-column{fill:none}";'), editor()));
+    expect(errors).toEqual([expect.stringContaining('contains editor code (drop-column)')]);
+  });
+
   it('rejects a core chunk over the size limit', () => {
     const errors = checkBundle(bundle(entry(), core(), editor()), { maxCoreBytes: 10 });
     expect(errors).toEqual([expect.stringContaining('over 10 B')]);
