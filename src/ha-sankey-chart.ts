@@ -39,7 +39,6 @@ import {
 import { until } from 'lit/directives/until';
 import { fetchFloorRegistry, FloorRegistryEntry, getEntitiesByArea, HomeAssistantReal } from './hass';
 import { LovelaceCardEditor } from 'custom-card-helpers';
-import './editor/index';
 import { calculateTimePeriod } from './utils';
 
 /* eslint no-console: 0 */
@@ -89,6 +88,12 @@ const sectionConfigs = (sections: Section[]): SectionConfig[] => {
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
+    try {
+      await import('./editor/index');
+    } catch (err) {
+      console.error(err);
+      throw new Error(`${localize('common.editor_load_failed')} (${err instanceof Error ? err.message : err})`);
+    }
     return document.createElement('sankey-chart-editor');
   }
 

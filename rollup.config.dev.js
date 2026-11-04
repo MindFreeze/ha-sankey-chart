@@ -4,13 +4,12 @@ import babel from "rollup-plugin-babel";
 import serve from "rollup-plugin-serve";
 import { terser } from "rollup-plugin-terser";
 import json from '@rollup/plugin-json';
+import { chunkPlugins, output, preserveEntrySignatures } from "./rollup.shared.js";
 
 export default {
   input: ["src/ha-sankey-chart.ts"],
-  output: {
-    dir: "./dist",
-    format: "es",
-  },
+  preserveEntrySignatures,
+  output,
   plugins: [
     resolve(),
     typescript(),
@@ -28,5 +27,6 @@ export default {
         "Access-Control-Allow-Origin": "*",
       },
     }),
+    ...chunkPlugins(),
   ],
 };

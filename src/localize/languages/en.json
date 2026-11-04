@@ -5,7 +5,8 @@
     "show_warning": "Show Warning",
     "entity_not_found": "Entity state not found",
     "missing_child": "Missing child entity",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "editor_load_failed": "Could not load the visual editor. Reload the page and try again."
   },
   "editor": {
     "yaml_disclaimer": "Please use yaml mode for the other options",

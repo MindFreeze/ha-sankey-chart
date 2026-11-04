@@ -1,5 +1,6 @@
 {
     "name": "Sankey Chart Card",
     "render_readme": true,
-    "filename": "ha-sankey-chart.js"
+    "filename": "ha-sankey-chart.js",
+    "hacs": "2.0.0"
 }
