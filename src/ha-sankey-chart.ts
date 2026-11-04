@@ -3,7 +3,7 @@ import { LitElement, html, PropertyValues, TemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 
-import type { CarbonNodeType, Config, Node, SankeyChartConfig, SectionConfig } from './types';
+import type { CarbonNodeType, Config, Node, SankeyChartConfig, Section, SectionConfig } from './types';
 import { DEFAULT_CONFIG, isCarbonNodeType } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
@@ -74,6 +74,18 @@ const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
+// Section settings by section index, as a config stores them
+const sectionConfigs = (sections: Section[]): SectionConfig[] => {
+  const configs: SectionConfig[] = [];
+  sections.forEach((section, position) => {
+    const { sort_by, sort_dir, sort_group_by_parent, min_width } = section;
+    const config: SectionConfig = { sort_by, sort_dir, sort_group_by_parent, min_width };
+    (Object.keys(config) as (keyof SectionConfig)[]).forEach(key => config[key] === undefined && delete config[key]);
+    configs[section.index ?? position] = config;
+  });
+  return Array.from(configs, config => config ?? {});
+};
+
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
@@ -98,6 +110,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   public connectedCallback(): void {
     super.connectedCallback();
     this.claimEditorBridge();
+    this.reportPastedGraph();
   }
 
   public disconnectedCallback(): void {
@@ -128,6 +141,13 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   private get chartWidth(): number {
     const cached = this.ownsEditorBridge ? this.editorBridge?.previewWidth : undefined;
     return cached || this.measureWidth() || window.innerWidth;
+  }
+
+  // An autoconfig chart pasted from print_yaml already has its graph, so autoconfig() never runs to report it
+  private reportPastedGraph(): void {
+    if (!this.ownsEditorBridge || !this.isConnected || !this.config?.autoconfig || !this.config.nodes.length) return;
+    const { nodes, links } = collapseAutoPassthroughs(this.config.nodes, this.config.links);
+    this.editorBridge?.reportGenerated({ nodes, links, sections: sectionConfigs(this.config.sections) });
   }
 
   private claimEditorBridge(): void {
@@ -316,6 +336,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       this.claimEditorBridge();
     }
     this.setNormalizedConfig(normalizeConfig(config, isMetric));
+    this.reportPastedGraph();
     this.resetSubscriptions();
   }
 

@@ -56,6 +56,15 @@ describe('preview editing', () => {
     return base.shadowRoot!;
   };
 
+  // jsdom has no hui-error-card; give renderError something to create
+  const win = window as unknown as { loadCardHelpers?: unknown };
+  beforeAll(() => {
+    win.loadCardHelpers = async () => ({ createCardElement: () => document.createElement('div') });
+  });
+  afterAll(() => {
+    delete win.loadCardHelpers;
+  });
+
   beforeEach(() => {
     actions = [];
     bridge = new SankeyEditorBridge(action => actions.push(action));
@@ -156,10 +165,74 @@ describe('preview editing', () => {
     }
   });
 
+  it('resolves units for remainders that only lead to each other', async () => {
+    // a remaining_child_state feeding a remaining_parent_state: each would read the other for its unit
+    const cycle = {
+      type: 'custom:sankey-chart',
+      nodes: [
+        { id: 'ent1', section: 0 },
+        { id: 'rest', section: 1, type: 'remaining_child_state' },
+        { id: 'left', section: 2, type: 'remaining_parent_state' },
+      ],
+      links: [
+        { source: 'ent1', target: 'rest' },
+        { source: 'rest', target: 'left' },
+      ],
+    } as SankeyChartConfig;
+    const root = await mount({ ...cycle, [EDITOR_BRIDGE]: bridge } as SankeyChartConfig);
+    expect(root.querySelectorAll('g.box')).toHaveLength(3);
+
+    card.remove();
+    card = document.createElement('sankey-chart') as SankeyChart;
+    // @ts-ignore
+    card.hass = hass as HomeAssistant;
+    const normal = await mount(cycle);
+    expect(normal.querySelector('svg.chart')).not.toBeNull();
+  });
+
+  it('fits a vertical preview with many hidden nodes instead of overlapping them', async () => {
+    const zeros = Array.from({ length: 150 }, (_, i) => ({ id: `zero${i}`, section: 1 }));
+    const root = await mount({
+      type: 'custom:sankey-chart',
+      layout: 'vertical',
+      nodes: [{ id: 'ent1', section: 0 }, { id: 'ent2', section: 1 }, ...zeros],
+      links: [{ source: 'ent1', target: 'ent2' }],
+      [EDITOR_BRIDGE]: bridge,
+    } as SankeyChartConfig);
+
+    const bars = [...root.querySelectorAll('g.box.ghost rect.color-bar')].map(r => ({
+      x: Number(r.getAttribute('x')),
+      width: Number(r.getAttribute('width')),
+    }));
+    expect(bars).toHaveLength(150);
+    bars.slice(1).forEach((bar, i) => {
+      expect(bar.x).toBeGreaterThanOrEqual(bars[i].x + bars[i].width);
+    });
+    const viewBox = root.querySelector('svg.chart')!.getAttribute('viewBox')!.split(' ').map(Number);
+    expect(viewBox[2]).toBeGreaterThanOrEqual(bars[bars.length - 1].x + bars[bars.length - 1].width);
+  });
+
+  it('reports the graph of an autoconfig chart pasted with its nodes', async () => {
+    const hop = 'ent2__passthrough_1__auto';
+    await mount({
+      type: 'custom:sankey-chart',
+      // power mode reads live states, so the test needs no energy collection
+      autoconfig: { mode: 'power', print_yaml: false },
+      nodes: [{ id: 'ent1', section: 0 }, { id: hop, section: 1, type: 'passthrough' }, { id: 'ent2', section: 2 }],
+      links: [
+        { source: 'ent1', target: hop },
+        { source: hop, target: 'ent2' },
+      ],
+      sections: [{}, { sort_by: 'state' }, {}],
+      [EDITOR_BRIDGE]: bridge,
+    } as SankeyChartConfig);
+
+    expect(bridge.generated?.nodes.map(n => n.id)).toEqual(['ent1', 'ent2']);
+    expect(bridge.generated?.links).toEqual([{ source: 'ent1', target: 'ent2' }]);
+    expect(bridge.generated?.sections).toEqual([{}, { sort_by: 'state' }, {}]);
+  });
+
   it('recovers when the editor comes back after rendering without it', async () => {
-    // jsdom has no hui-error-card; give renderError something to create
-    const win = window as unknown as { loadCardHelpers?: unknown };
-    win.loadCardHelpers = async () => ({ createCardElement: () => document.createElement('div') });
     const config = {
       type: 'custom:sankey-chart',
       nodes: [
@@ -182,7 +255,6 @@ describe('preview editing', () => {
     await base.updateComplete;
     root = base.shadowRoot!;
     expect(root.querySelector('.container.editing svg.chart')).not.toBeNull();
-    delete win.loadCardHelpers;
   });
 
   it('lets only one card edit through a bridge', async () => {

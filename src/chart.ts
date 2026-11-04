@@ -117,6 +117,8 @@ export class Chart extends LitElement {
   private _sectionOf = new Map<string, number>();
   private _autoTarget = new Map<string, string>();
   private _missing = new Set<string>();
+  // nodes whose state is being derived from a related node, to stop resolution cycles
+  private _resolving = new Set<EntityConfigInternal>();
   private _boxIndex = new Map<string, { box: Box; column: ColumnGeom }>();
   private _columns: ColumnGeom[] = [];
 
@@ -793,11 +795,9 @@ export class Chart extends LitElement {
     return Math.max(MIN_GHOST_BOX_SIZE, Math.min(GHOST_BOX_SIZE, Math.floor(budget / ghostCount)));
   }
 
-  // Grows a horizontal chart while editing until hidden nodes fit at full size.
+  // Grows the chart along its boxes while editing until hidden nodes fit at full size.
+  // A vertical chart that grows wider than the card is scaled down to fit (see styles).
   private _editSectionSize(sections: Section[]): number {
-    if (this.vertical) {
-      return this.width - 32;
-    }
     const { min_state, min_box_distance, height } = this.config;
     return sections.reduce((size, section) => {
       let real = 0;
@@ -813,7 +813,7 @@ export class Chart extends LitElement {
       if (!ghosts) return size;
       const needed = ghosts * GHOST_BOX_SIZE + (real + ghosts - 1) * min_box_distance;
       return Math.max(size, real ? needed * 2 : needed);
-    }, height);
+    }, this.vertical ? this.width - 32 : height);
   }
 
   private _naturalSectionHeight(section: SectionState): number {
@@ -962,6 +962,27 @@ export class Chart extends LitElement {
   }
 
   private _getEntityState(entityConf: EntityConfigInternal) {
+    if (
+      entityConf.type === 'remaining_parent_state' ||
+      entityConf.type === 'remaining_child_state' ||
+      entityConf.type === 'passthrough'
+    ) {
+      // A remaining_child_state feeding a remaining_parent_state would each read the other
+      if (this._resolving.has(entityConf)) {
+        return this._placeholderEntity(entityConf);
+      }
+      this._resolving.add(entityConf);
+      try {
+        return this._getDerivedEntityState(entityConf);
+      } finally {
+        this._resolving.delete(entityConf);
+      }
+    }
+    return this._getRealEntityState(entityConf);
+  }
+
+  // State of a node that borrows its unit and attributes from a related node
+  private _getDerivedEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
       const connections = this.connectionsByChild.get(entityConf);
       if (!connections) {
@@ -1007,7 +1028,10 @@ export class Chart extends LitElement {
       }
       return this._getEntityState(realConnection.child);
     }
+    return this._getRealEntityState(entityConf);
+  }
 
+  private _getRealEntityState(entityConf: EntityConfigInternal) {
     const lookupId = this._lookupId(entityConf);
     let entity = this.states[lookupId];
     if (!entity) {
@@ -1505,7 +1529,7 @@ export class Chart extends LitElement {
 
       this.lastUpdate = Date.now();
 
-      const chartW = this.width - 32;
+      const chartW = this.vertical ? Math.max(this.width - 32, this._sectionSize) : this.width - 32;
       const lastSection = this.sections[this.sections.length - 1];
       const chartH = this.vertical
         ? (lastSection ? lastSection.offset + lastSection.size : 0)

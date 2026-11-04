@@ -89,6 +89,7 @@ export default css`
 
     /* Preview editing */
     .editing .chart {
+        height: auto;
         outline: none;
         user-select: none;
         -webkit-user-select: none;

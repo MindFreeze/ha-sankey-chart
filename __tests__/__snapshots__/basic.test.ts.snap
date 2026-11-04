@@ -194,6 +194,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
 
     /* Preview editing */
     .editing .chart {
+        height: auto;
         outline: none;
         user-select: none;
         -webkit-user-select: none;
