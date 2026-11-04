@@ -457,6 +457,29 @@ describe('preview editing', () => {
     expect(bridge.valueOf() === other.valueOf()).toBe(false);
   });
 
+  it('shows the focus ring after keyboard use only', async () => {
+    const root = await mount({ ...baseConfig(), [EDITOR_BRIDGE]: bridge } as SankeyChartConfig);
+    const base = card.shadowRoot!.querySelector('sankey-chart-base') as LitElement;
+    const svg = root.querySelector('svg.chart') as SVGSVGElement;
+    const container = () => root.querySelector('.container')!;
+
+    // focus without a press, as Tab does
+    svg.focus();
+    await base.updateComplete;
+    expect(container().classList.contains('focus-ring')).toBe(true);
+
+    boxOf(root, 'ent1').dispatchEvent(pointer('pointerdown'));
+    svg.dispatchEvent(pointer('pointerup'));
+    await base.updateComplete;
+    expect(container().classList.contains('focus-ring')).toBe(false);
+    // a rebuilt preview starts from the same state
+    expect(bridge.focusRing).toBe(false);
+
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    await base.updateComplete;
+    expect(container().classList.contains('focus-ring')).toBe(true);
+  });
+
   it('does not run tap actions while editing', async () => {
     const root = await mount({ ...baseConfig(), [EDITOR_BRIDGE]: bridge } as SankeyChartConfig);
     const moreInfo = jest.fn();

@@ -45,6 +45,9 @@ export class SankeyEditorBridge extends EventTarget {
   /** Last width the preview card rendered at; reading it again from a rebuilt card resets its scroll. */
   public previewWidth?: number;
 
+  /** Whether the preview shows its focus ring: only after keyboard use, also across rebuilds. */
+  public focusRing = false;
+
   constructor(onAction?: (action: PreviewAction) => void) {
     super();
     this._onAction = onAction;

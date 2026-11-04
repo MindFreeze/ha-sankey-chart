@@ -56,6 +56,7 @@ import { reconcileEntity } from './reconcile';
 
 const DRAG_THRESHOLD = { mouse: 4, other: 10 };
 const LINK_TARGET_PAD = 8;
+const POINTER_FOCUS_WINDOW = 500;
 const GHOST_BOX_SIZE = 14;
 const MIN_GHOST_BOX_SIZE = 4;
 const EMPTY_SECTION_SIZE = 64;
@@ -109,6 +110,9 @@ export class Chart extends LitElement {
   // Preview editing (only while a visual editor bridge is active)
   private _editMode = false;
   private _editRendered = false;
+  // the focus ring only shows for keyboard use; these tell a pointer or script focus apart
+  private _lastPointerDown = 0;
+  private _refocusing = false;
   private _connectionsEditMode = false;
   private _subscribedBridge?: SankeyEditorBridge;
   private _bridgeHighlight?: string;
@@ -144,7 +148,14 @@ export class Chart extends LitElement {
       this._editRendered = true;
       if (this.editBridge?.takePreviewFocus()) {
         // the new card is not laid out yet, and an element without a box cannot take focus
-        requestAnimationFrame(() => this._svg?.focus({ preventScroll: true }));
+        requestAnimationFrame(() => {
+          this._refocusing = true;
+          try {
+            this._svg?.focus({ preventScroll: true });
+          } finally {
+            this._refocusing = false;
+          }
+        });
       }
     }
   }
@@ -1310,7 +1321,26 @@ export class Chart extends LitElement {
     return this.vertical ? { across: y, along: x } : { across: x, along: y };
   }
 
+  private _setFocusRing(show: boolean): void {
+    const bridge = this.editBridge;
+    if (!bridge || bridge.focusRing === show) return;
+    bridge.focusRing = show;
+    this._editRevision++;
+  }
+
+  private _notePointer(): void {
+    this._lastPointerDown = Date.now();
+    this._setFocusRing(false);
+  }
+
+  private _onFocus = (): void => {
+    // a rebuilt preview keeps the ring of the one it replaces, and a focus right after a press came from the pointer
+    if (this._refocusing || Date.now() - this._lastPointerDown < POINTER_FOCUS_WINDOW) return;
+    this._setFocusRing(true);
+  };
+
   private _capturePointer(ev: PointerEvent): void {
+    this._notePointer();
     try {
       this._svg?.setPointerCapture(ev.pointerId);
     } catch (_err) {
@@ -1372,6 +1402,7 @@ export class Chart extends LitElement {
   };
 
   private _onSvgPointerDown = (ev: PointerEvent): void => {
+    this._notePointer();
     if (this._isBusy(ev)) return;
     this._capturePointer(ev);
     this._press = { type: 'background', ...this._pressAt(ev) };
@@ -1473,6 +1504,7 @@ export class Chart extends LitElement {
   }
 
   private _onKeyDown = (ev: KeyboardEvent): void => {
+    this._setFocusRing(true);
     const selection = this.editBridge?.selection;
     if (ev.key === 'Escape') {
       if (this._drag || this._press) {
@@ -1513,6 +1545,7 @@ export class Chart extends LitElement {
         'with-header': !!this.config.title,
         vertical: this.vertical,
         editing,
+        'focus-ring': editing && !!this.editBridge?.focusRing,
       });
 
       if (!Object.keys(this.states).length) {
@@ -1552,6 +1585,7 @@ export class Chart extends LitElement {
               @pointercancel=${editing ? this._onPointerCancel : nothing}
               @touchstart=${editing ? this._onTouchStart : nothing}
               @keydown=${editing ? this._onKeyDown : nothing}
+              @focus=${editing ? this._onFocus : nothing}
             >
               ${edit ? renderEditBackground(edit.layer) : nothing}
               ${this.sections.map((s, i) =>

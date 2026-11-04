@@ -94,6 +94,11 @@ export default css`
         user-select: none;
         -webkit-user-select: none;
     }
+    .editing.focus-ring .chart:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 4px;
+        border-radius: 4px;
+    }
     .editing .box {
         cursor: grab;
         touch-action: none;

@@ -1,9 +1,11 @@
 import { HomeAssistant, stateIcon } from 'custom-card-helpers';
 import { HassEntity } from 'home-assistant-js-websocket';
 import { html, TemplateResult } from 'lit';
+import { resolveCarbonSources } from '../energy';
 import { computeEntityName } from '../entity-name';
 import * as en from '../localize/languages/en.json';
 import { localize } from '../localize/localize';
+import { isCarbonNodeType } from '../types';
 import type { Node, NodeType } from '../types';
 import { deepEqual, readsEntity } from './config-ops';
 
@@ -121,7 +123,10 @@ export function nodeName(hass: HomeAssistant | undefined, node: Node | undefined
 }
 
 export function isMissingEntity(hass: HomeAssistant | undefined, node: Node): boolean {
-  return readsEntity(node.type) && !!hass && !hass.states[nodeEntityId(node)];
+  if (!hass || !readsEntity(node.type)) return false;
+  // a carbon node's id is usually synthetic: it reads its source entities instead
+  if (isCarbonNodeType(node.type)) return !resolveCarbonSources(node, hass).some(id => hass.states[id]);
+  return !hass.states[nodeEntityId(node)];
 }
 
 export function sectionLabel(index: number): string {
