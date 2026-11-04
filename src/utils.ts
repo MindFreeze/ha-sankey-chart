@@ -245,6 +245,7 @@ export function convertNodesToSections(nodes: Node[], links: Link[], sectionConf
     const sectionConfig = sectionConfigs?.[sectionIndex] || {};
 
     return {
+      index: sectionIndex,
       entities: nodesBySection.get(sectionIndex) || [],
       sort_by: sectionConfig.sort_by,
       sort_dir: sectionConfig.sort_dir,
@@ -309,12 +310,43 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
 
 const AUTO_PASSTHROUGH_SUFFIX = '__auto';
 
+export const autoPassthroughId = (target: string, section: number): string =>
+  `${target}__passthrough_${section}${AUTO_PASSTHROUGH_SUFFIX}`;
+
 /**
  * Whether the node is a passthrough inserted by autoRouteCrossGapLinks rather
  * than declared by the user.
  */
 export function isAutoPassthrough(node: { id: string; type?: string }): boolean {
   return node.type === 'passthrough' && node.id.endsWith(AUTO_PASSTHROUGH_SUFFIX);
+}
+
+/**
+ * Inverse of autoRouteCrossGapLinks: drops the synthetic passthroughs and points
+ * each link straight at the node its chain ends in.
+ */
+export function collapseAutoPassthroughs(nodes: Node[], links: Link[]): { nodes: Node[]; links: Link[] } {
+  const auto = new Set(nodes.filter(isAutoPassthrough).map(n => n.id));
+  const onward = new Map<string, string>();
+  links.forEach(l => {
+    if (auto.has(l.source)) onward.set(l.source, l.target);
+  });
+  const resolve = (id: string): string => {
+    const seen = new Set<string>();
+    while (auto.has(id) && onward.has(id) && !seen.has(id)) {
+      seen.add(id);
+      id = onward.get(id)!;
+    }
+    return id;
+  };
+  const collapsed: Link[] = [];
+  links.forEach(link => {
+    if (auto.has(link.source)) return;
+    const target = resolve(link.target);
+    if (auto.has(target) || collapsed.some(l => l.source === link.source && l.target === target)) return;
+    collapsed.push({ ...link, target });
+  });
+  return { nodes: nodes.filter(n => !auto.has(n.id)), links: collapsed };
 }
 
 /**
@@ -344,7 +376,7 @@ export function autoRouteCrossGapLinks(nodes: Node[], links: Link[]): void {
     const originalTarget = link.target;
     const hopIds: string[] = [];
     for (let i = srcSec + 1; i < tgtSec; i++) {
-      const pid = `${originalTarget}__passthrough_${i}${AUTO_PASSTHROUGH_SUFFIX}`;
+      const pid = autoPassthroughId(originalTarget, i);
       // Reuse an existing synthetic passthrough for the same (target, section)
       if (!nodes.some(n => n.id === pid)) {
         // Inherit visual props (color, icon, name, etc.) from the target so

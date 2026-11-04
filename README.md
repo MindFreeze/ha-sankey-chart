@@ -16,6 +16,19 @@ This card is intended to display connections between entities with numeric state
 
 Install through [HACS](https://hacs.xyz/)
 
+## Visual editor
+
+You can build the chart in the dashboard's card editor, directly on the preview:
+
+- **Edit** a node or a link: click it in the preview.
+- **Move** a node to another section: drag it there. Drop it between two sections, or after the last one, to create a new section.
+- **Link** two nodes: drag the round handle on the edge of a node onto a node in a later section. Drop it on empty space to add a new node with that link.
+- **Delete** the selected node or link with <kbd>Delete</kbd>. Undo with <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd>.
+
+While you edit, the preview also draws what the card normally hides, so you can work with it: nodes the card hides (a value of 0 or below `min_state`) and links without a flow are dashed, and empty sections are drop areas. Editing in the preview needs Home Assistant 2026.2 or newer.
+
+Using [autoconfig](#autoconfig)? Select **Customize** in the editor to turn the generated chart into nodes and links you can edit.
+
 ## Options
 
 | Name              | Type    | Default             | Description                                 |

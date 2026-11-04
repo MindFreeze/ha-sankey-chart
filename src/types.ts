@@ -159,7 +159,12 @@ export type ChildConfig = {
 
 export type ChildConfigOrStr = string | ChildConfig;
 
-export type ActionConfigExtended = ActionConfig | CallServiceActionConfig | MoreInfoActionConfig | ZoomActionConfig;
+export type ActionConfigExtended =
+  | ActionConfig
+  | CallServiceActionConfig
+  | PerformActionConfig
+  | MoreInfoActionConfig
+  | ZoomActionConfig;
 
 export interface MoreInfoActionConfig extends BaseActionConfig {
   action: 'more-info';
@@ -185,6 +190,13 @@ export interface CallServiceActionConfig extends BaseActionConfig {
   haptic?: HapticType;
 }
 
+export interface PerformActionConfig extends BaseActionConfig {
+  action: 'perform-action';
+  perform_action: string;
+  data?: Record<string, unknown>;
+  target?: HassServiceTarget;
+}
+
 export interface ReconcileConfig {
   should_be: 'equal' | 'equal_or_less' | 'equal_or_more';
   reconcile_to: 'min' | 'max' | 'mean' |  'latest';
@@ -198,6 +210,7 @@ export interface SectionConfig {
 }
 
 export interface Section {
+  index?: number; // the nodes' `section` value; differs from the array position when indices are sparse
   entities: NodeInternal[];
   sort_by?: 'none' | 'state';
   sort_dir?: 'asc' | 'desc';
@@ -249,6 +262,8 @@ export interface Box {
     parents: Connection[];
   };
   connectedParentState: number;
+  ghost?: boolean; // preview editing: hidden in the card, drawn so it can be edited
+  missing?: boolean; // preview editing: its entity does not exist
 }
 
 export interface SectionState {
