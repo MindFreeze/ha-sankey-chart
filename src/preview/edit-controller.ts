@@ -1,3 +1,4 @@
+import '../localize/register-editor';
 import { localize } from '../localize/localize';
 import { autoPassthroughId, getBoxName, isAutoPassthrough } from '../utils';
 import { selectionEquals } from '../editor-bridge';

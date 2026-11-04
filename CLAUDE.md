@@ -32,7 +32,7 @@ src/
 ├── migrate.ts          # V3→V4 config migration
 ├── editor/             # Visual card editor components
 ├── preview/            # Preview editing, loaded with the editor
-└── localize/           # i18n translations
+└── localize/           # i18n: languages/ (card), editor/ (loaded with the editor)
 __tests__/              # Jest test files
 dist/                   # Build output
 ```
