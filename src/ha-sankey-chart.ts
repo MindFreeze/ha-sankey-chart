@@ -1,13 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LitElement, html, TemplateResult } from 'lit';
+import { LitElement, html, PropertyValues, TemplateResult } from 'lit';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { customElement, property, state } from 'lit/decorators';
 
-import type { CarbonNodeType, Config, Node, SankeyChartConfig, SectionConfig } from './types';
+import type { CarbonNodeType, Config, Node, SankeyChartConfig, Section, SectionConfig } from './types';
 import { DEFAULT_CONFIG, isCarbonNodeType } from './types';
 import { version } from '../package.json';
 import { localize } from './localize/localize';
-import { autoRouteCrossGapLinks, convertNodesToSections, normalizeConfig, renderError } from './utils';
+import {
+  autoRouteCrossGapLinks,
+  collapseAutoPassthroughs,
+  convertNodesToSections,
+  normalizeConfig,
+  renderError,
+} from './utils';
+import { getEditorBridge, SankeyEditorBridge } from './editor-bridge';
 import { SubscribeMixin } from './subscribe-mixin';
 import './chart';
 import './print-config';
@@ -67,6 +74,18 @@ const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
+// Section settings by section index, as a config stores them
+const sectionConfigs = (sections: Section[]): SectionConfig[] => {
+  const configs: SectionConfig[] = [];
+  sections.forEach((section, position) => {
+    const { sort_by, sort_dir, sort_group_by_parent, min_width } = section;
+    const config: SectionConfig = { sort_by, sort_dir, sort_group_by_parent, min_width };
+    (Object.keys(config) as (keyof SectionConfig)[]).forEach(key => config[key] === undefined && delete config[key]);
+    configs[section.index ?? position] = config;
+  });
+  return Array.from(configs, config => config ?? {});
+};
+
 @customElement('sankey-chart')
 class SankeyChart extends SubscribeMixin(LitElement) {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
@@ -85,6 +104,55 @@ class SankeyChart extends SubscribeMixin(LitElement) {
   @state() private entityIds: string[] = [];
   @state() private error?: unknown;
   @state() private forceUpdateTs?: number;
+  @state() private editorBridge?: SankeyEditorBridge;
+  @state() private ownsEditorBridge = false;
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+    this.claimEditorBridge();
+    this.reportPastedGraph();
+  }
+
+  public disconnectedCallback(): void {
+    super.disconnectedCallback();
+    // no state change here: a re-render of the detached card would drop edit mode
+    this.editorBridge?.release(this);
+  }
+
+  protected updated(changedProps: PropertyValues): void {
+    super.updated(changedProps);
+    const bridge = this.ownsEditorBridge ? this.editorBridge : undefined;
+    if (!bridge) return;
+    // measured once the chart has rendered; the rebuilt preview reuses it instead of reading layout while empty
+    requestAnimationFrame(() => {
+      const width = this.measureWidth();
+      if (width && width !== bridge.previewWidth && this.isConnected) {
+        bridge.previewWidth = width;
+        this.requestUpdate();
+      }
+    });
+  }
+
+  // the host is inline, so clientWidth is usually 0
+  private measureWidth(): number {
+    return this.clientWidth || this.offsetWidth || this.parentElement?.clientWidth || 0;
+  }
+
+  private get chartWidth(): number {
+    const cached = this.ownsEditorBridge ? this.editorBridge?.previewWidth : undefined;
+    return cached || this.measureWidth() || window.innerWidth;
+  }
+
+  // An autoconfig chart pasted from print_yaml already has its graph, so autoconfig() never runs to report it
+  private reportPastedGraph(): void {
+    if (!this.ownsEditorBridge || !this.isConnected || !this.config?.autoconfig || !this.config.nodes.length) return;
+    const { nodes, links } = collapseAutoPassthroughs(this.config.nodes, this.config.links);
+    this.editorBridge?.reportGenerated({ nodes, links, sections: sectionConfigs(this.config.sections) });
+  }
+
+  private claimEditorBridge(): void {
+    this.ownsEditorBridge = !!this.editorBridge && this.isConnected && this.editorBridge.claim(this);
+  }
 
   private _collectCarbonNodes(): { node: Node & { type: CarbonNodeType }; sources: string[] }[] {
     const isCarbonNode = (n: Node): n is Node & { type: CarbonNodeType } => isCarbonNodeType(n.type);
@@ -260,7 +328,15 @@ class SankeyChart extends SubscribeMixin(LitElement) {
       throw new Error(localize('common.invalid_configuration'));
     }
 
+    // normalizeConfig clones through JSON, which drops the Symbol
+    const bridge = getEditorBridge(config);
+    if (bridge !== this.editorBridge) {
+      this.editorBridge?.release(this);
+      this.editorBridge = bridge;
+      this.claimEditorBridge();
+    }
     this.setNormalizedConfig(normalizeConfig(config, isMetric));
+    this.reportPastedGraph();
     this.resetSubscriptions();
   }
 
@@ -689,6 +765,10 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     autoRouteCrossGapLinks(nodes, links);
 
     this.setNormalizedConfig({ ...this.config, nodes, links, sections } as any);
+    // a replaced preview must not report a graph built from an older config
+    if (this.ownsEditorBridge && this.isConnected && this.editorBridge?.active) {
+      this.editorBridge.reportGenerated({ ...collapseAutoPassthroughs(nodes, links), sections });
+    }
   }
 
   // Mirrors HA's hui-energy-sankey-card._getDeviceSections: top-level parents
@@ -737,7 +817,8 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         .states=${Object.keys(this.states).length ? this.states : this.hass.states}
         .config=${this.config}
         .forceUpdateTs=${this.forceUpdateTs}
-        .width=${this.clientWidth || this.offsetWidth || this.parentElement?.clientWidth || window.innerWidth}
+        .editBridge=${this.ownsEditorBridge ? this.editorBridge : undefined}
+        .width=${this.chartWidth}
       ></sankey-chart-base>
 
       ${print_yaml && this.config.sections.length
