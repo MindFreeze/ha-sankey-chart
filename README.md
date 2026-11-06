@@ -3,7 +3,7 @@
 A Home Assistant lovelace card to display a sankey chart. For example for energy/power/water consumption.
 
 [![License][license-shield]](LICENSE.md)
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![marketplace_badge](https://img.shields.io/badge/Marketplace-Default-41BDF5.svg?style=for-the-badge)](https://www.home-assistant.io/integrations/marketplace/)
 [![GitHub Activity][commits-shield]][commits]
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/mindfreeze)
