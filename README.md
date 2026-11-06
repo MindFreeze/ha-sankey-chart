@@ -3,7 +3,7 @@
 A Home Assistant lovelace card to display a sankey chart. For example for energy/power/water consumption.
 
 [![License][license-shield]](LICENSE.md)
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![marketplace_badge](https://img.shields.io/badge/Marketplace-Default-41BDF5.svg?style=for-the-badge)](https://www.home-assistant.io/integrations/marketplace/)
 [![GitHub Activity][commits-shield]][commits]
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/mindfreeze)
@@ -16,7 +16,7 @@ This card is intended to display connections between entities with numeric state
 
 ## Installation
 
-Install through [HACS](https://hacs.xyz/) or the Home Assistant Marketplace.
+Install through the [Home Assistant Marketplace](https://www.home-assistant.io/integrations/marketplace/). On Home Assistant versions before 2026.11, which have no Marketplace, install through [HACS](https://hacs.xyz/) instead.
 
 ### Manual installation
 
@@ -522,7 +522,7 @@ For automatic configuration from your Energy Dashboard setup, see [autoconfig](#
 2. `npm start`
 3. The compiled files will be accessible on
    `http://127.0.0.1:3000/`. `ha-sankey-chart.js` loads the other chunks.
-4. On a running Home Assistant installation, add this to your Lovelace `resources:`. The `?v=` query matches how HACS loads the card, so a chunk that wrongly imports `ha-sankey-chart.js` fails in development too.
+4. On a running Home Assistant installation, add this to your Lovelace `resources:`. The `?v=` query matches how the Marketplace loads the card, so a chunk that wrongly imports `ha-sankey-chart.js` fails in development too.
 
 ```yaml
 - url: 'http://127.0.0.1:3000/ha-sankey-chart.js?v=dev'
