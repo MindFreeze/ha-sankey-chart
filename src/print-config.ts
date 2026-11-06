@@ -27,7 +27,7 @@ export class PrintConfig extends LitElement {
     const { sections, autoconfig, ...rest } = this.config;
     const printable: Record<string, unknown> = {
       ...rest,
-      sections: sections.map(({ entities: _entities, ...sectionConfig }) => sectionConfig),
+      sections: sections.map(({ entities: _entities, index: _index, ...sectionConfig }) => sectionConfig),
     };
     if (autoconfig) {
       printable.autoconfig = { ...autoconfig, print_yaml: false };

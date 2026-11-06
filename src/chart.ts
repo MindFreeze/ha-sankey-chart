@@ -1,4 +1,4 @@
-import { LitElement, html, TemplateResult, PropertyValues, CSSResultGroup } from 'lit';
+import { LitElement, html, TemplateResult, PropertyValues, CSSResultGroup, nothing } from 'lit';
 import { classMap } from 'lit/directives/class-map';
 import { until } from 'lit/directives/until.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -17,7 +17,17 @@ import type {
 import { isCarbonNodeType } from './types';
 import { localize } from './localize/localize';
 import styles from './styles';
-import { formatState, getBoxName, getEntityId, isAutoPassthrough, normalizeStateValue, renderError, sortBoxes, generateRandomRGBColor } from './utils';
+import {
+  formatState,
+  getBoxName,
+  getEntityId,
+  isAutoPassthrough,
+  normalizeStateValue,
+  renderError,
+  sortBoxes,
+  generateRandomRGBColor,
+} from './utils';
+import type { EditController, EditorBridge } from './editor-bridge';
 import { entityNamesChanged } from './entity-name';
 import {
   CHAR_WIDTH_RATIO,
@@ -34,32 +44,51 @@ import { renderSection } from './section';
 import { shouldBeVertical } from './layout';
 import { reconcileEntity } from './reconcile';
 
+const EMPTY_SECTION_SIZE = 64;
+
 @customElement('sankey-chart-base')
 export class Chart extends LitElement {
   // https://lit.dev/docs/components/properties/
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public states!: HassEntities;
   @property({ attribute: false }) public forceUpdateTs?: number;
+  @property({ attribute: false }) public editBridge?: EditorBridge;
 
-  @state() private config!: Config;
-  @state() private sections: SectionState[] = [];
+  @state() config!: Config;
+  @state() sections: SectionState[] = [];
   @state() private entityIds: string[] = [];
-  @state() private connections: ConnectionState[] = [];
+  @state() connections: ConnectionState[] = [];
   @state() private connectionsByParent: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private connectionsByChild: Map<EntityConfigInternal, ConnectionState[]> = new Map();
   @state() private reconciledStates: Map<EntityConfigInternal | string, number> = new Map();
   @state() private statePerPixel = 0;
   @state() private entityStates: Map<EntityConfigInternal | string, NormalizedState> = new Map();
-  @state() private highlightedEntities: EntityConfigInternal[] = [];
+  @state() highlightedEntities: EntityConfigInternal[] = [];
   @state() private lastUpdate = 0;
-  @state() private vertical = false;
-  @state() private width = 0; // passed from parent
+  @state() vertical = false;
+  @state() width = 0; // passed from parent
   @state() public zoomEntity?: EntityConfigInternal;
   @state() public error?: Error;
+  @state() _editRevision = 0;
 
   private randomColors = new Map<string, string>();
   // order in which _calcConnections allocates the connections
   private calcOrder: ConnectionState[] = [];
+
+  // the along-axis size the boxes were laid out in; edit mode may grow it
+  _sectionSize = 0;
+
+  // Preview editing (only while a visual editor bridge is active)
+  private _edit?: EditController;
+  _editMode = false;
+  private _connectionsEditMode = false;
+  private _missing = new Set<string>();
+  // nodes whose state is being derived from a related node, to stop resolution cycles
+  private _resolving = new Set<EntityConfigInternal>();
+
+  get _editing(): boolean {
+    return !!this._edit && !!this.editBridge?.active && !!this.config && !this.config.autoconfig;
+  }
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -74,7 +103,9 @@ export class Chart extends LitElement {
       changedProps.has('forceUpdateTs') ||
       changedProps.has('highlightedEntities') ||
       changedProps.has('zoomEntity') ||
-      changedProps.has('width')
+      changedProps.has('width') ||
+      changedProps.has('editBridge') ||
+      changedProps.has('_editRevision')
     ) {
       return true;
     }
@@ -104,8 +135,18 @@ export class Chart extends LitElement {
   }
 
   public willUpdate(changedProps: PropertyValues): void {
+    if (!this._edit && this.editBridge) {
+      this._edit = this.editBridge.createEditController(this);
+      this.addController(this._edit);
+    }
     this.vertical = shouldBeVertical(this.config, this.width);
-    if (!this.entityIds.length || changedProps.has('config')) {
+    this._editMode = this._editing;
+    if (!this.entityIds.length || changedProps.has('config') || this._editMode !== this._connectionsEditMode) {
+      this._connectionsEditMode = this._editMode;
+      this.error = undefined;
+      if (this._editMode) {
+        this._edit!.indexLinks();
+      }
       this.entityIds = [];
       this.connections = [];
       this.connectionsByParent.clear();
@@ -168,8 +209,11 @@ export class Chart extends LitElement {
             ) => {
               const next = byId.get(getEntityId(conf));
               if (!next || (next.type === 'passthrough' && !next.children.length)) {
-                this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(conf));
-                throw this.error;
+                // half-built graphs are normal while editing; otherwise render() shows the error
+                if (!this._editMode) {
+                  this.error = new Error(localize('common.missing_child') + ' ' + getEntityId(conf));
+                }
+                return;
               }
               if (next.type !== 'passthrough') {
                 addConnection(next, passthroughs, connectionRank);
@@ -312,7 +356,7 @@ export class Chart extends LitElement {
     }
   }
 
-  private _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
+  _getMemoizedState(entityConfOrStr: EntityConfigInternal | string) {
     if (!this.entityStates.has(entityConfOrStr)) {
       const entityConf =
         typeof entityConfOrStr === 'string' ? { id: entityConfOrStr, type: 'entity' as const, children: [] } : entityConfOrStr;
@@ -424,22 +468,37 @@ export class Chart extends LitElement {
         this.config.static_scale,
       );
     }
-    const filteredConfig = filterConfigByZoomEntity(this.config, this.zoomEntity);
+    const editing = this._editMode;
+    const filteredConfig = editing ? this.config : filterConfigByZoomEntity(this.config, this.zoomEntity);
     const sectionsStates: SectionState[] = [];
     // 32 is the padding of the card
-    const sectionSize = this.vertical ? this.width - 32 : this.config.height;
-    filteredConfig.sections.forEach(section => {
+    const sections = editing ? this._edit!.sectionsForEditing(filteredConfig.sections) : filteredConfig.sections;
+    const sectionSize = editing ? this._edit!.sectionSize(sections) : this.vertical ? this.width - 32 : this.config.height;
+    this._sectionSize = sectionSize;
+    sections.forEach(section => {
       let total = 0;
+      // edit mode keeps the boxes the card would hide, as ghosts, so they can be edited
+      const ghosts = new Set<EntityConfigInternal>();
       const boxes: Box[] = section.entities
         .filter(entityConf => {
           const { min_state } = this.config;
           // remove empty entity boxes
           const { state } = this._getMemoizedState(entityConf);
-          return state && state >= min_state;
+          if (state && state >= min_state) {
+            return true;
+          }
+          if (editing && !isAutoPassthrough(entityConf)) {
+            ghosts.add(entityConf);
+            return true;
+          }
+          return false;
         })
         .map(entityConf => {
           const { state, unit_of_measurement } = this._getMemoizedState(entityConf);
-          total += state;
+          const ghost = ghosts.has(entityConf);
+          if (!ghost) {
+            total += state;
+          }
 
           let finalColor = entityConf.color || 'var(--primary-color)';
           if (entityConf.color === 'random') {
@@ -475,7 +534,7 @@ export class Chart extends LitElement {
             }
           }
 
-          return {
+          const box: Box = {
             config: entityConf,
             entity: this._getEntityState(entityConf),
             id: getEntityId(entityConf),
@@ -488,19 +547,56 @@ export class Chart extends LitElement {
             size: 0,
             connectedParentState: 0,
           };
+          if (ghost) {
+            box.ghost = true;
+          }
+          if (editing && this._missing.has(this._lookupId(entityConf))) {
+            box.missing = true;
+          }
+          return box;
         });
       if (!boxes.length) {
+        if (editing) {
+          sectionsStates.push({
+            boxes: [],
+            total: 0,
+            statePerPixel: 0,
+            spacerSize: 0,
+            config: section,
+            offset: 0,
+            size: 0,
+          });
+        }
         return;
       }
+      const ghostSize = ghosts.size ? this._edit!.ghostSize(sectionSize, boxes.length, ghosts.size) : 0;
       // leave room for margin
-      const availableHeight = sectionSize - (boxes.length - 1) * this.config.min_box_distance;
+      let availableHeight =
+        sectionSize - (boxes.length - 1) * this.config.min_box_distance - ghosts.size * ghostSize;
+      if (ghosts.size) {
+        // ghosts must never starve the real boxes, or the whole chart's scale breaks
+        const realCount = boxes.length - ghosts.size;
+        availableHeight = Math.max(availableHeight, (sectionSize - (realCount - 1) * this.config.min_box_distance) / 2, 1);
+      }
       // calc sizes to determine statePerPixel ratio and find the best one
-      const calcResults = this._calcBoxHeights(boxes, availableHeight, total);
-      const parentBoxes = section.sort_group_by_parent ? sectionsStates[sectionsStates.length - 1]?.boxes || [] : [];
+      const calcResults = this._calcBoxHeights(
+        ghosts.size ? boxes.filter(b => !b.ghost) : boxes,
+        availableHeight,
+        total,
+      );
+      let sizedBoxes = calcResults.boxes;
+      if (ghosts.size) {
+        const sizedReal = sizedBoxes;
+        let realIdx = 0;
+        sizedBoxes = boxes.map(b => (b.ghost ? { ...b, size: ghostSize } : sizedReal[realIdx++]));
+      }
+      const parentBoxes = section.sort_group_by_parent
+        ? [...sectionsStates].reverse().find(s => s.boxes.length)?.boxes || []
+        : [];
       const sortBy = section.sort_by || this.config.sort_by;
       const sortDir = section.sort_dir || this.config.sort_dir;
       sectionsStates.push({
-        boxes: sortBoxes(parentBoxes, calcResults.boxes, sortBy, sortDir),
+        boxes: sortBoxes(parentBoxes, sizedBoxes, sortBy, sortDir),
         total,
         statePerPixel: calcResults.statePerPixel,
         spacerSize: 0,
@@ -516,7 +612,9 @@ export class Chart extends LitElement {
       let sizedBoxes = sectionState.boxes;
       if (sectionState.statePerPixel !== this.statePerPixel) {
         sizedBoxes = sizedBoxes.map(box => {
-          const size = Math.max(this.config.min_box_size, Math.floor(box.state / this.statePerPixel));
+          const size = box.ghost
+            ? box.size
+            : Math.max(this.config.min_box_size, Math.floor(box.state / this.statePerPixel));
           totalSize += size;
           return {
             ...box,
@@ -597,6 +695,9 @@ export class Chart extends LitElement {
   }
 
   private _naturalSectionHeight(section: SectionState): number {
+    if (!section.boxes.length) {
+      return EMPTY_SECTION_SIZE;
+    }
     const { show_states, show_names } = this.config;
     let nameLines = 0;
     if (show_names) {
@@ -617,6 +718,9 @@ export class Chart extends LitElement {
   }
 
   private _naturalSectionWidth(section: SectionState): number {
+    if (!section.boxes.length) {
+      return EMPTY_SECTION_SIZE;
+    }
     const { show_states, show_names, show_units, round, monetary_unit, box_thickness } = this.config;
     let maxWidth = 0;
     for (const box of section.boxes) {
@@ -664,7 +768,7 @@ export class Chart extends LitElement {
     return { boxes: result, statePerPixel: this.statePerPixel };
   }
 
-  private highlightPath(entityConf: EntityConfigInternal, direction?: 'parents' | 'children') {
+  highlightPath(entityConf: EntityConfigInternal, direction?: 'parents' | 'children') {
     this.highlightedEntities.push(entityConf);
     if (!direction || direction === 'children') {
       this.connections.forEach(c => {
@@ -705,19 +809,22 @@ export class Chart extends LitElement {
   }
 
   private _handleMouseEnter(box: Box): void {
+    if (this._edit?.dragging) {
+      return;
+    }
     this.highlightPath(box.config);
     // trigger rerender
     this.highlightedEntities = [...this.highlightedEntities];
   }
 
-  private _handleMouseLeave(): void {
+  _handleMouseLeave(): void {
     this.highlightedEntities = [];
     this.connections.forEach(c => {
       c.highlighted = false;
     });
   }
 
-  private _getUnitOfMeasurement(reported_unit_of_measurement: string): string {
+  private _getUnitOfMeasurement(reported_unit_of_measurement = ''): string {
     // If converting to money, don't actually display the word "monetary"
     if (this.config.convert_units_to == 'monetary') {
       return '';
@@ -733,9 +840,33 @@ export class Chart extends LitElement {
   }
 
   private _getEntityState(entityConf: EntityConfigInternal) {
+    if (
+      entityConf.type === 'remaining_parent_state' ||
+      entityConf.type === 'remaining_child_state' ||
+      entityConf.type === 'passthrough'
+    ) {
+      // A remaining_child_state feeding a remaining_parent_state would each read the other
+      if (this._resolving.has(entityConf)) {
+        return this._placeholderEntity(entityConf);
+      }
+      this._resolving.add(entityConf);
+      try {
+        return this._getDerivedEntityState(entityConf);
+      } finally {
+        this._resolving.delete(entityConf);
+      }
+    }
+    return this._getRealEntityState(entityConf);
+  }
+
+  // State of a node that borrows its unit and attributes from a related node
+  private _getDerivedEntityState(entityConf: EntityConfigInternal) {
     if (entityConf.type === 'remaining_parent_state') {
       const connections = this.connectionsByChild.get(entityConf);
       if (!connections) {
+        if (this._editMode) {
+          return this._placeholderEntity(entityConf);
+        }
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
@@ -750,11 +881,11 @@ export class Chart extends LitElement {
     if (entityConf.type === 'remaining_child_state') {
       const connections = this.connectionsByParent.get(entityConf);
       if (!connections) {
-        if (entityConf.children.length) {
+        if (entityConf.children.length && !this._editMode) {
           throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
         }
         // no children means no state. simplifies autoconfig
-        return { state: 0, attributes: {} };
+        return this._placeholderEntity(entityConf);
       }
       const state = connections.reduce((sum, c) => (c.ready ? sum + c.state : Infinity), 0);
       const childEntity = this._getEntityState(this._findRelatedRealEntity(entityConf, 'children'));
@@ -768,21 +899,27 @@ export class Chart extends LitElement {
     if (entityConf.type === 'passthrough') {
       const realConnection = this.connections.find(c => c.passthroughs.includes(entityConf));
       if (!realConnection) {
+        if (this._editMode) {
+          return this._placeholderEntity(entityConf);
+        }
         throw new Error('Invalid entity config ' + JSON.stringify(entityConf));
       }
       return this._getEntityState(realConnection.child);
     }
+    return this._getRealEntityState(entityConf);
+  }
 
-    // Carbon nodes ignore `entity_id` for the lookup — `entity_id` is the
-    // source declaration; the computed value lives under the node id.
-    const lookupId = isCarbonNodeType(entityConf.type)
-      ? getEntityId(entityConf)
-      : entityConf.entity_id || getEntityId(entityConf);
+  private _getRealEntityState(entityConf: EntityConfigInternal) {
+    const lookupId = this._lookupId(entityConf);
     let entity = this.states[lookupId];
     if (!entity) {
-      if (this.config.ignore_missing_entities) {
+      if (this._editMode) {
+        this._missing.add(lookupId);
+      }
+      if (this.config.ignore_missing_entities || this._editMode) {
         // Return a fake entity with state 0 if ignoring missing entities
         return {
+          entity_id: lookupId,
           state: 0,
           attributes: {
             unit_of_measurement: entityConf.unit_of_measurement || '',
@@ -803,6 +940,17 @@ export class Chart extends LitElement {
       }
     }
     return entity;
+  }
+
+  // name and icon helpers need an entity_id even when there is no real entity
+  private _placeholderEntity(entityConf: EntityConfigInternal) {
+    return { entity_id: entityConf.id, state: 0, attributes: {} };
+  }
+
+  // Carbon nodes ignore `entity_id` for the lookup — `entity_id` is the
+  // source declaration; the computed value lives under the node id.
+  private _lookupId(entityConf: EntityConfigInternal): string {
+    return isCarbonNodeType(entityConf.type) ? getEntityId(entityConf) : entityConf.entity_id || getEntityId(entityConf);
   }
 
   // find the first parent/child that is type: entity
@@ -836,10 +984,14 @@ export class Chart extends LitElement {
       }
       this.entityStates.clear();
       this.reconciledStates.clear();
+      this._missing.clear();
+      const editing = this._editMode;
       const containerClasses = classMap({
         container: true,
         'with-header': !!this.config.title,
         vertical: this.vertical,
+        editing,
+        'focus-ring': editing && !!this.editBridge?.focusRing,
       });
 
       if (!Object.keys(this.states).length) {
@@ -856,11 +1008,12 @@ export class Chart extends LitElement {
 
       this.lastUpdate = Date.now();
 
-      const chartW = this.width - 32;
+      const chartW = this.vertical ? Math.max(this.width - 32, this._sectionSize) : this.width - 32;
       const lastSection = this.sections[this.sections.length - 1];
       const chartH = this.vertical
         ? (lastSection ? lastSection.offset + lastSection.size : 0)
-        : this.config.height;
+        : this._sectionSize;
+      const edit = editing ? this._edit!.prepare() : undefined;
 
       return html`
         <ha-card label="Sankey Chart" .header=${this.config.title}>
@@ -871,7 +1024,16 @@ export class Chart extends LitElement {
               width="${chartW}"
               height="${chartH}"
               preserveAspectRatio="xMinYMin meet"
+              tabindex=${editing ? '0' : nothing}
+              @pointerdown=${edit ? edit.onPointerDown : nothing}
+              @pointermove=${edit ? edit.onPointerMove : nothing}
+              @pointerup=${edit ? edit.onPointerUp : nothing}
+              @pointercancel=${edit ? edit.onPointerCancel : nothing}
+              @touchstart=${edit ? edit.onTouchStart : nothing}
+              @keydown=${edit ? edit.onKeyDown : nothing}
+              @focus=${edit ? edit.onFocus : nothing}
             >
+              ${edit ? edit.background : nothing}
               ${this.sections.map((s, i) =>
                 renderSection({
                   hass: this.hass,
@@ -887,8 +1049,10 @@ export class Chart extends LitElement {
                   onMouseEnter: this._handleMouseEnter.bind(this),
                   onMouseLeave: this._handleMouseLeave.bind(this),
                   vertical: this.vertical,
+                  edit: edit?.section,
                 }),
               )}
+              ${edit ? edit.foreground : nothing}
             </svg>
           </div>
         </ha-card>

@@ -14,7 +14,7 @@
 ## Commands
 
 ```bash
-npm start      # Dev server with watch (http://127.0.0.1:3000/ha-sankey-chart.js)
+npm start      # Dev server with watch (http://127.0.0.1:3000/ha-sankey-chart.js?v=dev)
 npm run build  # Lint + production build
 npm run lint   # ESLint check
 npm test       # Run Jest tests
@@ -31,7 +31,8 @@ src/
 ├── energy.ts           # Energy dashboard integration
 ├── migrate.ts          # V3→V4 config migration
 ├── editor/             # Visual card editor components
-└── localize/           # i18n translations
+├── preview/            # Preview editing, loaded with the editor
+└── localize/           # i18n: languages/ (card), editor/ (loaded with the editor)
 __tests__/              # Jest test files
 dist/                   # Build output
 ```
@@ -49,6 +50,7 @@ dist/                   # Build output
 2. **State values**: `normalizeStateValue()` handles unit prefixes (m, k, M, G, T)
 3. **Entity types**: `entity`, `passthrough`, `remaining_parent_state`, `remaining_child_state`
 4. **Actions**: tap/hold/double-tap via `handleAction()` from custom-card-helpers
+5. **Lazy editor**: `getConfigElement()` loads `editor/index` with `import()`. The build emits `ha-sankey-chart.js` (a facade), a hashed core chunk and a hashed editor chunk. Modules the card imports must not import editor code, and nothing may import `ha-sankey-chart.js`. The `check-chunks` plugin in `rollup.shared.js` fails the build otherwise.
 
 ## Testing
 

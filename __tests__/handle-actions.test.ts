@@ -42,4 +42,43 @@ describe('handleAction', () => {
 
     expect(entityId).toBe('carbon_node');
   });
+  it('performs the action written by the HA action editor', async () => {
+    const chart = document.createElement('sankey-chart-base') as Chart;
+    const callService = jest.fn();
+
+    await handleAction(
+      chart,
+      { callService } as unknown as HomeAssistant,
+      {
+        id: 'node',
+        children: [],
+        tap_action: {
+          action: 'perform-action',
+          perform_action: 'light.toggle',
+          data: { brightness: 5 },
+          target: { entity_id: 'light.kitchen' },
+        },
+      } as EntityConfigInternal,
+      'tap',
+    );
+
+    expect(callService).toHaveBeenCalledWith('light', 'toggle', { brightness: 5 }, { entity_id: 'light.kitchen' });
+  });
+  it('accepts either action key like HA, and says so when none is set', async () => {
+    const chart = document.createElement('sankey-chart-base') as Chart;
+    const callService = jest.fn();
+    const localize = jest.fn((key: string) => (key.endsWith('no_action') ? 'No action' : ''));
+    const toasts: unknown[] = [];
+    chart.addEventListener('hass-notification', event => toasts.push((event as CustomEvent).detail));
+    const hass = { callService, localize } as unknown as HomeAssistant;
+    const node = (tap_action: unknown) => ({ id: 'node', children: [], tap_action } as EntityConfigInternal);
+
+    await handleAction(chart, hass, node({ action: 'perform-action', service: 'light.toggle' }), 'tap');
+    expect(callService).toHaveBeenCalledWith('light', 'toggle', undefined, undefined);
+
+    // what HA's action editor writes before an action is picked
+    await handleAction(chart, hass, node({ action: 'perform-action', perform_action: '' }), 'tap');
+    expect(callService).toHaveBeenCalledTimes(1);
+    expect(toasts).toEqual([{ message: 'No action' }]);
+  });
 });

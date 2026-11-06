@@ -2,6 +2,11 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build and upload the assets for
+        required: true
 name: release-please
 
 permissions: {}
@@ -18,19 +23,29 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.tag || github.sha }}
       - name: Build
         run: |
           npm ci
           npm test
           npm run build
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        if: ${{ github.event_name == 'push' }}
         id: release
-      - name: Upload Release Artifact
-        if: ${{ steps.release.outputs.release_created }}
+      # Chunks first: the entry is what HACS installs, so it must never be on the release without them.
+      - name: Upload Release Artifacts
+        if: ${{ steps.release.outputs.release_created || inputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.release.outputs.tag_name }}
-        run: gh release upload "$TAG_NAME" ./dist/ha-sankey-chart.js
+          TAG_NAME: ${{ steps.release.outputs.tag_name || inputs.tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          chunks=(dist/ha-sankey-chart-*.js)
+          gh release delete-asset "$TAG_NAME" ha-sankey-chart.js --yes 2>/dev/null || true
+          if [ ${#chunks[@]} -gt 0 ]; then gh release upload "$TAG_NAME" "${chunks[@]}" --clobber; fi
+          gh release upload "$TAG_NAME" dist/ha-sankey-chart.js --clobber
+          diff <(cd dist && ls -1 *.js | sort) <(gh release view "$TAG_NAME" --json assets --jq '.assets[].name' | sort)
 
   hacs-validate:
     needs: release-please

@@ -6,6 +6,8 @@ import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 import json from '@rollup/plugin-json';
 import minifyHTML from 'rollup-plugin-minify-html-literals';
+import { rmSync } from 'fs';
+import { chunkPlugins, output, preserveEntrySignatures } from './rollup.shared.js';
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -19,7 +21,13 @@ const serveopts = {
   },
 };
 
+const cleanDist = {
+  name: 'clean-dist',
+  buildStart: () => rmSync('dist', { recursive: true, force: true }),
+};
+
 const plugins = [
+  !dev && cleanDist,
   nodeResolve({}),
   commonjs(),
   typescript(),
@@ -32,15 +40,14 @@ const plugins = [
   dev && serve(serveopts),
   !dev && minifyHTML(),
   !dev && terser({ output: { comments: false } }),
+  ...chunkPlugins({ maxCoreBytes: dev ? Infinity : undefined }),
 ];
 
 export default [
   {
     input: 'src/ha-sankey-chart.ts',
-    output: {
-      dir: 'dist',
-      format: 'es',
-    },
+    preserveEntrySignatures,
+    output,
     plugins: [...plugins],
   },
 ];

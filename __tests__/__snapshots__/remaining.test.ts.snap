@@ -14,6 +14,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
           <div class=" container with-header ">
             <svg class="chart" preserveAspectRatio="xMinYMin meet" viewBox="0 0 992 200" width="992" height="200">
               
+              
     <g class="section">
       
         <defs>
@@ -33,6 +34,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
       
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="0" y="69.5" width="15" height="61" fill="var(--warning-color)"></rect>
             
             <foreignObject x="15" y="69.5" width="214.0625" height="61">
@@ -45,6 +47,7 @@ exports[`SankeyChart with remaining type entities matches snapshot 2`] = `
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
@@ -100,6 +103,7 @@ IDK
 IDK
 IDK
 IDK</title>
+            
             <rect class="color-bar" x="229.0625" y="5" width="15" height="190" fill="darkslateblue"></rect>
             
             <foreignObject x="244.0625" y="5" width="214.0625" height="190">
@@ -112,6 +116,7 @@ IDK</title>
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
@@ -155,6 +160,7 @@ IDK</title>
           <g class=" box type-entity ">
             <title>1.9kW Varmtvann
 Blaa</title>
+            
             <rect class="color-bar" x="458.125" y="0" width="15" height="63" fill="var(--primary-color)"></rect>
             
             <foreignObject x="473.125" y="0" width="214.0625" height="63">
@@ -167,10 +173,12 @@ Blaa</title>
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="458.125" y="68.5" width="15" height="63" fill="var(--primary-color)"></rect>
             
             <foreignObject x="473.125" y="68.5" width="214.0625" height="63">
@@ -183,10 +191,12 @@ Blaa</title>
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="458.125" y="137" width="15" height="63" fill="var(--primary-color)"></rect>
             
             <foreignObject x="473.125" y="137" width="214.0625" height="63">
@@ -199,6 +209,7 @@ Blaa</title>
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
@@ -222,6 +233,7 @@ Blaa</title>
       
           <g class=" box type-passthrough ">
             <title></title>
+            
             <rect class="color-bar" x="687.1875" y="68.5" width="15" height="63" fill="red"></rect>
             
             <foreignObject x="702.1875" y="68.5" width="214.0625" height="63">
@@ -229,6 +241,7 @@ Blaa</title>
                 
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
@@ -238,6 +251,7 @@ Blaa</title>
       
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="916.25" y="68.5" width="15" height="63" fill="red"></rect>
             
             <foreignObject x="931.25" y="68.5" width="60.75" height="63">
@@ -250,10 +264,12 @@ Blaa</title>
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
   
+              
             </svg>
           </div>
         </ha-card>

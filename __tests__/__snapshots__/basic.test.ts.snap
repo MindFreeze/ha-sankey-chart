@@ -14,6 +14,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
           <div class=" container ">
             <svg class="chart" preserveAspectRatio="xMinYMin meet" viewBox="0 0 992 200" width="992" height="200">
               
+              
     <g class="section">
       
         <defs>
@@ -42,6 +43,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
       
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="0" y="2.5" width="15" height="195" fill="var(--primary-color)"></rect>
             
             <foreignObject x="15" y="2.5" width="925.7" height="195">
@@ -54,6 +56,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
@@ -63,6 +66,7 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
       
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="940.7" y="0" width="15" height="97" fill="var(--primary-color)"></rect>
             
             <foreignObject x="955.7" y="0" width="36.3" height="97">
@@ -75,10 +79,12 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
           <g class=" box type-entity ">
             <title></title>
+            
             <rect class="color-bar" x="940.7" y="103" width="15" height="97" fill="var(--primary-color)"></rect>
             
             <foreignObject x="955.7" y="103" width="36.3" height="97">
@@ -91,10 +97,12 @@ exports[`SankeyChart matches a simple snapshot 2`] = `
   </div>
               </div>
             </foreignObject>
+            
           </g>
         
     </g>
   
+              
             </svg>
           </div>
         </ha-card>

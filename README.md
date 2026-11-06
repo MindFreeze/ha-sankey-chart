@@ -16,7 +16,31 @@ This card is intended to display connections between entities with numeric state
 
 ## Installation
 
-Install through [HACS](https://hacs.xyz/)
+Install through [HACS](https://hacs.xyz/) or the Home Assistant Marketplace.
+
+### Manual installation
+
+The card is split into several files. The visual editor loads only when you open it.
+
+1. Download every `.js` file of the [latest release](https://github.com/MindFreeze/ha-sankey-chart/releases/latest): `ha-sankey-chart.js` and all `ha-sankey-chart-*.js` files. `ha-sankey-chart.js` alone does not work.
+2. Copy them into one folder, for example `config/www/ha-sankey-chart/`.
+3. Add the dashboard resource `/local/ha-sankey-chart/ha-sankey-chart.js?v=<version>` as a JavaScript module.
+4. On every update, copy all the new files and change `?v=` to the new version. Home Assistant caches these files for a month.
+
+Once every browser and the companion app have reloaded, you can delete the previous version's `ha-sankey-chart-*.js` files. Keeping them does no harm.
+
+## Visual editor
+
+You can build the chart in the dashboard's card editor, directly on the preview:
+
+- **Edit** a node or a link: click it in the preview.
+- **Move** a node to another section: drag it there. Drop it between two sections, or after the last one, to create a new section.
+- **Link** two nodes: drag the round handle on the edge of a node onto a node in a later section. Drop it on empty space to add a new node with that link.
+- **Delete** the selected node or link with <kbd>Delete</kbd>. Undo with <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd>.
+
+While you edit, the preview also draws what the card normally hides, so you can work with it: nodes the card hides (a value of 0 or below `min_state`) and links without a flow are dashed, and empty sections are drop areas. Editing in the preview needs Home Assistant 2026.2 or newer.
+
+Using [autoconfig](#autoconfig)? Select **Customize** in the editor to turn the generated chart into nodes and links you can edit.
 
 ## Options
 
@@ -496,12 +520,12 @@ For automatic configuration from your Energy Dashboard setup, see [autoconfig](#
 
 1. `npm i`
 2. `npm start`
-3. The compiled `.js` file will be accessible on
-   `http://127.0.0.1:3000/ha-sankey-chart.js`.
-4. On a running Home Assistant installation add this to your Lovelace `resources:`
+3. The compiled files will be accessible on
+   `http://127.0.0.1:3000/`. `ha-sankey-chart.js` loads the other chunks.
+4. On a running Home Assistant installation, add this to your Lovelace `resources:`. The `?v=` query matches how HACS loads the card, so a chunk that wrongly imports `ha-sankey-chart.js` fails in development too.
 
 ```yaml
-- url: 'http://127.0.0.1:3000/ha-sankey-chart.js'
+- url: 'http://127.0.0.1:3000/ha-sankey-chart.js?v=dev'
   type: module
 ```
 

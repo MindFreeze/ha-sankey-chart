@@ -98,15 +98,22 @@ export const handleAction = async (
             forwardHaptic("light");
             break;
         }
+        // perform-action is what HA's action editor writes; call-service is its old name
+        case "perform-action":
         case "call-service": {
-            if (!actionConfig.service) {
+            // like HA, accept either key for both names
+            const action = ("perform_action" in actionConfig && actionConfig.perform_action) ||
+                ("service" in actionConfig && actionConfig.service);
+            if (!action) {
                 showToast(node, {
-                    message: hass.localize("ui.panel.lovelace.cards.actions.no_service"),
+                    message:
+                        hass.localize("ui.panel.lovelace.cards.actions.no_action") ||
+                        hass.localize("ui.panel.lovelace.cards.actions.no_service"),
                 });
                 forwardHaptic("failure");
                 return;
             }
-            const [domain, service] = actionConfig.service.split(".", 2);
+            const [domain, service] = action.split(".", 2);
             hass.callService(
                 domain,
                 service,

@@ -13,6 +13,12 @@ const languages: any = {
   pt: pt,
 };
 
+export function registerTranslations(strings: Record<string, Record<string, unknown>>): void {
+  Object.keys(strings).forEach(lang => {
+    languages[lang] = { ...languages[lang], ...strings[lang] };
+  });
+}
+
 export function localize(string: string, search = '', replace = ''): string {
   const lang = (localStorage.getItem('selectedLanguage') || 'en').replace(/['"]+/g, '').replace('-', '_');
 
@@ -21,7 +27,7 @@ export function localize(string: string, search = '', replace = ''): string {
   try {
     translated = string.split('.').reduce((o, i) => o[i], languages[lang]);
   } catch (e) {
-    translated = string.split('.').reduce((o, i) => o[i], languages['en']);
+    translated = string.split('.').reduce((o, i) => o && o[i], languages['en']);
   }
 
   if (translated === undefined) translated = string.split('.').reduce((o, i) => o && o[i], languages['en']);

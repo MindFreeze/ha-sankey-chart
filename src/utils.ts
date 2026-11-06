@@ -245,6 +245,7 @@ export function convertNodesToSections(nodes: Node[], links: Link[], sectionConf
     const sectionConfig = sectionConfigs?.[sectionIndex] || {};
 
     return {
+      index: sectionIndex,
       entities: nodesBySection.get(sectionIndex) || [],
       sort_by: sectionConfig.sort_by,
       sort_dir: sectionConfig.sort_dir,
@@ -309,6 +310,9 @@ export function normalizeConfig(conf: SankeyChartConfig | V3Config, isMetric?: b
 
 const AUTO_PASSTHROUGH_SUFFIX = '__auto';
 
+export const autoPassthroughId = (target: string, section: number): string =>
+  `${target}__passthrough_${section}${AUTO_PASSTHROUGH_SUFFIX}`;
+
 /**
  * Whether the node is a passthrough inserted by autoRouteCrossGapLinks rather
  * than declared by the user.
@@ -344,7 +348,7 @@ export function autoRouteCrossGapLinks(nodes: Node[], links: Link[]): void {
     const originalTarget = link.target;
     const hopIds: string[] = [];
     for (let i = srcSec + 1; i < tgtSec; i++) {
-      const pid = `${originalTarget}__passthrough_${i}${AUTO_PASSTHROUGH_SUFFIX}`;
+      const pid = autoPassthroughId(originalTarget, i);
       // Reuse an existing synthetic passthrough for the same (target, section)
       if (!nodes.some(n => n.id === pid)) {
         // Inherit visual props (color, icon, name, etc.) from the target so
