@@ -65,6 +65,7 @@ const NO_AREA = 'no_area';
 const AUTO_TO_SUFFIX = '__to_auto';
 const AUTO_LOW_CARBON_SUFFIX = '__low_carbon_auto';
 const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
+const AUTO_UNTRACKED_SUFFIX = '__untracked_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
 
@@ -721,9 +722,11 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     // so this loop only has to place each device into the right section;
     // autoRouteCrossGapLinks takes care of any cross-gap routing.
     const deviceSections = this.getDeviceSections(parentLinks, deviceNodes);
+    const deviceSectionById: Record<string, number> = {};
     deviceSections.forEach(section => {
       if (section.length) {
         section.forEach(d => {
+          deviceSectionById[d.id] = currentSection;
           nodes.push({
             id: d.id,
             section: currentSection,
@@ -735,6 +738,23 @@ class SankeyChart extends SubscribeMixin(LitElement) {
         sections.push({ sort_by: 'state', sort_group_by_parent: true });
         currentSection++;
       }
+    });
+
+    // Like HA's energy sankey, show what a parent device consumes beyond the
+    // sum of its tracked children, one column after the parent.
+    const parentIds = new Set(Object.values(parentLinks));
+    deviceNodes.forEach(d => {
+      if (!parentIds.has(d.id)) return;
+      const section = deviceSectionById[d.id] + 1;
+      if (section >= currentSection) return;
+      const untrackedId = `${d.id}${AUTO_UNTRACKED_SUFFIX}`;
+      nodes.push({
+        id: untrackedId,
+        section,
+        type: 'remaining_parent_state',
+        name: 'Untracked',
+      });
+      links.push({ source: d.id, target: untrackedId });
     });
 
     const totalSection = nodes.find(n => n.id === TOTAL_NODE_ID)?.section;

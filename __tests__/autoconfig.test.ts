@@ -676,6 +676,41 @@ describe('SankeyChart autoconfig', () => {
       expect(config.sections[3].sort_by).toBe('state');
       expect(config.sections[3].sort_group_by_parent).toBe(true);
     });
+
+    it('adds an untracked remaining_parent_state node to every non-leaf device', async () => {
+      hass.states['sensor.top'] = { entity_id: 'sensor.top', state: '10' } as any;
+      hass.states['sensor.mid'] = { entity_id: 'sensor.mid', state: '6' } as any;
+      hass.states['sensor.leaf'] = { entity_id: 'sensor.leaf', state: '2' } as any;
+      hass.states['sensor.solo'] = { entity_id: 'sensor.solo', state: '1' } as any;
+      hass.areas = {};
+      (getEnergyPreferences as jest.Mock).mockResolvedValue({
+        energy_sources: [{ type: 'grid', stat_energy_from: 'sensor.grid_in' }],
+        device_consumption: [
+          { stat_consumption: 'sensor.top' },
+          { stat_consumption: 'sensor.mid', included_in_stat: 'sensor.top' },
+          { stat_consumption: 'sensor.leaf', included_in_stat: 'sensor.mid' },
+          { stat_consumption: 'sensor.solo' },
+        ],
+      });
+      (getEntitiesByArea as jest.Mock).mockResolvedValue({});
+      (fetchFloorRegistry as jest.Mock).mockResolvedValue([]);
+
+      await (sankeyChart as any)['autoconfig']();
+      const config = (sankeyChart as any).config;
+      const nodeById = (id: string) => config.nodes.find((n: { id: string }) => n.id === id);
+
+      const untrackedNodes = config.nodes.filter((n: { id: string }) => n.id.endsWith('__untracked_auto'));
+      expect(untrackedNodes.map((n: { id: string }) => n.id).sort()).toEqual([
+        'sensor.mid__untracked_auto',
+        'sensor.top__untracked_auto',
+      ]);
+      ['sensor.top', 'sensor.mid'].forEach(id => {
+        const untracked = nodeById(`${id}__untracked_auto`);
+        expect(untracked.type).toBe('remaining_parent_state');
+        expect(untracked.section).toBe(nodeById(id).section + 1);
+        expect(config.links).toContainEqual({ source: id, target: `${id}__untracked_auto` });
+      });
+    });
   });
 
   describe('autoconfig.mode', () => {
