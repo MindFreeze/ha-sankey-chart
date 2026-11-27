@@ -65,7 +65,6 @@ const NO_AREA = 'no_area';
 const AUTO_TO_SUFFIX = '__to_auto';
 const AUTO_LOW_CARBON_SUFFIX = '__low_carbon_auto';
 const AUTO_HIGH_CARBON_SUFFIX = '__high_carbon_auto';
-// Suffix for the untracked remainder of a parent device (parent - sum(children)).
 const AUTO_UNTRACKED_SUFFIX = '__untracked_auto';
 
 type DeviceNode = { id: string; name?: string; parent?: string; color?: string };
@@ -742,7 +741,7 @@ class SankeyChart extends SubscribeMixin(LitElement) {
     });
 
     // Like HA's energy sankey, show what a parent device consumes beyond the
-    // sum of its tracked children, in the same column as those children.
+    // sum of its tracked children, one column after the parent.
     const parentIds = new Set(Object.values(parentLinks));
     deviceNodes.forEach(d => {
       if (!parentIds.has(d.id)) return;
