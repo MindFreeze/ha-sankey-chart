@@ -1,5 +1,18 @@
 # Changelog
 
+## [6.5.0](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.5...v6.5.0) (2026-11-27)
+
+
+### Features
+
+* edit the chart directly in the card editor preview ([#404](https://github.com/MindFreeze/ha-sankey-chart/issues/404)) ([c793df5](https://github.com/MindFreeze/ha-sankey-chart/commit/c793df52f23886e463ad48eaee761685de9d3e23))
+* show untracked consumption for parent devices in autoconfig ([#409](https://github.com/MindFreeze/ha-sankey-chart/issues/409)) ([7c7cdc9](https://github.com/MindFreeze/ha-sankey-chart/commit/7c7cdc974a834f696d9be8c810d2f1429db9833f))
+
+
+### Performance Improvements
+
+* load the visual editor and preview editing on demand ([#406](https://github.com/MindFreeze/ha-sankey-chart/issues/406)) ([12f8a86](https://github.com/MindFreeze/ha-sankey-chart/commit/12f8a86e86c4df901d7f130e60a3132a5c2a905d))
+
 ## [6.4.5](https://github.com/MindFreeze/ha-sankey-chart/compare/v6.4.4...v6.4.5) (2026-11-02)
 
 
